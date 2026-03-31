@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +8,27 @@ import { Progress } from "@/components/ui/progress";
 export function AcademicProgress() {
   const [showCgpa, setShowCgpa] = useState(true);
   const [showSemesterGpa, setShowSemesterGpa] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const savedCgpa = localStorage.getItem("showCgpa");
+    const savedGpa = localStorage.getItem("showSemesterGpa");
+    if (savedCgpa !== null) setShowCgpa(savedCgpa === "true");
+    if (savedGpa !== null) setShowSemesterGpa(savedGpa === "true");
+    setMounted(true);
+  }, []);
+
+  const toggleCgpa = () => {
+    const next = !showCgpa;
+    setShowCgpa(next);
+    localStorage.setItem("showCgpa", String(next));
+  };
+
+  const toggleSemesterGpa = () => {
+    const next = !showSemesterGpa;
+    setShowSemesterGpa(next);
+    localStorage.setItem("showSemesterGpa", String(next));
+  };
 
   return (
     <Card className="rounded-[24px] border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden h-full flex flex-col">
@@ -29,7 +50,7 @@ export function AcademicProgress() {
             
             <button
               type="button"
-              onClick={() => setShowCgpa(!showCgpa)}
+              onClick={toggleCgpa}
               className="w-11 h-11 flex items-center justify-center -mr-2 text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation"
               aria-label={showCgpa ? "Hide CGPA" : "Show CGPA"}
             >
@@ -51,7 +72,7 @@ export function AcademicProgress() {
             </div>
             <button
               type="button"
-              onClick={() => setShowSemesterGpa(!showSemesterGpa)}
+              onClick={toggleSemesterGpa}
               className="w-11 h-11 flex items-center justify-center -mr-2 text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation"
               aria-label={showSemesterGpa ? "Hide Semester GPA" : "Show Semester GPA"}
             >
