@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Academics", href: "#", icon: BookOpen },
+  { title: "Academics", href: "/academic-details", icon: BookOpen },
   { title: "Register", href: "#", icon: Settings },
   { title: "Finance", href: "/dashboard/finance", icon: Wallet },
 ];
@@ -18,7 +18,7 @@ export function MobileNav() {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 h-[84px] bg-white border-t flex items-center justify-around px-4 z-50 pb-safe">
       {navItems.map((item) => {
-        const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+        const isActive = pathname === item.href;
         return (
           <Link 
             key={item.title} 

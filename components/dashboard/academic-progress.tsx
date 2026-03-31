@@ -27,16 +27,16 @@ export function AcademicProgress() {
               <span className="text-[11px] font-semibold text-gray-500 tracking-wide">CGPA</span>
             </div>
             
-            <button 
+            <button
               type="button"
               onClick={() => setShowCgpa(!showCgpa)}
-              className="p-2 -mr-2 text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors select-none z-50"
+              className="w-11 h-11 flex items-center justify-center -mr-2 text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation"
               aria-label={showCgpa ? "Hide CGPA" : "Show CGPA"}
             >
               {showCgpa ? (
-                <Eye className="w-5 h-5 pointer-events-none" /> 
+                <Eye className="w-5 h-5" /> 
               ) : (
-                <EyeOff className="w-5 h-5 pointer-events-none" />
+                <EyeOff className="w-5 h-5" />
               )}
             </button>
           </div>
@@ -49,16 +49,16 @@ export function AcademicProgress() {
               </span>
               <span className="text-[11px] font-semibold text-gray-500 tracking-wide">SEMESTER GPA</span>
             </div>
-            <button 
+            <button
               type="button"
               onClick={() => setShowSemesterGpa(!showSemesterGpa)}
-              className="p-2 -mr-2 text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors select-none z-50"
-              aria-label={showSemesterGpa ? "Hide CGPA" : "Show CGPA"}
+              className="w-11 h-11 flex items-center justify-center -mr-2 text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation"
+              aria-label={showSemesterGpa ? "Hide Semester GPA" : "Show Semester GPA"}
             >
               {showSemesterGpa ? (
-                <Eye className="w-5 h-5 pointer-events-none" /> 
+                <Eye className="w-5 h-5" /> 
               ) : (
-                <EyeOff className="w-5 h-5 pointer-events-none" />
+                <EyeOff className="w-5 h-5" />
               )}
             </button>
           </div>
@@ -88,3 +88,4 @@ export function AcademicProgress() {
     </Card>
   );
 }
+
