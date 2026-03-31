@@ -5,9 +5,10 @@ import { QuickInfo } from "@/components/academic-details/quick-info";
 import { CurrentSemesterRegistration } from "@/components/academic-details/current-semester-registration";
 import { AcademicAlerts } from "@/components/academic-details/academic-alerts";
 
+
 export default function AcademicDetailsPage() {
   return (
-    <div className="p-4 md:p-6 overflow-y-auto">
+    <div className="p-4 md:px-6 md:py-2 overflow-y-auto">
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Left Column */}
         <div className="xl:col-span-7 flex flex-col gap-6">
