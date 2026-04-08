@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const actions = [
   { id: 1, title: "Select Courses", icon: FileText, href: "#", iconColor: "text-[#3B5B98]" },
-  { id: 2, title: "View Results", icon: TrendingUp, href: "#", iconColor: "text-[#34A853]" },
+  { id: 2, title: "View Results", icon: TrendingUp, href: "/academic-details/semester-results", iconColor: "text-[#34A853]" },
   { id: 3, title: "Export Transcript", icon: Download, href: "#", iconColor: "text-[#D94F8F]" },
   { id: 4, title: "Make Payment", icon: CreditCard, href: "/dashboard/finance", iconColor: "text-[#00B4D8]" },
 ];

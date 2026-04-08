@@ -28,7 +28,7 @@ const GPAMetric = () => {
     localStorage.setItem("showSemesterGpa", String(next));
     };
   return (
-    <div className="flex items-center gap-2 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
         {/* CGPA */}
         <div className="flex-1 bg-[#F8F9FB] rounded-2xl p-4 flex items-center justify-between">
         <div className="flex flex-col mr-1">
@@ -75,7 +75,7 @@ const GPAMetric = () => {
         </div>
 
         {/* CURRENT LEVEL */}
-        <div className="flex-1 bg-[#F8F9FB] rounded-2xl p-4 flex items-center justify-between">
+        <div className="col-span-2 md:col-span-1 bg-[#F8F9FB] rounded-2xl p-4 flex items-center justify-between">
         <div className="flex flex-col">
             <span className="text-[28px] font-bold text-[#1E1E1E] leading-none mb-1">200</span>
             <span className="text-[11px] font-semibold text-gray-500 tracking-wide uppercase">Current Level</span>

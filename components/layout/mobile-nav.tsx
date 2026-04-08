@@ -18,7 +18,7 @@ export function MobileNav() {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 h-[84px] bg-white border-t flex items-center justify-around px-4 z-50 pb-safe">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`));
         return (
           <Link 
             key={item.title} 

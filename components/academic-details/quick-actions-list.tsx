@@ -3,7 +3,7 @@ import { FileText, ClipboardList, RefreshCw, Repeat, Download } from "lucide-rea
 import Link from "next/link";
 
 const actions = [
-  { id: 1, title: "View Semester Results", icon: FileText, href: "#", iconColor: "text-[#4DB16B]" },
+  { id: 1, title: "View Semester Results", icon: FileText, href: "/academic-details/semester-results", iconColor: "text-[#4DB16B]" },
   { id: 2, title: "View Current Semester Courses", icon: FileText, href: "#", iconColor: "text-[#3B5B98]" },
   { id: 3, title: "View Carry Over Courses", icon: FileText, href: "#", iconColor: "text-[#3B5B98]" },
   { id: 4, title: "View Repeated Courses", icon: FileText, href: "#", iconColor: "text-[#3B5B98]" },
