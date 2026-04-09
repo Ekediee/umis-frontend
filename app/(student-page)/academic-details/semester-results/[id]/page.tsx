@@ -60,7 +60,10 @@ export default function SemesterResultDetailPage() {
           </div>
         </div>
 
-        <Button className="bg-[#3B5B98] hover:bg-[#2e477a] text-white font-semibold rounded-[12px] h-11 px-6 w-full md:w-auto shadow-sm transition-colors">
+        <Button 
+          className="bg-[#003CBB] hover:bg-[#5585EA] text-white font-semibold rounded-[12px] h-11 px-6 w-full md:w-auto shadow-sm transition-colors"
+          onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(semesterId)}/preview`)}
+        >
           Export Result
         </Button>
       </Card>
@@ -99,7 +102,7 @@ export default function SemesterResultDetailPage() {
                 </div>
                 
                 <div className="flex justify-center">
-                  <span className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold ${getGradeColor(course.grade)}`}>
+                  <span className={`w-8 h-8 flex items-center justify-center rounded-full text-[17px] font-bold ${getGradeColor(course.grade)}`}>
                     {course.grade}
                   </span>
                 </div>
@@ -118,7 +121,7 @@ export default function SemesterResultDetailPage() {
                         {course.units} units
                       </span>
                     </div>
-                    <span className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold ${getGradeColor(course.grade)}`}>
+                    <span className={`w-9 h-9 flex items-center justify-center rounded-full text-[20px] font-bold ${getGradeColor(course.grade)}`}>
                       {course.grade}
                     </span>
                  </div>
@@ -148,7 +151,7 @@ export default function SemesterResultDetailPage() {
       </div>
 
       {/* Pagination Footer */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6 text-gray-500 text-[13px] md:text-sm">
+      {/* <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6 text-gray-500 text-[13px] md:text-sm">
         <div>
           Page 1 of 2
         </div>
@@ -182,7 +185,7 @@ export default function SemesterResultDetailPage() {
               <ChevronDown className="w-4 h-4 text-gray-400 ml-1" />
            </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

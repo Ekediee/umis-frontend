@@ -6,8 +6,11 @@ import { Sidebar } from "@/components/layout/sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "UMIS Tracker",
+  title: "Babcock University | UMIS Student Portal",
   description: "University Management Information System",
+  icons: {
+    icon: '/images/bu_logo.png'
+  }
 };
 
 export default function RootLayout({
