@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { MainContent } from "@/components/layout/main-content";
 
 export default function DashboardLayout({
   children,
@@ -15,9 +16,9 @@ export default function DashboardLayout({
       {/* Main Content Area overlapping the dark background */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#F4F5F7] overflow-hidden relative md:shadow-[-10px_0_30px_rgba(0,0,0,0.1)] z-10">
          <Header />
-         <main className="flex-1 overflow-y-auto pb-24 md:pb-8 pt-6 relative z-0">
+         <MainContent>
             {children}
-         </main>
+         </MainContent>
          <MobileNav />
       </div>
     </div>

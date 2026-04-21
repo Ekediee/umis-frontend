@@ -18,7 +18,7 @@ export default function SemesterResultsPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 mt-4 md:mt-0">
+    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 md:mt-0">
       {/* Back button */}
       <div>
         <Button 

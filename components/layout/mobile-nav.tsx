@@ -15,6 +15,13 @@ const navItems = [
 export function MobileNav() {
   const pathname = usePathname();
 
+  // Hide mobile nav on semester-results detail pages and courses view
+  const isHidden = 
+    pathname.includes('/academic-details/semester-results') || 
+    pathname.includes('/academic-details/courses');
+
+  if (isHidden) return null;
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 h-[84px] bg-white border-t flex items-center justify-around px-4 z-50 pb-safe">
       {navItems.map((item) => {
