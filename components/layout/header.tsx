@@ -12,6 +12,7 @@ export function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
   
   const getTitle = () => {
+    if (pathname?.includes('/finance/receipt')) return "Payment";
     if (pathname?.includes('/finance')) return "Finance";
     if (pathname?.includes('/academic-details')) return "Academic Details";
     return "Dashboard";
