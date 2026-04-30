@@ -2,6 +2,7 @@ import Image from "next/image";
 import { User, Lock, Eye, Globe, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import CopyRight from "@/components/CopyRight";
 
 export default function LoginPage() {
   return (
@@ -130,13 +131,13 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="w-full flex items-center justify-between text-[12px] lg:text-[13px] text-gray-500 font-medium mt-auto pt-8">
-          <span>© 2026 ESMIS</span>
-          <button className="flex items-center gap-1.5 hover:text-gray-800 transition-colors">
+        <div className="w-full flex items-center justify-center text-[12px] lg:text-[13px] text-gray-500 font-medium mt-auto pt-8">
+          <span><CopyRight /></span>
+          {/* <button className="flex items-center gap-1.5 hover:text-gray-800 transition-colors">
             <Globe className="w-[14px] h-[14px]" />
             ENG
             <ChevronDown className="w-3.5 h-3.5" />
-          </button>
+          </button> */}
         </div>
       </div>
 

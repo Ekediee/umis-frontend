@@ -1,0 +1,42 @@
+# ─── Development Compose ──────────────────────────────────────────────────────
+# Usage:
+#   docker compose -f docker-compose.dev.yml up
+#
+# Hot-reload works by bind-mounting the host source directory into /app.
+# Any file you save on the host is immediately visible inside the container,
+# triggering Next.js HMR. The browser at http://localhost:3000 updates within ~1s.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  nextjs-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: umis-frontend-dev
+    restart: unless-stopped
+
+    # Load development environment variables from .env.dev
+    # Copy .env.dev.example → .env.dev and fill in your values before starting.
+    env_file:
+      - .env.dev
+
+    ports:
+      # Expose Next.js dev server directly — no Nginx needed in development
+      - "3000:3000"
+
+    volumes:
+      # ── Bind mount: host source → container /app ──────────────────────────
+      # This is what enables live hot-reload. Every file change on the host
+      # is immediately reflected inside the container.
+      - .:/app
+
+      # ── Anonymous volumes: prevent host paths from overwriting container paths
+      # Critical on Windows hosts: the host node_modules uses Windows paths,
+      # but the container needs Linux paths. These volumes keep them separate.
+      - /app/node_modules
+      - /app/.next
+
+    # Keep container's stdin open and allocate a pseudo-TTY.
+    # Useful for debugging with console.log output clearly visible.
+    stdin_open: true
+    tty: true
