@@ -1,6 +1,7 @@
 import { Info, ChevronDown, ChevronRight, CreditCard, ThumbsUp, Eye, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
 
 const paymentHistoryData = [
   {
@@ -184,9 +185,9 @@ export default function FinancePage() {
                     </span>
                   </div>
                   <div className="flex justify-center">
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
+                    <Link href="/dashboard/finance/receipt" className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
                       <Eye className="w-4 h-4" />
-                    </button>
+                    </Link>
                   </div>
                   <div className="flex justify-center">
                     <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
@@ -211,9 +212,9 @@ export default function FinancePage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
+                  <Link href="/dashboard/finance/receipt" className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
                     <Eye className="w-5 h-5" />
-                  </button>
+                  </Link>
                   <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
                     <Download className="w-5 h-5" />
                   </button>
