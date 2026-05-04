@@ -23,7 +23,7 @@ export default function SemesterResultsPage() {
       <div>
         <Button 
           variant="outline" 
-          className="rounded-[10px] text-blue-600 font-semibold px-4 h-10 border-gray-200 hover:bg-blue-50 hover:text-blue-700 bg-white shadow-sm transition-colors"
+          className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-10 border-gray-200 hover:bg-[#f5f8fe] hover:text-[#003095] bg-white shadow-sm transition-colors"
           onClick={() => router.back()}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
@@ -93,7 +93,7 @@ export default function SemesterResultsPage() {
                     <div className="flex justify-end">
                       <Button 
                         variant="outline" 
-                        className="rounded-[10px] text-blue-600 font-semibold px-4 h-9 border border-blue-100 hover:bg-blue-50 bg-white shadow-sm"
+                        className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-9 border border-[#003cbb]/20 hover:bg-[#f5f8fe] bg-white shadow-sm"
                         onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
                       >
                         <Eye className="w-4 h-4 mr-1.5" />
@@ -134,7 +134,7 @@ export default function SemesterResultsPage() {
 
                     <Button 
                       variant="outline" 
-                      className="w-full rounded-[12px] text-blue-600 font-semibold h-11 border border-blue-100 hover:bg-blue-50 bg-white shadow-sm mt-1"
+                      className="w-full rounded-[12px] text-[#003cbb] font-semibold h-11 border border-[#003cbb]/20 hover:bg-[#f5f8fe] bg-white shadow-sm mt-1"
                       onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
                     >
                       <Eye className="w-[18px] h-[18px] mr-2" />

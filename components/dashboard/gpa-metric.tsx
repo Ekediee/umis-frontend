@@ -55,7 +55,7 @@ const GPAMetric = () => {
         {/* SEMESTER GPA */}
         <div className="flex-1 bg-[#F8F9FB] rounded-2xl p-4 flex items-center justify-between">
         <div className="flex flex-col mr-1">
-            <span className="text-[28px] font-bold text-[#209255] leading-none mb-1">
+            <span className="text-[28px] font-bold text-[#12B76A] leading-none mb-1">
             {showSemesterGpa ? "3.52" : "****"}
             </span>
             <span className="text-[11px] font-semibold text-gray-500 tracking-wide">SEMESTER GPA</span>

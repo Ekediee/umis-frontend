@@ -23,7 +23,7 @@ export default function SemesterResultDetailPage() {
   const getGradeColor = (grade: string) => {
     switch(grade) {
       case "A": return "bg-[#D1F4E0] text-[#1E8B4A]";
-      case "B": return "bg-[#E1E7FC] text-[#3B5B98]";
+      case "B": return "bg-[#E1E7FC] text-[#003cbb]";
       case "C": return "bg-[#FCECD1] text-[#E08F22]"; 
       case "D": return "bg-[#FCD1D1] text-[#D32F2F]";
       case "F": return "bg-[#FCD1D1] text-[#D32F2F]";
@@ -37,7 +37,7 @@ export default function SemesterResultDetailPage() {
       <div>
         <Button 
           variant="outline" 
-          className="rounded-[10px] text-blue-600 font-semibold px-4 h-10 border-gray-200 hover:bg-blue-50 hover:text-blue-700 bg-white shadow-sm transition-colors"
+          className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-10 border-gray-200 hover:bg-[#f5f8fe] hover:text-[#003095] bg-white shadow-sm transition-colors"
           onClick={() => router.back()}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
@@ -50,7 +50,7 @@ export default function SemesterResultDetailPage() {
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <h2 className="font-bold text-[18px] text-gray-900">Semester Result</h2>
           
-          <button className="flex items-center gap-2 border border-blue-100 rounded-[10px] px-3.5 py-2 bg-white text-blue-600 text-[14px] font-semibold hover:bg-blue-50 transition-colors">
+          <button className="flex items-center gap-2 border border-[#003cbb]/20 rounded-[10px] px-3.5 py-2 bg-white text-[#003cbb] text-[14px] font-semibold hover:bg-[#f5f8fe] transition-colors">
             {semesterId}
             <ChevronDown className="w-4 h-4 text-blue-400" />
           </button>

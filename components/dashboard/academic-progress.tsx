@@ -21,9 +21,9 @@ export function AcademicProgress() {
         <div className="mt-auto">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[13px] font-bold text-gray-800">Overall Completion</span>
-            <span className="text-[14px] font-bold text-[#3B4FA1]">31.3%</span>
+            <span className="text-[14px] font-bold text-[#003cbb]">31.3%</span>
           </div>
-          <Progress value={31.3} className="h-2.5 mb-2 bg-[#E5E7EB] [&>div]:bg-[#314A95]" />
+          <Progress value={31.3} className="h-2.5 mb-2 bg-[#E5E7EB] [&>div]:bg-[#003095]" />
           <div className="flex items-center justify-between text-[11px] text-gray-500 font-medium">
             <span>45 credits earned</span>
             <span>144 total required</span>

@@ -56,7 +56,7 @@ export default function FinancePage() {
             <span className="text-[15px] font-bold text-gray-900">100%</span>
           </div>
           <div className="h-3 w-full bg-white/60 rounded-full overflow-hidden">
-            <div className="h-full bg-[#1D4ED8] rounded-full w-full"></div>
+            <div className="h-full bg-[#003cbb] rounded-full w-full"></div>
           </div>
         </div>
 
@@ -73,7 +73,7 @@ export default function FinancePage() {
         <div className="flex flex-col md:flex md:flex-row md:items-center justify-between gap-6">
           <div className="flex-1 md:border-r order-gray-100 pr-4">
             <p className="text-[13px] font-medium text-gray-500 mb-3">Financial Approval</p>
-            <div className="bg-[#ECFDF3] text-[#027A48] px-3 py-1.5 rounded-full text-[13px] font-bold inline-flex items-center gap-2 border border-[#D1FADF]">
+            <div className="bg-[#ECFDF3] text-[#12B76A] px-3 py-1.5 rounded-full text-[13px] font-bold inline-flex items-center gap-2 border border-[#D1FADF]">
               <ThumbsUp className="w-4 h-4" fill="currentColor" /> Approved
             </div>
           </div>
@@ -89,11 +89,11 @@ export default function FinancePage() {
           </div>
 
           <div className="bg-[#ECFDF3] border border-[#D1FADF] rounded-[16px] p-4 flex-shrink-0 w-full md:w-[240px] relative">
-            <Info className="absolute top-3 right-3 w-4 h-4 text-[#027A48]" />
-            <div className="flex items-center gap-2 text-[#027A48] font-medium text-[13px] mb-1">
+            <Info className="absolute top-3 right-3 w-4 h-4 text-[#12B76A]" />
+            <div className="flex items-center gap-2 text-[#12B76A] font-medium text-[13px] mb-1">
               <CreditCard className="w-4 h-4" /> Surplus
             </div>
-            <p className="text-[22px] font-bold text-[#027A48]">₦100,000</p>
+            <p className="text-[22px] font-bold text-[#12B76A]">₦100,000</p>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export default function FinancePage() {
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
-                <Button className="w-[150px] bg-[#0038FF] hover:bg-[#002BCC] text-white rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 shadow-sm transition-all">
+                <Button className="w-[150px] bg-[#003cbb] hover:bg-[#002BCC] text-white rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 shadow-sm transition-all">
                   Make payment <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -132,7 +132,7 @@ export default function FinancePage() {
           <div className="bg-[#E9DFFB] rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px]">
             <div className="relative z-10 w-4/5 flex flex-col justify-center">
               <h3 className="text-[20px] font-bold text-gray-900 mb-8">Pay for current semester</h3>
-              <Button className="w-[180px] bg-white/60 hover:bg-white/80 text-[#0038FF] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 shadow-sm transition-all backdrop-blur-sm">
+              <Button className="w-[180px] bg-white/60 hover:bg-white/80 text-[#003cbb] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 shadow-sm transition-all backdrop-blur-sm">
                 Pay School Fees <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -180,17 +180,17 @@ export default function FinancePage() {
                   <div className="text-[14px] text-gray-600">{row.amountToPay}</div>
                   <div className="text-[14px] text-gray-600">{row.amountPaid}</div>
                   <div>
-                    <span className={`px-3 py-1.5 rounded-full text-[13px] font-bold ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] text-[#D92D20]' : 'bg-[#ECFDF3] text-[#027A48]'}`}>
+                    <span className={`px-3 py-1.5 rounded-full text-[13px] font-bold ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] text-[#D92D20]' : 'bg-[#ECFDF3] text-[#12B76A]'}`}>
                       {row.statusValue}
                     </span>
                   </div>
                   <div className="flex justify-center">
-                    <Link href="/dashboard/finance/receipt" className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
+                    <Link href="/dashboard/finance/receipt" className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-[#003cbb] hover:bg-gray-50 transition-colors">
                       <Eye className="w-4 h-4" />
                     </Link>
                   </div>
                   <div className="flex justify-center">
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
+                    <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-[#003cbb] hover:bg-gray-50 transition-colors">
                       <Download className="w-4 h-4" />
                     </button>
                   </div>
@@ -212,10 +212,10 @@ export default function FinancePage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Link href="/dashboard/finance/receipt" className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
+                  <Link href="/dashboard/finance/receipt" className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-[#003cbb] hover:bg-gray-50 transition-colors">
                     <Eye className="w-5 h-5" />
                   </Link>
-                  <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-blue-600 hover:bg-gray-50 transition-colors">
+                  <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 text-[#003cbb] hover:bg-gray-50 transition-colors">
                     <Download className="w-5 h-5" />
                   </button>
                 </div>
@@ -238,7 +238,7 @@ export default function FinancePage() {
                   <span className="text-[14px] text-gray-500">
                     {row.statusType === 'deficit' ? 'Deficit:' : 'Surplus:'}
                   </span>
-                  <span className={`rounded-full px-4 py-1.5 font-bold text-[15px] ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] text-[#D92D20]' : 'bg-[#ECFDF3] text-[#027A48]'}`}>
+                  <span className={`rounded-full px-4 py-1.5 font-bold text-[15px] ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] text-[#D92D20]' : 'bg-[#ECFDF3] text-[#12B76A]'}`}>
                     {row.statusValue}
                   </span>
                 </div>

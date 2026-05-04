@@ -5,7 +5,7 @@ export function WelcomeBanner() {
   return (
     <div className="mb-6">
       <h2 className="text-[22px] font-semibold text-gray-900 mb-4 tracking-tight">
-        Welcome back Alex, Here is your academic overview
+        Welcome back Yakubu, Here is your academic overview
       </h2>
       
       <div className="bg-white rounded-[24px] p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col xl:flex-row gap-8 items-start xl:items-center justify-between">
@@ -15,25 +15,25 @@ export function WelcomeBanner() {
           <div className="relative shrink-0">
             <Avatar className="w-[84px] h-[84px] border-[5px] border-white shadow-sm">
               {/* Note: The user image in the original design looks like a 3D avatar */}
-              <AvatarImage src="https://i.pravatar.cc/300?u=alex2" alt="Alex Rivera" className="object-cover" />
-              <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-bold">AR</AvatarFallback>
+              <AvatarImage src="/Student Image.png" alt="Yakubu Onome Joy" className="object-cover" />
+              <AvatarFallback className="bg-[#eef3fd] text-[#003095] text-xl font-bold">YJ</AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 bg-white rounded-full p-[2px] shadow-sm">
-              <BadgeCheck className="w-6 h-6 text-blue-600 fill-white" />
+              <BadgeCheck className="w-6 h-6 text-[#003cbb] fill-white" />
             </div>
           </div>
           
           <div className="flex flex-col gap-1.5">
-            <h3 className="text-[22px] font-bold text-gray-900 leading-tight tracking-tight">Alex Rivera</h3>
+            <h3 className="text-[22px] font-bold text-gray-900 leading-tight tracking-tight">Yakubu Onome Joy</h3>
             <p className="text-[15px] text-gray-500 font-medium">BSc. Computer Science</p>
             <div className="flex items-center gap-2 mt-1.5">
-              <div className="bg-[#EEF2FC] text-[#3B5B98] px-3.5 py-1.5 rounded-lg text-xs font-bold flex flex-col items-start leading-[1.3]">
-                <span className="text-[9px] uppercase tracking-wider text-[#7990C2] mb-[2px]">MATRIC NO</span>
+              <div className="bg-[#f5f8fe] text-[#003cbb] px-3.5 py-1.5 rounded-lg text-xs font-bold flex flex-col items-start leading-[1.3]">
+                <span className="text-[9px] uppercase tracking-wider text-[#80a4f0] mb-[2px]">MATRIC NO</span>
                 CS/2021/4092
               </div>
-              <div className="bg-[#EAF6ED] text-[#299054] px-3.5 py-1.5 rounded-lg text-xs font-bold flex flex-col items-start leading-[1.3] border border-[#D4ECD9]">
-                <span className="text-[9px] uppercase tracking-wider text-[#5EB17E] mb-[2px]">STATUS</span>
-                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#34A853]"></span>ACTIVE</span>
+              <div className="bg-[#ECFDF3] text-[#12B76A] px-3.5 py-1.5 rounded-lg text-xs font-bold flex flex-col items-start leading-[1.3] border border-[#D1FADF]">
+                <span className="text-[9px] uppercase tracking-wider text-[#027A48] mb-[2px]">STATUS</span>
+                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>ACTIVE</span>
               </div>
             </div>
           </div>
@@ -43,8 +43,8 @@ export function WelcomeBanner() {
         <div className="flex-1 w-full xl:max-w-[420px] bg-[#F8F9FB] rounded-[20px] p-5">
           <div className="flex items-center justify-between mb-5">
             <h4 className="text-[11px] font-bold text-gray-400 tracking-wider">ACADEMIC STANDING</h4>
-            <div className="bg-[#E6EAF6] text-[#4A64A5] text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#4A64A5]"></span>
+            <div className="bg-[#E6EAF6] text-[#5585ea] text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5585ea]"></span>
               Good Standing
             </div>
           </div>
@@ -56,7 +56,7 @@ export function WelcomeBanner() {
           </div>
           <div className="h-2.5 w-full bg-[#E5E7EB] rounded-full overflow-hidden">
              {/* Note: In the image it's a solid blue line going to 48%, quite rounded */}
-             <div className="h-full bg-[#314A95] rounded-full" style={{ width: '48%' }}></div>
+             <div className="h-full bg-[#003095] rounded-full" style={{ width: '48%' }}></div>
           </div>
         </div>
 

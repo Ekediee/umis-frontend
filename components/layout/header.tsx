@@ -15,6 +15,7 @@ export function Header() {
     if (pathname?.includes('/finance/receipt')) return "Payment";
     if (pathname?.includes('/finance')) return "Finance";
     if (pathname?.includes('/academic-details')) return "Academic Details";
+    if (pathname?.includes('/profile')) return "Profile";
     return "Dashboard";
   };
 
@@ -94,11 +95,11 @@ export function Header() {
         <div className="relative z-10">
           <button type="button" className="p-1 touch-manipulation">
             <Avatar className="w-9 h-9 border border-gray-100">
-              <AvatarFallback className="bg-blue-50 text-blue-600 font-medium text-xs">AT</AvatarFallback>
-              <AvatarImage src="https://i.pravatar.cc/150?u=arthur" alt="Arthur Taylor" />
+              <AvatarFallback className="bg-[#f5f8fe] text-[#003cbb] font-medium text-xs">YJ</AvatarFallback>
+              <AvatarImage src="/Student Image.png" alt="Yakubu Onome Joy" />
             </Avatar>
           </button>
-          <span className="absolute bottom-[4px] right-[0px] w-[14px] h-[14px] bg-[#3454D1] border-[2px] border-white rounded-full flex items-center justify-center pointer-events-none">
+          <span className="absolute bottom-[4px] right-[0px] w-[14px] h-[14px] bg-[#003cbb] border-[2px] border-white rounded-full flex items-center justify-center pointer-events-none">
              <span className="w-1 h-1 bg-white rounded-full opacity-80"></span>
           </span>
         </div>

@@ -17,11 +17,11 @@ describe('SemesterResultsPage Component', () => {
     expect(screen.getByText('CGPA')).toBeDefined();
     expect(screen.getByText('3.67')).toBeDefined();
     
-    expect(screen.getByText('Semester GPA')).toBeDefined();
-    expect(screen.getByText('3.52')).toBeDefined();
+    expect(screen.getAllByText('Semester GPA').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('3.52').length).toBeGreaterThan(0);
 
-    expect(screen.getByText('Level')).toBeDefined();
-    expect(screen.getByText('200')).toBeDefined();
+    expect(screen.getByText('Study Level')).toBeDefined();
+    expect(screen.getAllByText('200').length).toBeGreaterThan(0);
 
     // Check specific rows
     expect(screen.getByText('2018/2019.1')).toBeDefined();

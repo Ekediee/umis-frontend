@@ -6,8 +6,8 @@ const updates = [
   {
     id: 1,
     icon: Check,
-    iconBg: "bg-[#EAF6ED]",
-    iconColor: "text-[#34A853]",
+    iconBg: "bg-[#ECFDF3]",
+    iconColor: "text-[#12B76A]",
     title: "Financial Approval",
     description: "Your financial status for the current semester is Approved.",
     time: "2 hours ago",
@@ -15,8 +15,8 @@ const updates = [
   {
     id: 2,
     icon: Info,
-    iconBg: "bg-[#EEF2FC]",
-    iconColor: "text-[#3B5B98]",
+    iconBg: "bg-[#f5f8fe]",
+    iconColor: "text-[#003cbb]",
     title: "Course Advisor Assigned",
     description: "Dr. Adeyemi Olumide has been assigned as your course advisor.",
     time: "1 day ago",
@@ -24,8 +24,8 @@ const updates = [
   {
     id: 3,
     icon: Home,
-    iconBg: "bg-[#FCECF3]",
-    iconColor: "text-[#D94F8F]",
+    iconBg: "bg-[#FFF7ED]",
+    iconColor: "text-[#F97316]",
     title: "Off-Campus Residence",
     description: "Your off-campus residence application has been Approved.",
     time: "3 days ago",
@@ -38,7 +38,7 @@ export function RecentUpdates() {
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-8">
           <h3 className="text-[17px] font-bold text-gray-900">Recent Updates</h3>
-          <Link href="#" className="text-[13px] font-semibold text-blue-600 hover:text-blue-700">View all</Link>
+          <Link href="#" className="text-[13px] font-semibold text-[#003cbb] hover:text-[#003095]">View all</Link>
         </div>
 
         <div className="flex flex-col gap-6">

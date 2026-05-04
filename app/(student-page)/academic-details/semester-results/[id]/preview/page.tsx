@@ -83,7 +83,7 @@ export default function DocumentPreviewPage() {
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
-            className="rounded-[10px] text-blue-600 font-semibold px-4 h-10 border-gray-200 hover:bg-blue-50 bg-white"
+            className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-10 border-gray-200 hover:bg-[#f5f8fe] bg-white"
             onClick={() => router.back()}
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
@@ -160,7 +160,7 @@ export default function DocumentPreviewPage() {
 
           {/* Document Header Text */}
           <div className="relative flex flex-col items-center justify-center text-center mt-4 mb-4 z-10">
-            <h2 className="text-[22px] font-normal text-gray-800 leading-tight tracking-wide mb-1 uppercase">ALEX RIVERA</h2>
+            <h2 className="text-[22px] font-normal text-gray-800 leading-tight tracking-wide mb-1 uppercase">YAKUBU ONOME JOY</h2>
             <h3 className="text-[26px] font-medium text-gray-900 leading-tight mb-2 uppercase">{session} {termName}</h3>
             <p className="text-[13px] text-gray-500 font-medium tracking-wide uppercase mb-1">B.Sc (Hons.) COMPUTER SCIENCE</p>
             <p className="text-[13px] text-gray-500 font-medium tracking-wide uppercase">100 LEVEL COURSES</p>
