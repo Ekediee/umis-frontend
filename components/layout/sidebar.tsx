@@ -107,7 +107,7 @@ export function Sidebar() {
           </p>
         </div>
         
-        <div className="flex items-center gap-3 px-2 py-2 border-t pt-4">
+        <Link href="/profile" className="flex items-center gap-3 px-2 py-2 border-t pt-4 hover:bg-gray-50 transition-colors rounded-xl -mx-2">
           <div className="relative">
             <Avatar className="w-10 h-10 border border-gray-100">
               <AvatarFallback className="bg-[#f5f8fe] text-[#003cbb] font-medium">YJ</AvatarFallback>
@@ -121,7 +121,7 @@ export function Sidebar() {
             </p>
             <p className="text-[13px] text-gray-500 truncate">yakubu.onome@univ.edu</p>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );

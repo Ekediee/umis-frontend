@@ -61,7 +61,7 @@ export function Header() {
     }
     return (
       <>
-        <Link href="#" className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50/80 hover:text-gray-900 border-b border-gray-50 last:border-0">
+        <Link href="/profile" className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50/80 hover:text-gray-900 border-b border-gray-50 last:border-0">
           <User className="w-[18px] h-[18px] text-gray-400" /> My Profile
         </Link>
         <Link href="#" className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50/80 hover:text-gray-900 border-b border-gray-50 last:border-0">
