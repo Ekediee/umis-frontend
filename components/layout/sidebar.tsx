@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   BookOpen, 
-  Settings, 
+  ListTodo, 
   Wallet, 
   User, 
   MonitorPlay, 
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Academic Details", href: "/academic-details", icon: BookOpen },
-  { title: "Registration", href: "#", icon: Settings }, // The image showed a settings-like or list icon for registration, actually let's use list or similar. The image had an icon that looked like settings/sliders. We'll use Settings for now.
+  { title: "Registration", href: "/registration", icon: ListTodo },
   { title: "Finance", href: "/dashboard/finance", icon: Wallet },
   { title: "My Profile", href: "/profile", icon: User },
 ];
