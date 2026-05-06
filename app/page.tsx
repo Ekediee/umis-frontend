@@ -17,6 +17,7 @@ export default function LoginPage() {
                 src="/images/Login image [UMIS [1.0].png"
                 alt="Dashboard Mockups"
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
                 className="object-cover object-top opacity-90 mix-blend-multiply"
                 priority
               />
