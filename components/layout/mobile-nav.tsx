@@ -32,18 +32,18 @@ export function MobileNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-[4px] w-16 h-14 transition-all rounded-2xl",
-              isActive ? "text-[#3B3B98]" : "text-gray-400 hover:text-gray-600"
+              isActive ? "text-[#003cbb]" : "text-gray-400 hover:text-gray-600"
             )}
           >
             <div className={cn(
                "flex items-center justify-center w-12 h-8 rounded-full transition-colors",
-               isActive ? "bg-[#3B3B98] text-white" : ""
+               isActive ? "bg-[#003cbb] text-white" : ""
             )}>
                <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 2} />
             </div>
             <span className={cn(
               "text-[10px]",
-              isActive ? "font-bold text-[#3B3B98]" : "font-medium"
+              isActive ? "font-bold text-[#003cbb]" : "font-medium"
             )}>{item.title}</span>
           </Link>
         );

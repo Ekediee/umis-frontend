@@ -22,7 +22,7 @@ describe('DocumentPreviewPage Component', () => {
     expect(screen.getByRole('button', { name: /Print Document/i })).toBeDefined();
 
     // Check inner document content
-    expect(screen.getByText('ALEX RIVERA')).toBeDefined();
+    expect(screen.getByText('YAKUBU ONOME JOY')).toBeDefined();
     expect(screen.getByText('2018/2019 FIRST SEMESTER RESULTS')).toBeDefined();
     expect(screen.getByText('B.Sc (Hons.) COMPUTER SCIENCE')).toBeDefined();
 

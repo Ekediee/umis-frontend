@@ -10,33 +10,37 @@ export function AcademicProgressExtended() {
   
   return (
     <Card className="rounded-[24px] border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white">
-      <CardContent className="p-2 md:p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <TrendingUp className="w-5 h-5 text-gray-500" />
-          <h3 className="text-[17px] font-bold text-gray-900">Academic Progress</h3>
+      <CardContent className="p-5 md:p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-[18px] font-bold text-[#0a0a0a]">Academic Progress</h3>
+          <TrendingUp className="w-5 h-5 text-[#0a0a0a]" strokeWidth={2.5} />
         </div>
 
         <GPAMetric />
 
-        <div className="mt-8 border-t border-gray-100 pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="mt-8 pt-8 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[13px] font-medium text-gray-500">Total Units Earned</span>
-              <span className="text-[13px] font-bold text-gray-900">45 / 144</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[14px] font-medium text-[#364153]">Total Units Earned</span>
+              <span className="text-[14px] font-medium text-[#0a0a0a]">45 / 144</span>
             </div>
-            <Progress value={31.3} className="h-2.5 mb-2 bg-[#E5E7EB] [&>div]:bg-[#1E1E1E]" />
-            <div className="text-[11px] text-gray-400 font-medium tracking-wide">
+            <div className="h-2 w-full bg-[#e5e7eb] rounded-full overflow-hidden mb-2">
+              <div className="h-full bg-black rounded-full" style={{ width: '31%' }}></div>
+            </div>
+            <div className="text-[12px] text-[#6a7282] font-normal">
               31% complete
             </div>
           </div>
           
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[13px] font-medium text-gray-500">Semester Units</span>
-              <span className="text-[13px] font-bold text-gray-900">17 / 24</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[14px] font-medium text-[#364153]">Semester Units</span>
+              <span className="text-[14px] font-medium text-[#0a0a0a]">17 / 24</span>
             </div>
-            <Progress value={71} className="h-2.5 mb-2 bg-[#E5E7EB] [&>div]:bg-[#1E1E1E]" />
-            <div className="text-[11px] text-gray-400 font-medium tracking-wide">
+            <div className="h-2 w-full bg-[#e5e7eb] rounded-full overflow-hidden mb-2">
+              <div className="h-full bg-black rounded-full" style={{ width: '71%' }}></div>
+            </div>
+            <div className="text-[12px] text-[#6a7282] font-normal">
               71% of max load
             </div>
           </div>

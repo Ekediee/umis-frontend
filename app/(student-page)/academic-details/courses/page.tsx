@@ -78,7 +78,7 @@ function CoursesContent() {
                 {course.level}
               </div>
               <div className="flex justify-end pr-2">
-                <span className="text-[11px] font-bold text-[#3B5B98] bg-[#E1E7FC] rounded-full px-3 py-1">
+                <span className="text-[11px] font-bold text-[#003cbb] bg-[#E1E7FC] rounded-full px-3 py-1">
                   {course.units} UNITS
                 </span>
               </div>
@@ -88,7 +88,7 @@ function CoursesContent() {
             <div className="flex flex-col md:hidden p-5 gap-3">
                <div className="flex justify-between items-center">
                   <div className="font-bold text-[16px] text-gray-900">{course.code}</div>
-                  <span className="text-[11px] font-bold text-[#3B5B98] bg-[#E1E7FC] rounded-full px-3 py-1">
+                  <span className="text-[11px] font-bold text-[#003cbb] bg-[#E1E7FC] rounded-full px-3 py-1">
                     {course.units} UNITS
                   </span>
                </div>
@@ -116,7 +116,7 @@ function CoursesContent() {
       <div>
         <Button 
           variant="outline" 
-          className="rounded-[10px] text-blue-600 font-semibold px-4 h-10 border-gray-200 hover:bg-blue-50 hover:text-blue-700 bg-white shadow-sm transition-colors"
+          className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-10 border-gray-200 hover:bg-[#f5f8fe] hover:text-[#003095] bg-white shadow-sm transition-colors"
           onClick={() => router.push('/academic-details')}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
@@ -135,10 +135,10 @@ function CoursesContent() {
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
-                borderBottom: activeTab === "current" ? "2px solid #3B5B98" : "2px solid transparent"
+                borderBottom: activeTab === "current" ? "2px solid #003cbb" : "2px solid transparent"
               }}
               className={`px-0 py-3 md:pb-4 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "current" ? "text-[#3B5B98]" : "text-gray-500 hover:text-gray-700"
+                activeTab === "current" ? "text-[#003cbb]" : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Current Semester Courses
@@ -150,10 +150,10 @@ function CoursesContent() {
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
-                borderBottom: activeTab === "carry-over" ? "2px solid #3B5B98" : "2px solid transparent"
+                borderBottom: activeTab === "carry-over" ? "2px solid #003cbb" : "2px solid transparent"
               }}
               className={`px-0 py-3 md:pb-4 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "carry-over" ? "text-[#3B5B98]" : "text-gray-500 hover:text-gray-700"
+                activeTab === "carry-over" ? "text-[#003cbb]" : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Carry Over courses
@@ -165,10 +165,10 @@ function CoursesContent() {
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
-                borderBottom: activeTab === "repeated" ? "2px solid #3B5B98" : "2px solid transparent"
+                borderBottom: activeTab === "repeated" ? "2px solid #003cbb" : "2px solid transparent"
               }}
               className={`px-0 py-3 md:pb-4 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "repeated" ? "text-[#3B5B98]" : "text-gray-500 hover:text-gray-700"
+                activeTab === "repeated" ? "text-[#003cbb]" : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Repeated Courses
