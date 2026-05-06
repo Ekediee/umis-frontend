@@ -1,0 +1,43 @@
+# ─── Development Image ────────────────────────────────────────────────────────
+# Single-stage: installs ALL dependencies (including devDependencies) and runs
+# `next dev`. Source code is NOT copied here — it is bind-mounted at runtime via
+# docker-compose.dev.yml so that every save on the host triggers HMR instantly.
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM node:20-alpine
+
+# Install libc6-compat — required by some native Node addons on Alpine
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copy package manifests first so Docker can cache the npm install layer.
+# If package.json / package-lock.json haven't changed, this layer is reused.
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including devDependencies needed by next dev / TS)
+RUN npm install
+
+# Copy the rest of the source. This is overridden at runtime by the bind-mount
+# in docker-compose.dev.yml, but having a copy here ensures the image is
+# self-contained if the bind-mount is ever omitted.
+COPY . .
+
+# Expose the Next.js dev server port
+EXPOSE 3000
+
+# Environment variables for reliable file-watching inside Docker volume mounts.
+# WATCHPACK_POLLING and CHOKIDAR_USEPOLLING use polling instead of inotify,
+# which does not propagate reliably through Docker bind-mounts on Linux/Windows.
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    WATCHPACK_POLLING=true \
+    CHOKIDAR_USEPOLLING=true \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+
+# Run as root in development to avoid permission issues with Windows/WSL bind mounts
+# and anonymous volumes (like /app/.next) which are created by Docker as root.
+# USER node
+
+CMD ["npm", "run", "dev"]
