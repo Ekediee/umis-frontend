@@ -5,8 +5,7 @@ export function WelcomeBanner() {
     <div className="mb-5 md:mb-6" style={{fontWeight: '700'}}>
       <StudentProfileBanner
         welcomeMessage="Welcome back Yakubu, Here is your academic overview"
-        showDetailedInfo={false}
-        showDetailedRow = {false}
+        showDetailedRow = {true}
       />
     </div>
   );

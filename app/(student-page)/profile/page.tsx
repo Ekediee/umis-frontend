@@ -50,11 +50,12 @@ export default function ProfilePage() {
       setIsSuccessBannerOpen(false);
     }, 5000);
   };
+  
   return (
     <div className="pl-4 pr-4 md:p-6 lg:p-8 w-full flex flex-col gap-5 md:gap-6 pb-24 md:pb-8">
       
       {/* Top Section: Profile Pic & Basic Stats — shared component */}
-      <StudentProfileBanner showEditAvatar  showDetailedRow={true}/>
+      <StudentProfileBanner showEditAvatar  showDetailedInfo={true}/>
 
       {/* Approvals Section - Stacked on Mobile */}
       <div className="flex flex-col md:flex-row gap-5 items-stretch md:items-start">

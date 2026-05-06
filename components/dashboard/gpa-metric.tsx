@@ -1,32 +1,13 @@
 'use client'
-import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 
 
 const GPAMetric = () => {
-    const [showCgpa, setShowCgpa] = useState(true);
-    const [showSemesterGpa, setShowSemesterGpa] = useState(true);
-    const [mounted, setMounted] = useState(false);
+    const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
+    const [showSemesterGpa, toggleSemesterGpa, mountedSemesterGpa] = usePersistentToggle("showSemesterGpa", true);
 
-    useEffect(() => {
-        const savedCgpa = localStorage.getItem("showCgpa");
-        const savedGpa = localStorage.getItem("showSemesterGpa");
-        if (savedCgpa !== null) setShowCgpa(savedCgpa === "true");
-        if (savedGpa !== null) setShowSemesterGpa(savedGpa === "true");
-        setMounted(true);
-    }, []);
-
-    const toggleCgpa = () => {
-        const next = !showCgpa;
-        setShowCgpa(next);
-        localStorage.setItem("showCgpa", String(next));
-    };
-
-    const toggleSemesterGpa = () => {
-        const next = !showSemesterGpa;
-        setShowSemesterGpa(next);
-        localStorage.setItem("showSemesterGpa", String(next));
-    };
+    const mounted = mountedCgpa && mountedSemesterGpa;
 
     if (!mounted) return null;
 

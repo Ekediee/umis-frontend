@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, Eye } from "lucide-react";
+import { Camera, Eye, EyeOff } from "lucide-react";
+import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 
 interface StudentProfileBannerProps {
   /** Show the camera edit button on the avatar (only on profile page) */
@@ -15,15 +16,19 @@ interface StudentProfileBannerProps {
 }
 
 export function StudentProfileBanner({ 
-  showEditAvatar = false, 
+  showEditAvatar, 
   welcomeMessage,
-  showDetailedInfo = true ,
-  showDetailedRow = true
+  showDetailedInfo,
+  showDetailedRow 
 }: StudentProfileBannerProps) {
+
+  const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
+  const mounted = mountedCgpa;
+  
   return (
     <div className="w-full">
       {welcomeMessage && (
-        <h2 className="text-[18px] md:text-[20px] font-medium text-gray-900 mb-4 tracking-tight">
+        <h2 className="text-[18px] md:text-[20px] font-bold text-gray-900 mb-4 tracking-tight">
           {welcomeMessage}
         </h2>
       )}
@@ -75,7 +80,7 @@ export function StudentProfileBanner({
         )}
 
         {/* Profile Picture Card on dashboard*/}
-        {!showDetailedRow && (
+        {showDetailedRow && (
 
           <div className="bg-white border border-gray-200 rounded-[24px] p-4 md:p-6 flex flex-row items-center justify-between gap-6 md:gap-8 md:w-[49.5%] w-[100%] shrink-0">
 
@@ -128,11 +133,24 @@ export function StudentProfileBanner({
                 <div className="flex flex-col gap-1 md:gap-3">
                   <div className="flex items-center gap-1.5 text-gray-500">
                     <span className="text-[12px] md:text-[14px] font-medium">Current CGPA</span>
-                    <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    <button
+                      type="button"
+                      onClick={toggleCgpa}
+                      className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
+                      aria-label={showCgpa ? "Hide CGPA" : "Show CGPA"}
+                    >
+                      {showCgpa ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
+                    </button>
                   </div>
                   <div className="flex items-baseline gap-1 text-[#00a63e]">
-                    <span className="text-[20px] md:text-[28px] font-bold">4.82</span>
-                    <span className="text-[14px] md:text-[18px] font-semibold">/ 5.0</span>
+                    {mounted && !showCgpa ? (
+                      <span className="text-[20px] md:text-[28px] font-bold">****</span>
+                    ):(
+                      <>
+                        <span className="text-[20px] md:text-[28px] font-bold">4.82</span>
+                        <span className="text-[14px] md:text-[18px] font-semibold">/ 5.0</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
