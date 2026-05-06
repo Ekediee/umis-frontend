@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   BookOpen, 
-  Settings, 
+  ListTodo, 
   Wallet, 
   User, 
   MonitorPlay, 
@@ -19,9 +19,9 @@ import { cn } from "@/lib/utils";
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Academic Details", href: "/academic-details", icon: BookOpen },
-  { title: "Registration", href: "#", icon: Settings }, // The image showed a settings-like or list icon for registration, actually let's use list or similar. The image had an icon that looked like settings/sliders. We'll use Settings for now.
+  { title: "Registration", href: "/registration", icon: ListTodo },
   { title: "Finance", href: "/dashboard/finance", icon: Wallet },
-  { title: "My Profile", href: "#", icon: User },
+  { title: "My Profile", href: "/profile", icon: User },
 ];
 
 const otherNavItems = [
@@ -36,8 +36,8 @@ export function Sidebar() {
     <div className="w-64 border-r bg-white h-screen hidden md:flex flex-col flex-shrink-0">
       {/* Brand */}
       <div className="px-6 py-8 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-          <span className="text-blue-600 font-bold text-sm">UM</span>
+        <div className="w-10 h-10 rounded-full bg-[#eef3fd] flex items-center justify-center">
+          <span className="text-[#003cbb] font-bold text-sm">UM</span>
         </div>
         <div>
           <h1 className="font-semibold text-[15px] leading-tight text-gray-900">UMIS</h1>
@@ -61,11 +61,11 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
                     isActive 
-                      ? "bg-blue-50/80 text-blue-600" 
+                      ? "bg-[#f5f8fe]/80 text-[#003cbb]" 
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   )}
                 >
-                  <item.icon className={cn("w-5 h-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                  <item.icon className={cn("w-5 h-5", isActive ? "text-[#003cbb]" : "text-gray-400")} />
                   {item.title}
                 </Link>
               );
@@ -107,21 +107,21 @@ export function Sidebar() {
           </p>
         </div>
         
-        <div className="flex items-center gap-3 px-2 py-2 border-t pt-4">
+        <Link href="/profile" className="flex items-center gap-3 px-2 py-2 border-t pt-4 hover:bg-gray-50 transition-colors rounded-xl -mx-2">
           <div className="relative">
             <Avatar className="w-10 h-10 border border-gray-100">
-              <AvatarFallback className="bg-blue-50 text-blue-600 font-medium">AT</AvatarFallback>
-              <AvatarImage src="https://i.pravatar.cc/150?u=arthur" alt="Arthur Taylor" />
+              <AvatarFallback className="bg-[#f5f8fe] text-[#003cbb] font-medium">YJ</AvatarFallback>
+              <AvatarImage src="/Student Image.png" alt="Yakubu Onome Joy" />
             </Avatar>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate flex items-center gap-1.5">
-              Arthur Taylor
-              <BadgeCheck className="w-[14px] h-[14px] text-blue-500 shrink-0" />
+              Yakubu Onome Joy
+              <BadgeCheck className="w-[14px] h-[14px] text-[#0048e0] shrink-0" />
             </p>
-            <p className="text-[13px] text-gray-500 truncate">arthur@alignui.com</p>
+            <p className="text-[13px] text-gray-500 truncate">yakubu.onome@univ.edu</p>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );

@@ -6,23 +6,25 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 
 export default function DashboardPage() {
   return (
-    <div className="p-4 md:p-6 overflow-y-auto">
+    <div className="p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto">
       <WelcomeBanner />
       
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
-        <div className="order-1 xl:order-none h-full [&>div]:h-full min-h-[320px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6 items-stretch">
+        {/* Mobile: Quick Actions first, Desktop: Academic Progress first */}
+        <div className="order-1 xl:order-1 h-full [&>div]:h-full min-h-[280px] xl:min-h-[320px]">
           <AcademicProgress />
         </div>
         
-        <div className="order-3 xl:order-none h-full [&>div]:h-full min-h-[320px]">
+        <div className="order-3 xl:order-2 h-full [&>div]:h-full min-h-[280px] xl:min-h-[320px]">
           <FinanceOverview />
         </div>
         
-        <div className="order-2 xl:order-none h-full [&>div]:h-full min-h-[380px]">
+        {/* Quick Actions: first on mobile (order-0), third on desktop */}
+        <div className="order-0 xl:order-3 h-full [&>div]:h-full min-h-[200px] xl:min-h-[340px]">
           <QuickActions />
         </div>
         
-        <div className="order-4 xl:order-none h-full [&>div]:h-full min-h-[380px]">
+        <div className="order-4 xl:order-4 h-full [&>div]:h-full min-h-[280px] xl:min-h-[340px]">
           <RecentUpdates />
         </div>
       </div>

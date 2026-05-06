@@ -13,7 +13,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <main className={cn(
-      "flex-1 overflow-y-auto md:pb-8 pt-6 relative z-0",
+      "flex-1 overflow-y-auto md:pb-8 pt-6 relative",
       hideMobileNav ? "pb-4" : "pb-24"
     )}>
       {children}

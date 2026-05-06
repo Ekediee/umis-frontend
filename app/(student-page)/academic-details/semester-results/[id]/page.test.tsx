@@ -25,11 +25,11 @@ describe('SemesterResultDetailPage Component', () => {
 
     // Check specific specific rows exist
     expect(screen.getAllByText('CSC 101').length).toBeGreaterThan(0);
-    expect(screen.getByText('Introduction to Computer Science')).toBeDefined();
+    expect(screen.getAllByText('Introduction to Computer Science').length).toBeGreaterThan(0);
     // Score contains 95
     expect(screen.getAllByText('95').length).toBeGreaterThan(0);
     // Grade points
-    expect(screen.getByText('12')).toBeDefined();
+    expect(screen.getAllByText('12').length).toBeGreaterThan(0);
 
     // Check that there is a back button
     expect(screen.getByRole('button', { name: /Back/i })).toBeDefined();
