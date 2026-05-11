@@ -47,7 +47,7 @@ export default function FinancePage() {
     <div className="max-w-6x px-4 md:px-8 flex flex-col gap-6 pb-12">
 
       {/* Top Card: Financial Standing */}
-      <div className="bg-[#EAF0FF] rounded-[24px] p-6 relative overflow-hidden shadow-sm">
+      <div className="bg-[#EAF0FF] rounded-[24px] p-6 relative overflow-hidden ">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-[15px] font-medium text-gray-600">Financial Standing</span>
           <div className="bg-[#D3E0FF] text-[#1E40AF] px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-1.5">
@@ -75,7 +75,7 @@ export default function FinancePage() {
       </div>
 
       {/* Stats Row */}
-      <div className="bg-white rounded-[24px] flex flex-col justify-between p-6 gap-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-[24px] flex flex-col justify-between p-6 gap-6  border border-gray-100">
         <div className="flex flex-col md:flex md:flex-row md:items-center justify-between gap-6">
           <div className="flex-1 md:border-r order-gray-100 pr-4">
             <p className="text-[13px] font-medium text-gray-500 mb-3">Financial Approval</p>
@@ -166,9 +166,11 @@ export default function FinancePage() {
           <div className="bg-[#E9DFFB] rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px]">
             <div className="relative z-10 w-4/5 flex flex-col justify-center">
               <h3 className="text-[20px] font-bold text-gray-900 mb-8">Pay for current semester</h3>
-              <Button className="w-[180px] bg-white/60 hover:bg-white/80 text-[#003cbb] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 shadow-sm transition-all backdrop-blur-sm">
-                Pay School Fees <ChevronRight className="w-4 h-4" />
-              </Button>
+              <Link href="/dashboard/finance/fees">
+                <Button className="w-[180px] bg-white/60 hover:bg-white/80 text-[#003cbb] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 shadow-sm transition-all backdrop-blur-sm">
+                  Pay School Fees <ChevronRight className="w-4 h-4" />
+                </Button>
+              </Link>
             </div>
             <div className="absolute right-[0px] md:right-8 bottom-[-60px] w-[250px] h-[250px] pointer-events-none ">
               <Image

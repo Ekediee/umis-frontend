@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, Settings, Wallet } from "lucide-react";
+import { LayoutDashboard, BookOpen, ListTodo, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Academics", href: "/academic-details", icon: BookOpen },
-  { title: "Register", href: "#", icon: Settings },
+  { title: "Register", href: "/registration/courses", icon: ListTodo },
   { title: "Finance", href: "/dashboard/finance", icon: Wallet },
 ];
 
@@ -18,7 +18,9 @@ export function MobileNav() {
   // Hide mobile nav on semester-results detail pages and courses view
   const isHidden = 
     pathname.includes('/academic-details/semester-results') || 
-    pathname.includes('/academic-details/courses');
+    pathname.includes('/academic-details/courses') ||
+    pathname.includes('/registration/courses') ||
+    pathname.includes('/dashboard/finance/fees');
 
   if (isHidden) return null;
 
