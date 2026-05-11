@@ -18,8 +18,8 @@ export default function FeesPage() {
   return (
     <div className="flex flex-col gap-6 w-full px-4 md:px-8 pb-10 relative bg-white md:bg-transparent min-h-screen md:min-h-0">
       
-      {/* General Back Button */}
-      <div className="mt-2 mb-2">
+      {/* General Back Button (Desktop only) */}
+      <div className="hidden md:flex mt-2 mb-2">
         <Button 
           variant="outline" 
           className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-10 border-gray-200 hover:bg-[#f5f8fe] hover:text-[#003095] bg-white transition-colors"
@@ -28,6 +28,13 @@ export default function FeesPage() {
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back
         </Button>
+      </div>
+
+      {/* Mobile Header X (matching Figma) */}
+      <div className="md:hidden flex items-center py-4">
+        <button onClick={handleBack} className="p-1">
+          <X className="w-6 h-6 text-[#0A0D14]" />
+        </button>
       </div>
 
       <div className="flex justify-center w-[100%] mx-auto">
