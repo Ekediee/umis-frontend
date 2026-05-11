@@ -44,7 +44,7 @@ export function ActionBanner({
           onClick={onClick}
           className={cn(
             "rounded-[12px] px-6 h-11 text-[15px] font-semibold transition-all flex items-center gap-2",
-            buttonVariant === "primary" && "bg-[#003cbb] hover:bg-[#002e8f] text-white shadow-sm",
+            buttonVariant === "primary" && "bg-[#003cbb] hover:bg-[#002e8f] text-white ",
             buttonVariant === "dark" && "bg-[#0a0d14] hover:bg-[#1a1d24] text-white",
             buttonVariant === "outline" && "bg-[#eef3fd] hover:bg-[#e4ebfa] text-[#003cbb]"
           )}

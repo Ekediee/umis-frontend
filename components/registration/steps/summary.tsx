@@ -1,0 +1,179 @@
+"use client";
+
+import { Box, BookOpen, ShieldCheck } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+
+interface SummaryProps {
+  selectedGroup: string | null;
+  selectedCourseIds: string[];
+}
+
+import { MOCK_COURSES } from "@/lib/mock-data";
+
+export function Summary({ selectedGroup, selectedCourseIds }: SummaryProps) {
+  // Course is selected if its ID is in selectedCourseIds
+  const selectedCourses = MOCK_COURSES.filter(c => selectedCourseIds.includes(c.id));
+  const carryOverCourses = selectedCourses.filter(c => c.isCarryOver);
+  const currentCourses = selectedCourses.filter(c => !c.isCarryOver);
+  const totalUnits = selectedCourses.reduce((sum, course) => sum + course.units, 0);
+
+  const CourseCard = ({ course }: { course: any }) => (
+    <div className="flex flex-col gap-2 p-4 rounded-[16px] bg-white border border-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[15px] font-bold text-[#0a0d14]">{course.code}</span>
+        <span className="inline-flex bg-[#eef3fd] text-[#003cbb] font-bold text-[10px] px-2 py-0.5 rounded-[6px] uppercase tracking-wider shrink-0">
+          {course.units} UNITS
+        </span>
+      </div>
+      <span className="text-[14px] text-[#525866] leading-snug">{course.title}</span>
+      
+      <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-50">
+        <div className="flex flex-col">
+          <span className="text-[11px] text-[#868c98] uppercase tracking-wider">Lecturer</span>
+          <span className="text-[13px] font-medium text-[#0a0d14]">{course.lecturer}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[11px] text-[#868c98] uppercase tracking-wider">Level</span>
+          <span className="text-[13px] font-medium text-[#0a0d14]">{course.level}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTable = (courses: any[]) => (
+    <div className="rounded-[16px] border border-gray-200 overflow-hidden bg-white">
+      <Table>
+        <TableHeader className="bg-[#f2f4f7]">
+          <TableRow className="hover:bg-[#f2f4f7] border-0">
+            <TableHead className="font-bold text-[#525866] text-[12px] tracking-wider pl-6">COURSE CODE</TableHead>
+            <TableHead className="font-bold text-[#525866] text-[12px] tracking-wider">COURSE TITLE</TableHead>
+            <TableHead className="font-bold text-[#525866] text-[12px] tracking-wider">LECTURER</TableHead>
+            <TableHead className="font-bold text-[#525866] text-[12px] tracking-wider">LEVEL</TableHead>
+            <TableHead className="font-bold text-[#525866] text-[12px] tracking-wider text-right pr-6">UNITS</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {courses.map((course) => (
+            <TableRow key={course.id} className="hover:bg-gray-50/50">
+              <TableCell className="font-bold text-[#0a0d14] w-[140px] pl-6 whitespace-nowrap">
+                {course.code}
+              </TableCell>
+              <TableCell className="text-[#525866]">
+                {course.title}
+              </TableCell>
+              <TableCell className="text-[#525866] whitespace-nowrap">
+                {course.lecturer}
+              </TableCell>
+              <TableCell className="text-[#525866] whitespace-nowrap w-[100px]">
+                {course.level}
+              </TableCell>
+              <TableCell className="text-right pr-6 w-[120px]">
+                <span className="inline-flex bg-[#eef3fd] text-[#003cbb] font-bold text-[12px] px-3 py-1 rounded-[8px] uppercase tracking-wider">
+                  {course.units} UNITS
+                </span>
+              </TableCell>
+            </TableRow>
+          ))}
+          {courses.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-8 text-[#525866]">
+                No courses selected.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-6 md:gap-8 w-full max-w-[1200px] mx-auto md:mx-0">
+      
+      {/* Header Section */}
+      <div className="flex flex-col gap-2">
+        <h2 className="text-[24px] md:text-[28px] font-bold text-[#0a0a0a]">Registration Summary</h2>
+        <p className="text-[14px] md:text-[15px] text-[#525866] leading-relaxed max-w-[800px]">
+          Please review your selected courses below. Once confirmed, your registration will be submitted for approval.
+          <br className="hidden md:block" /> Ensure all selections are correct before proceeding.
+        </p>
+      </div>
+
+      {/* Review Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        
+        {/* Total Units Selected */}
+        <div className="bg-white rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="w-12 h-12 rounded-full bg-[#eef3fd] flex items-center justify-center shrink-0">
+            <Box className="w-6 h-6 text-[#003cbb]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[14px] text-[#525866]">Total Units Selected</span>
+            <span className="text-[24px] font-bold text-[#0a0d14]">{totalUnits}</span>
+          </div>
+        </div>
+
+        {/* Number of Courses */}
+        <div className="bg-white rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="w-12 h-12 rounded-full bg-[#e9f8f2] flex items-center justify-center shrink-0">
+            <BookOpen className="w-6 h-6 text-[#10b981]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[14px] text-[#525866]">Number of Courses</span>
+            <span className="text-[24px] font-bold text-[#0a0d14]">{selectedCourses.length}</span>
+          </div>
+        </div>
+
+        {/* Classification */}
+        <div className="bg-white rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="w-12 h-12 rounded-full bg-[#f4eefe] flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6 text-[#7c3aed]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[14px] text-[#525866]">Classification</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] leading-tight">Normal Load</span>
+              <span className="bg-[#f6f8fa] text-[#525866] text-[11px] font-bold px-2 py-0.5 rounded-md">200L</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Desktop Views */}
+      <div className="hidden md:flex flex-col gap-8">
+        {carryOverCourses.length > 0 && (
+          <div className="flex flex-col gap-4">
+            <h3 className="text-[18px] font-bold text-[#0a0d14]">Carry Over Courses</h3>
+            {renderTable(carryOverCourses)}
+          </div>
+        )}
+        
+        <div className="flex flex-col gap-4">
+          <h3 className="text-[18px] font-bold text-[#0a0d14]">Current Semester Courses</h3>
+          {renderTable(currentCourses)}
+        </div>
+      </div>
+
+      {/* Mobile Views */}
+      <div className="md:hidden flex flex-col gap-6">
+        {carryOverCourses.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <h3 className="text-[15px] font-bold text-[#0a0d14]">Carry Over Courses</h3>
+            <div className="flex flex-col gap-3">
+              {carryOverCourses.map(course => <CourseCard key={course.id} course={course} />)}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          <h3 className="text-[15px] font-bold text-[#0a0d14]">Current Semester Courses</h3>
+          <div className="flex flex-col gap-3">
+            {currentCourses.map(course => <CourseCard key={course.id} course={course} />)}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}

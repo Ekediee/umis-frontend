@@ -16,12 +16,14 @@ import {
   ListTodo
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Mock data for registration states
 const REGISTRATION_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
 const PAYMENT_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
 
 export default function RegistrationPage() {
+  const router = useRouter();
   const [regState, setRegState] = useState(REGISTRATION_STATE);
   const [payState, setPayState] = useState(PAYMENT_STATE);
 
@@ -73,9 +75,9 @@ export default function RegistrationPage() {
   const payProps = getPayBannerProps();
 
   return (
-    <div className="flex flex-col mx-6 gap-6 md:gap-8 pb-10">
+    <div className="flex flex-col md:mx-8 mx-4 gap-6 md:gap-8 pb-10">
       {/* Summary Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
         <SummaryCard 
           title="Session" 
           value="2025/2026" 
@@ -106,6 +108,11 @@ export default function RegistrationPage() {
           buttonVariant={regProps.buttonVariant}
           gradientClass="bg-gradient-to-br from-[#c2d6ff] to-[#ebf1ff]"
           illustrationSrc="/Reg-image.png"
+          onClick={() => {
+            if (regState !== "completed") {
+              router.push("/registration/courses");
+            }
+          }}
         />
         <ActionBanner 
           title="Make your payment"
@@ -114,11 +121,18 @@ export default function RegistrationPage() {
           buttonVariant={payProps.buttonVariant}
           gradientClass={payState === 'completed' ? "bg-gradient-to-br from-[#c2f5e1] to-[#e6fff5]" : "bg-gradient-to-br from-[#dcd6ff] to-[#cbc2ff]"}
           illustrationSrc="/Pay-image.png"
+          onClick={() => {
+            if (payState !== "completed") {
+              router.push("/dashboard/finance/fees");
+            } else {
+              router.push("/dashboard/finance/receipt");
+            }
+          }}
         />
       </div>
 
       {/* Clearance Requirements Section */}
-      <div className="bg-white rounded-[24px] p-6 md:p-8 border border-gray-100/50">
+      <div className="bg-white rounded-[24px] p-4 md:p-8 border border-gray-100/50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h2 className="text-[20px] font-bold text-[#0a0a0a]">Clearance Requirements</h2>
@@ -149,6 +163,7 @@ export default function RegistrationPage() {
             description="Tuition and fee clearance from Bursary"
             status="not_approved"
             actionText="Pay Now"
+            onAction={() => router.push("/dashboard/finance/fees")}
           />
           <ClearanceRequirement 
             icon={UserCheck}

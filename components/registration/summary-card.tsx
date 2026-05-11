@@ -28,13 +28,13 @@ export function SummaryCard({ title, value, subValue, badgeText, isWarning }: Su
 
         <div className="flex items-baseline gap-1">
           <span className={cn(
-            "text-[24px] font-bold tracking-tight",
+            "text-[18px] md:text-[24px] font-bold tracking-tight",
             isWarning ? "text-[#c2540a]" : "text-[#0a0d14]"
           )}>
             {value}
           </span>
           {subValue && (
-            <span className="text-[16px] font-semibold text-[#f17b2c]">{subValue}</span>
+            <span className="text-[14px] font-semibold text-[#f17b2c]">{subValue}</span>
           )}
         </div>
       </CardContent>

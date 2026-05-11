@@ -13,6 +13,7 @@ export function Header() {
   
   const getTitle = () => {
     if (pathname?.includes('/finance/receipt')) return "Payment";
+    if (pathname?.includes('/finance/fees')) return "Make Payment";
     if (pathname?.includes('/finance')) return "Finance";
     if (pathname?.includes('/academic-details')) return "Academic Details";
     if (pathname?.includes('/registration')) return "Registration";
@@ -58,7 +59,8 @@ export function Header() {
       </header>
 
       {/* Mobile Header */}
-      <header className="md:hidden h-[64px] border-b bg-white flex items-center justify-between px-4 shrink-0 relative z-50">
+      {!pathname?.includes('/registration/courses') && (
+        <header className="md:hidden h-[64px] border-b bg-white flex items-center justify-between px-4 shrink-0 relative z-50">
         {/* Left: Avatar with Badge */}
         <div className="relative z-10">
           <button type="button" className="p-1 touch-manipulation">
@@ -96,6 +98,7 @@ export function Header() {
           </button>
         </div>
       </header>
+      )}
 
       {/* Mobile Bottom Sheet Modal */}
       {isBottomSheetOpen && (

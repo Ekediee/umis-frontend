@@ -46,7 +46,7 @@ const earlierNotifications = [
 
 export default function NotificationsPage() {
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto max-w-[800px]">
+    <div className="p-4 mx-auto md:p-6 pb-24 md:pb-6 overflow-y-auto max-w-[800px]">
       {/* Back Link */}
       <Link 
         href="/dashboard" 
