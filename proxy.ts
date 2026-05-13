@@ -7,14 +7,14 @@ export function proxy(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname === '/'
 
   // Redirect unauthenticated users to the login page if they try to access protected routes
-  // if (!token && !isAuthPage) {
-  //   return NextResponse.redirect(new URL('/', request.url))
-  // }
+  if (!token && !isAuthPage) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
 
-  // // Redirect authenticated users to the dashboard if they visit the login page
-  // if (token && isAuthPage) {
-  //   return NextResponse.redirect(new URL('/dashboard', request.url))
-  // }
+  // Redirect authenticated users to the dashboard if they visit the login page
+  if (token && isAuthPage) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
   return NextResponse.next()
 }
