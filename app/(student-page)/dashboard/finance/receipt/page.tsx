@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, Download, Printer, CheckCircle, ClipboardList, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef, useState } from "react";
+import { useRef, useState, Suspense } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
+import { useSearchParams } from "next/navigation";
 
 const receiptItems = [
   { label: "Mandatory Basic Fees", amount: "₦185,000.00" },
@@ -16,7 +17,12 @@ const receiptItems = [
   { label: "Registration & Admin Charges", amount: "₦252,500.00" },
 ];
 
-export default function ReceiptPage() {
+function ReceiptContent() {
+  const searchParams = useSearchParams();
+  const ref = searchParams.get("ref") || "PAY-728910-ARTH";
+  const amount = parseFloat(searchParams.get("amount") || "647000");
+  const gateway = searchParams.get("gateway") || "Payzeep";
+
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -137,7 +143,7 @@ export default function ReceiptPage() {
               <div className="flex items-center justify-between mb-5">
                 <span className="text-[12px] font-bold text-gray-500 tracking-wider uppercase">Transaction Summary</span>
                 <span className="text-[10px] font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded-full px-2 py-1">
-                  Ref: PAY-728910-ARTH
+                  Ref: {ref}
                 </span>
               </div>
 
@@ -148,18 +154,23 @@ export default function ReceiptPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-[12px] text-gray-400 mb-1">Amount Paid</p>
-                  <p className="text-[15px] font-bold text-[#003cbb]">₦647,000.00</p>
+                  <p className="text-[15px] font-bold text-[#003cbb]">₦{amount.toLocaleString()}.00</p>
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-400 mb-1">Payment Method</p>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#003cbb] flex items-center justify-center text-white text-[8px] font-bold">Pz</div>
-                    <span className="text-[15px] font-medium text-gray-900">Payzeep</span>
+                    <div className="w-6 h-6 rounded-full bg-[#003cbb] flex items-center justify-center text-white text-[8px] font-bold">
+                      {gateway.substring(0, 2)}
+                    </div>
+                    <span className="text-[15px] font-medium text-gray-900">{gateway}</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-[12px] text-gray-400 mb-1">Date & Time</p>
-                  <p className="text-[15px] font-medium text-gray-900">Oct 14, 2024 • 10:42 AM</p>
+                  <p className="text-[15px] font-medium text-gray-900">
+                    {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} •{" "}
+                    {new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                  </p>
                 </div>
               </div>
             </div>
@@ -187,7 +198,7 @@ export default function ReceiptPage() {
                 <span className="text-[13px] font-bold text-[#003cbb] tracking-wider uppercase">TOTAL SUM PAID</span>
                 <p className="text-[12px] text-[#003cbb]/70 mt-0.5">Calculated including VAT and administrative levies.</p>
               </div>
-              <p className="text-[28px] md:text-[32px] print:text-[32px] font-bold text-[#003cbb]">₦647,000.00</p>
+              <p className="text-[28px] md:text-[32px] print:text-[32px] font-bold text-[#003cbb]">₦{amount.toLocaleString()}.00</p>
             </div>
 
             {/* Verification Footer */}
@@ -212,5 +223,19 @@ export default function ReceiptPage() {
       </div>
     </div>
 
+  );
+}
+
+export default function ReceiptPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003cbb]"></div>
+        </div>
+      }
+    >
+      <ReceiptContent />
+    </Suspense>
   );
 }

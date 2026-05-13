@@ -20,7 +20,7 @@ export function MobileFlowHeader({ currentStep, totalSteps, title, onProgressCli
   const strokeDashoffset = circumference - progress * circumference;
 
   return (
-    <div className="md:hidden flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
+    <div className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
       <div className="flex items-center gap-3">
         <button 
           onClick={() => router.back()}

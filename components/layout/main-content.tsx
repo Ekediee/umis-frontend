@@ -11,7 +11,8 @@ export function MainContent({ children }: { children: React.ReactNode }) {
     pathname.includes('/academic-details/semester-results') || 
     pathname.includes('/academic-details/courses') ||
     pathname.includes('/registration/courses') ||
-    pathname.includes('/dashboard/finance/fees');
+    pathname.includes('/dashboard/finance/fees') ||
+    pathname.includes('/dashboard/finance/fees/payment');
 
   return (
     <main className={cn(

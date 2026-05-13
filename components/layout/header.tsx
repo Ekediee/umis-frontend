@@ -59,7 +59,7 @@ export function Header() {
       </header>
 
       {/* Mobile Header */}
-      {!pathname?.includes('/registration/courses') && (
+      {!pathname?.includes('/registration/courses') && !pathname?.includes('/dashboard/finance/fees/payment') && (
         <header className="md:hidden h-[64px] border-b bg-white flex items-center justify-between px-4 shrink-0 relative z-50">
         {/* Left: Avatar with Badge */}
         <div className="relative z-10">
