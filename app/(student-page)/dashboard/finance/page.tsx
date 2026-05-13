@@ -1,7 +1,10 @@
-import { Info, ChevronDown, ChevronRight, CreditCard, ThumbsUp, Eye, Download } from "lucide-react";
+"use client";
+
+import { Info, ChevronDown, ChevronRight, CreditCard, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 
 const paymentHistoryData = [
   {
@@ -37,6 +40,9 @@ const paymentHistoryData = [
 ];
 
 export default function FinancePage() {
+  const [showFullfee, toggleFullfee, mountedFullfee] = usePersistentToggle("showFullfee", true);
+  const mounted = mountedFullfee;
+
   return (
     <div className="max-w-6x px-4 md:px-8 flex flex-col gap-6 pb-12">
 
@@ -79,13 +85,35 @@ export default function FinancePage() {
           </div>
 
           <div className="flex-1 md:border-r border-gray-100 px-0">
-            <p className="text-[13px] font-medium text-gray-500 mb-2">Full Session Fee</p>
-            <p className="text-[22px] font-bold text-gray-900">₦4,500,000</p>
+            <div className="flex items-center">
+              <div><span className="text-[#12B76A] font-medium text-gray-500 mb-2">Full Session Fee</span></div>
+              <button
+                type="button"
+                onClick={toggleFullfee}
+                className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
+                aria-label={showFullfee ? "Hide CGPA" : "Show CGPA"}
+              >
+                {showFullfee ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
+              </button>
+            </div>
+              {mounted && !showFullfee ? (
+
+                <p className="text-[22px] font-bold text-gray-900">****</p>
+              ) : (
+
+                <p className="text-[22px] font-bold text-gray-900">₦4,500,000</p>
+              )}
           </div>
 
           <div className="flex-1 px-0">
             <p className="text-[13px] font-medium text-gray-500 mb-2">Amount Paid For Semester</p>
-            <p className="text-[22px] font-bold text-gray-900">₦4,600,000</p>
+            {mounted && !showFullfee ? (
+
+              <p className="text-[22px] font-bold text-gray-900">****</p>
+            ) : (
+
+              <p className="text-[22px] font-bold text-gray-900">₦4,600,000</p>
+            )}
           </div>
 
           <div className="bg-[#ECFDF3] border border-[#D1FADF] rounded-[16px] p-4 flex-shrink-0 w-full md:w-[240px] relative">
@@ -93,7 +121,13 @@ export default function FinancePage() {
             <div className="flex items-center gap-2 text-[#12B76A] font-medium text-[13px] mb-1">
               <CreditCard className="w-4 h-4" /> Surplus
             </div>
-            <p className="text-[22px] font-bold text-[#12B76A]">₦100,000</p>
+            {mounted && !showFullfee ? (
+
+              <p className="text-[22px] font-bold text-[#12B76A]">****</p>
+            ) : (
+
+              <p className="text-[22px] font-bold text-[#12B76A]">₦100,000</p>
+            )}
           </div>
         </div>
 

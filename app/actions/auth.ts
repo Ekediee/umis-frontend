@@ -1,12 +1,13 @@
 "use server";
 
 import { createSession } from "@/lib/session";
+import { UMISResponse } from "@/lib/session";
 
 export async function loginAction(formData: FormData) {
-  const username = formData.get("username") as string;
+  const user_name = formData.get("user_name") as string;
   const password = formData.get("password") as string;
 
-  if (!username || !password) {
+  if (!user_name || !password) {
     return { error: "Username and password are required" };
   }
 
@@ -22,14 +23,14 @@ export async function loginAction(formData: FormData) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ user_name, password }),
     });
 
     if (!response.ok) {
       let errorMessage = "Invalid credentials or server error";
       try {
-        console.log("Checking login response", await response.text());
         const errorData = await response.json();
+        console.log("Error data", errorData);
         errorMessage = errorData.message || errorMessage;
       } catch (e) {
         // Fallback if response isn't JSON
@@ -38,20 +39,23 @@ export async function loginAction(formData: FormData) {
     }
 
     const data = await response.json();
-    
-    // Assuming the API returns a token in data.token or data.data.token
-    const token = data.token || (data.data && data.data.token);
-    
+
+    console.log("Login data", data);
+
+    // Token is at data.token or data.data.token
+    const token = data.data.token
+
     if (!token) {
       return { error: "Authentication successful, but no token was received." };
     }
 
-    // Store token securely in an HTTP-only cookie
-    await createSession(token);
+    // User data is at data.data.user
+    const userData: UMISResponse | undefined = data.data?.user ?? undefined;
 
-    return { success: true,
-      data: data,
-     };
+    // Store token + user data securely in HTTP-only cookies
+    await createSession(token, userData);
+
+    return { success: true, data: data };
   } catch (error) {
     console.error("Login API Error:", error);
     return { error: "Failed to connect to the authentication service. Please try again later." };

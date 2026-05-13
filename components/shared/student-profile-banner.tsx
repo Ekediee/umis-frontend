@@ -3,12 +3,16 @@
 import Image from "next/image";
 import { Camera, Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
+import { UMISResponse } from "@/lib/session";
+import { toTitleCase } from "@/lib/utils";
 
 interface StudentProfileBannerProps {
   /** Show the camera edit button on the avatar (only on profile page) */
   showEditAvatar?: boolean;
   /** Optional welcome message shown above the banner (used on dashboard) */
   welcomeMessage?: string;
+  /** Real user data from the session */
+  userData?: UMISResponse | null;
   /** Whether to show CGPA, Level, and School details (hidden on dashboard) */
   showDetailedInfo?: boolean;
   /** Whether to show detailed row (used on dashboard) */
@@ -18,12 +22,26 @@ interface StudentProfileBannerProps {
 export function StudentProfileBanner({ 
   showEditAvatar, 
   welcomeMessage,
+  userData,
   showDetailedInfo,
   showDetailedRow 
 }: StudentProfileBannerProps) {
 
   const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
   const mounted = mountedCgpa;
+
+  console.log("This is the data", userData);
+
+  // Derived display values from session data (with fallbacks)
+  const rawName = userData?.entity_name ?? "—";
+  const displayName = toTitleCase(rawName);
+  const displayMatric = userData?.user_data?.matric_number ?? "—";
+  const displayProgramme = userData?.user_data?.degree_name ?? "—";
+  const displayLevel = userData?.user_data?.current_level ?? "—";
+  const displaySchool = userData?.user_data?.school_name ?? "—";
+  const displayDepartment = userData?.user_data?.department ?? "—";
+  const displayStatus = userData?.user_data?.status ?? "Active";
+  const displayCgpa = userData?.user_data?.cummulative_gpa?.toFixed(2) ?? "—";
   
   return (
     <div className="w-full">
@@ -44,7 +62,7 @@ export function StudentProfileBanner({
               <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 border-[5px] border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative">
                 <Image
                   src="/Student Image.png"
-                  alt="Yakubu Onome Joy"
+                  alt={`${displayName}`}
                   fill
                   className="object-cover"
                 />
@@ -57,21 +75,21 @@ export function StudentProfileBanner({
             </div>
 
             <div className="text-center">
-              <h2 className="text-[20px] md:text-[24px] font-semibold text-gray-900 leading-tight">Yakubu Onome Joy</h2>
-              <p className="text-[14px] font-medium text-gray-500 mt-1">BSc. Computer Science</p>
+              <h2 className="text-[20px] md:text-[24px] font-semibold text-gray-900 leading-tight">{displayName}</h2>
+              <p className="text-[14px] font-medium text-gray-500 mt-1">{displayProgramme}</p>
             </div>
           </div>
 
           <div className="w-full flex items-center justify-between border-t border-gray-100 pt-5">
             <div>
               <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
-              <p className="text-[14px] md:text-[16px] font-bold text-gray-900">CS/2021/4092</p>
+              <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
             </div>
             <div className="flex flex-col items-end">
               <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Status</p>
               <span className="bg-[#ECFDF3] text-[#027A48] px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 tracking-wide">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>
-                ACTIVE
+                {displayStatus.toUpperCase()}
               </span>
             </div>
           </div>
@@ -89,7 +107,7 @@ export function StudentProfileBanner({
               <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 border-[5px] border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative">
                 <Image
                   src="/Student Image.png"
-                  alt="Yakubu Onome Joy"
+                  alt={`${displayName}`}
                   fill
                   className="object-cover"
                 />
@@ -102,21 +120,21 @@ export function StudentProfileBanner({
             </div>
 
             <div className="text-left">
-              <h2 className="text-[20px] md:text-[24px] font-semibold text-gray-900 leading-tight">Yakubu Onome Joy</h2>
-              <p className="text-[14px] font-medium text-gray-500 mt-1">BSc. Computer Science</p>
+              <h2 className="text-[20px] md:text-[24px] font-semibold text-gray-900 leading-tight">{displayName}</h2>
+              <p className="text-[14px] font-medium text-gray-500 mt-1">{displayProgramme}</p>
             </div>
           </div>
 
           <div className="w-full flex items-center justify-between border-t border-gray-100 pt-5">
             <div>
               <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
-              <p className="text-[14px] md:text-[16px] font-bold text-gray-900">CS/2021/4092</p>
+              <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
             </div>
             <div className="flex flex-col ">
               <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Status</p>
               <span className="bg-[#ECFDF3] text-[#027A48] px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 tracking-wide">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>
-                ACTIVE
+                {displayStatus.toUpperCase()}
               </span>
             </div>
           </div>
@@ -147,7 +165,7 @@ export function StudentProfileBanner({
                       <span className="text-[20px] md:text-[28px] font-bold">****</span>
                     ):(
                       <>
-                        <span className="text-[20px] md:text-[28px] font-bold">4.82</span>
+                        <span className="text-[20px] md:text-[28px] font-bold">{displayCgpa}</span>
                         <span className="text-[14px] md:text-[18px] font-semibold">/ 5.0</span>
                       </>
                     )}
@@ -158,17 +176,17 @@ export function StudentProfileBanner({
 
                 <div className="flex flex-col gap-1 md:gap-3">
                   <span className="text-[12px] md:text-[14px] font-medium text-gray-500">Current Level</span>
-                  <span className="text-[20px] md:text-[28px] font-bold text-gray-900">300</span>
+                  <span className="text-[20px] md:text-[28px] font-bold text-gray-900">{displayLevel}</span>
                 </div>
               </div>
 
               {/* School & Department */}
               <div className="bg-gradient-to-b from-[#d6f4ff] to-[#ebfaff] border border-gray-200/50 rounded-[24px] p-5 md:p-6 flex flex-col justify-center gap-1 md:gap-2 flex-1 order-1 md:order-2">
                 <p className="text-[12px] md:text-[16px] text-gray-500 uppercase tracking-wider">School & Department</p>
-                <h3 className="text-[14px] md:text-[24px] font-semibold text-gray-900 leading-snug">School of Computing & Information Technology</h3>
+                <h3 className="text-[14px] md:text-[24px] font-semibold text-gray-900 leading-snug">{displaySchool} - {displayDepartment}</h3>
               </div>
             </div>
-          )}
+          )}  
 
           {/* Academic Standing */}
           <div className="bg-[#e5ecfc] border border-gray-200/50 rounded-[24px] h-[100%] p-5 md:p-6 flex flex-col justify-center gap-4 w-full">

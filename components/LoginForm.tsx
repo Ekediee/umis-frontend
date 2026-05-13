@@ -43,7 +43,7 @@ export function LoginForm() {
           </div>
           <input
             type="text"
-            name="username"
+            name="user_name"
             required
             placeholder="e.g. 18/0654"
             className="block w-full pl-[42px] pr-4 py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"

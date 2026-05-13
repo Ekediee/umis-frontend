@@ -3,7 +3,13 @@
 import { TrendingUp, Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 
-export function AcademicProgress() {
+interface AcademicProgressProps {
+  cgpa?: number | null;
+  semester_gpa?: number | null;
+  current_level?: number | null;
+}
+
+export function AcademicProgress({cgpa, semester_gpa, current_level}: AcademicProgressProps) {
   const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
   const [showSemesterGpa, toggleSemesterGpa, mountedSemesterGpa] = usePersistentToggle("showSemesterGpa", true);
 
@@ -22,7 +28,7 @@ export function AcademicProgress() {
         <div className="bg-[#f6f8fa] rounded-[16px] p-3 md:p-4 flex flex-col">
           <div className="flex items-center justify-between gap-1">
             <span className="text-[20px] md:text-[24px] font-bold text-[#253ea7] leading-none">
-              {mounted && !showCgpa ? "****" : "3.67"}
+              {mounted && !showCgpa ? "****" : cgpa?.toFixed(2)}
             </span>
             <button
               type="button"
@@ -40,7 +46,7 @@ export function AcademicProgress() {
         <div className="bg-[#f6f8fa] rounded-[16px] p-3 md:p-4 flex flex-col">
           <div className="flex items-center justify-between gap-1">
             <span className="text-[20px] md:text-[24px] font-bold text-[#2d9f75] leading-none">
-              {mounted && !showSemesterGpa ? "****" : "3.52"}
+              {mounted && !showSemesterGpa ? "****" : semester_gpa}
             </span>
             <button
               type="button"
@@ -56,7 +62,7 @@ export function AcademicProgress() {
 
         {/* Level */}
         <div className="bg-[#f6f8fa] rounded-[16px] p-3 md:p-4 justify-between flex flex-col">
-          <span className="text-[20px] md:text-[24px] font-bold text-black leading-none">200</span>
+          <span className="text-[20px] md:text-[24px] font-bold text-black leading-none">{current_level}</span>
           <span className="text-[10px] md:text-[12px] text-gray-500 font-normal mt-1">Level</span>
         </div>
       </div>

@@ -1,7 +1,12 @@
-import { Wallet, CheckCircle2, Flag, ArrowRight } from "lucide-react";
+"use client";
+import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
+import { Wallet, CheckCircle2, Flag, ArrowRight, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 export function FinanceOverview() {
+  const [showFullfee, toggleFullfee, mountedFullfee] = usePersistentToggle("showFullfee", true);
+  const mounted = mountedFullfee;
+
   return (
     <div className="bg-white rounded-[16px] border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 md:p-6 flex flex-col h-full">
       {/* Header */}
@@ -19,18 +24,46 @@ export function FinanceOverview() {
       {/* Fee Info */}
       <div className="flex flex-wrap items-start justify-between md:gap-6 mb-6 md:mb-8">
         <div className="flex flex-col gap-3 min-w-[100px]">
-          <span className="text-[11px] md:text-[12px] font-medium text-gray-500 tracking-wide mb-1">Full Session Fee</span>
-          <span className="text-[18px] md:text-[20px] font-bold text-gray-900 leading-none tracking-tight">₦4,500,000</span>
+          <div className="flex items-center">
+            <span className="text-[11px] md:text-[12px] font-medium text-gray-500 tracking-wide mb-1">Full Session Fee</span>
+            <button
+                type="button"
+                onClick={toggleFullfee}
+                className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
+                aria-label={showFullfee ? "Hide CGPA" : "Show CGPA"}
+              >
+                {showFullfee ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
+              </button>
+            </div>
+            {mounted && !showFullfee ? (
+
+              <p className="text-[22px] font-bold text-gray-900">****</p>
+            ) : (
+
+              <p className="text-[22px] font-bold text-gray-900">₦4,500,000</p>
+            )}
         </div>
         <div className="flex flex-col gap-3 min-w-[100px]">
           <span className="text-[11px] md:text-[12px] font-medium text-gray-500 tracking-wide mb-1">Amount Paid</span>
-          <span className="text-[18px] md:text-[20px] font-bold text-gray-900 leading-none tracking-tight">₦4,600,000</span>
+          {mounted && !showFullfee ? (
+
+            <p className="text-[22px] font-bold text-gray-900">****</p>
+          ) : (
+
+            <p className="text-[22px] font-bold text-gray-900">₦4,600,000</p>
+          )}
         </div>
         <div className="bg-[#cbf5e5] border border-[#dcfce7] rounded-[16px] p-3 px-4 flex flex-col min-w-[120px]">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#15803d] tracking-wider mb-1 uppercase">
             <Flag className="w-3 h-3" strokeWidth={3} /> Surplus
           </span>
-          <span className="text-[18px] md:text-[20px] font-bold text-[#16a34a] leading-none tracking-tight">₦100,000</span>
+          {mounted && !showFullfee ? (
+
+            <p className="text-[22px] font-bold text-[#12B76A]">****</p>
+          ) : (
+
+            <p className="text-[22px] font-bold text-[#12B76A]">₦100,000</p>
+          )}
         </div>
       </div>
 

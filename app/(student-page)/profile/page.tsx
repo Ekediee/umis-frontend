@@ -1,33 +1,81 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Info, User, Book, Heart, Globe, MapPin, 
   Phone, Mail, Home, Users, Calendar, X, CheckCircle2
 } from "lucide-react";
 import { StudentProfileBanner } from "@/components/shared/student-profile-banner";
+import { getUserData } from "@/app/actions/user";
+import { UMISResponse } from "@/lib/session";
 
 export default function ProfilePage() {
-  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
-  const [isNokModalOpen, setIsNokModalOpen] = React.useState(false);
-  const [isSuccessBannerOpen, setIsSuccessBannerOpen] = React.useState(false);
-  const [contactInfo, setContactInfo] = React.useState({
-    email: "joy.onome@example.com",
-    phone: "08125001111",
-    address: "23, Example Street, Lagos",
-    city: "Ikeja",
-    country: "Nigeria",
-    residencyStatus: "Off-Campus"
+  const [userData, setUserData] = useState<UMISResponse | null>(null);
+
+  useEffect(() => {
+    getUserData().then(setUserData);
+  }, []);
+
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isNokModalOpen, setIsNokModalOpen] = useState(false);
+  const [isSuccessBannerOpen, setIsSuccessBannerOpen] = useState(false);
+  const [contactInfo, setContactInfo] = useState({
+    email: '-',
+    phone: "-",
+    address: "-",
+    city: "-",
+    country: "-",
+    residencyStatus: "-"
   });
 
-  const [nextOfKinInfo, setNextOfKinInfo] = React.useState({
-    name: "Badmus Rukky",
-    relationship: "Father",
-    phone: "08125001111",
-    address: "23, Example Street, Lagos",
-    city: "Ikeja",
-    country: "Nigeria"
+  const [personalInfo, setPersonalInfo] = useState({
+    gender: "-",
+    religion: "-",
+    denominiation: "-",
+    maritalStatus: "-",
+    nationality: "-",
   });
+
+  const [nextOfKinInfo, setNextOfKinInfo] = useState({
+    name: "-",
+    relationship: "-",
+    phone: "-",
+    address: "-",
+    city: "-",
+    country: "-"
+  });
+
+  useEffect(() => {
+    if (userData?.user_data) {
+      setContactInfo((prev) => ({
+        ...prev,
+        email: userData.user_data.contact_information.email ?? '-',
+        phone: userData.user_data.contact_information.phone ?? '-',
+        address: userData.user_data.contact_information.residential_address ?? '-',
+        city: userData.user_data.contact_information.town ?? '-',
+        country: userData.user_data.contact_information.country ?? '-',
+        residencyStatus: userData.user_data.contact_information.residency_status ?? '-',
+      }));
+
+      setPersonalInfo((prev) => ({
+        ...prev,
+        gender: userData.user_data.personal_information.gender ?? '-',
+        religion: userData.user_data.personal_information.religion ?? '-',
+        denominiation: userData.user_data.personal_information.denomination ?? '-',
+        maritalStatus: userData.user_data.personal_information.marital_status ?? '-',
+        nationality: userData.user_data.personal_information.nationality ?? '-',
+      }));
+
+      setNextOfKinInfo((prev) => ({
+        ...prev,
+        name: userData.user_data.guardian_information.guardian_name ?? '-',
+        phone: userData.user_data.guardian_information.guardian_phone ?? '-',
+        address: userData.user_data.guardian_information.guardian_address ?? '-',
+        city: userData.user_data.guardian_information.guardian_town ?? '-',
+        country: userData.user_data.guardian_information.guardian_country ?? '-',
+      }));
+    }
+  }, [userData]); 
 
   const handleUpdateContact = (updatedInfo: typeof contactInfo) => {
     setContactInfo(updatedInfo);
@@ -55,7 +103,7 @@ export default function ProfilePage() {
     <div className="pl-4 pr-4 md:p-6 lg:p-8 w-full flex flex-col gap-5 md:gap-6 pb-24 md:pb-8">
       
       {/* Top Section: Profile Pic & Basic Stats — shared component */}
-      <StudentProfileBanner showEditAvatar  showDetailedInfo={true}/>
+      <StudentProfileBanner showEditAvatar showDetailedInfo={true} userData={userData} />
 
       {/* Approvals Section - Stacked on Mobile */}
       <div className="flex flex-col md:flex-row gap-5 items-stretch md:items-start">
@@ -89,11 +137,11 @@ export default function ProfilePage() {
         <div className="bg-white border border-gray-200 rounded-[24px] p-5 md:p-6 flex flex-col gap-5 md:gap-6">
           <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900">Personal Information</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:flex md:flex-col md:gap-5">
-            <InfoRow icon={<User size={14} />} label="Gender" value="Female" />
-            <InfoRow icon={<Book size={14} />} label="Religion" value="Christian" />
-            <InfoRow icon={<Church size={14} />} label="Denomination" value="SDA" />
-            <InfoRow icon={<Heart size={14} />} label="Marital Status" value="Single" />
-            <InfoRow icon={<Globe size={14} />} label="Nationality" value="Nigerian" />
+            <InfoRow icon={<User size={14} />} label="Gender" value={personalInfo.gender} />
+            <InfoRow icon={<Book size={14} />} label="Religion" value={personalInfo.religion} />
+            <InfoRow icon={<Church size={14} />} label="Denomination" value={personalInfo.denominiation} />
+            <InfoRow icon={<Heart size={14} />} label="Marital Status" value={personalInfo.maritalStatus} />
+            <InfoRow icon={<Globe size={14} />} label="Nationality" value={personalInfo.nationality} />
           </div>
         </div>
 
