@@ -96,6 +96,7 @@ export default function FeesPage() {
 
           <Button 
             disabled={!selectedOption}
+            onClick={() => router.push(`/dashboard/finance/fees/payment?type=${selectedOption}`)}
             className={cn(
               "w-full h-[52px] rounded-[12px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all",
               selectedOption 

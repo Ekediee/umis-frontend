@@ -61,13 +61,13 @@ function BaseModal({
 
   return (
     <Overlay onClose={onClose}>
-      <div className="w-full max-md:absolute max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:rounded-t-[24px] max-md:rounded-b-none max-md:pb-safe bg-white md:max-w-[440px] md:rounded-[16px] shadow-[0px_16px_32px_-12px_rgba(88,92,95,0.1)] flex flex-col relative z-10 animate-in slide-in-from-bottom duration-300 md:animate-in md:zoom-in-95">
+      <div className="w-full max-md:absolute max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:rounded-[24px] max-md:pb-safe bg-white md:max-w-[440px] md:rounded-[16px] rounded-t-[24px] rounded-b-none shadow-[0px_16px_32px_-12px_rgba(88,92,95,0.1)] flex flex-col relative z-10 animate-in slide-in-from-bottom duration-300 md:animate-in md:zoom-in-95 ">
         
         {/* Mobile Drag Handle & Close Button */}
         <div className="md:hidden w-full relative pt-3 pb-2 flex justify-center items-center">
           <div className="w-[80px] h-[6px] bg-[#e5e7eb] rounded-[100px]" />
           {onClose && (
-            <button onClick={onClose} className="absolute right-4 text-gray-500 hover:text-gray-900 transition-colors">
+            <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-gray-900 transition-colors">
               <X className="w-6 h-6" />
             </button>
           )}
@@ -87,8 +87,8 @@ function BaseModal({
           </div>
         </div>
         
-        <div className="bg-white max-md:border-t-0 md:border-t border-[#E2E4E9] px-[20px] py-[20px] flex w-full">
-          <div className="flex flex-col md:flex-row gap-[12px] w-full">
+        <div className=" max-md:border-t-0 md:border-t border-[#E2E4E9] px-[20px] py-[20px] flex w-full">
+          <div className="flex flex-col flex-wrap md:flex-row gap-[12px] h-[104px] md:h-[44px] w-full">
             <Button 
               variant="outline" 
               className="flex-1 rounded-[10px] h-[44px] border-[#E2E4E9] text-[#525866] max-md:order-1"
