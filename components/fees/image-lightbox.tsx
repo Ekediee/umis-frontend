@@ -154,6 +154,7 @@ export function ImageLightbox({ images, initialIndex = 0, alt, isOpen, onClose }
               transition: isTransitioning ? "opacity 0.3s ease" : "none",
             }}
             draggable={false}
+            unoptimized
             priority
           />
         </div>

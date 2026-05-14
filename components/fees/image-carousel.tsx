@@ -107,6 +107,7 @@ export function ImageCarousel({ images, alt, className }: ImageCarouselProps) {
               src={images[currentIndex]}
               alt={`${alt} - image ${currentIndex + 1}`}
               fill
+              unoptimized
               className="object-cover"
               style={{
                 transition: isTransitioning ? "opacity 0.3s ease" : "none",

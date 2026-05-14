@@ -61,9 +61,10 @@ export function StudentProfileBanner({
             <div className="relative">
               <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 border-[5px] border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative">
                 <Image
-                  src="/Student Image.png"
+                  src="/student-image.png"
                   alt={`${displayName}`}
                   fill
+                  unoptimized
                   className="object-cover"
                 />
               </div>
@@ -106,9 +107,10 @@ export function StudentProfileBanner({
             <div className="relative">
               <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 border-[5px] border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative">
                 <Image
-                  src="/Student Image.png"
+                  src="/student-image.png"
                   alt={`${displayName}`}
                   fill
+                  unoptimized
                   className="object-cover"
                 />
               </div>
