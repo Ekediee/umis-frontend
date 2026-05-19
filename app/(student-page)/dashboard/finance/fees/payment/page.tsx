@@ -218,13 +218,13 @@ function PaymentFlowContent() {
 
       {/* Step 4: Custom Payment Bottom Bar */}
       {currentStep === 4 && (
-        <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-gray-100 p-4 md:px-8 md:py-6 z-40">
+        <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 md:px-8 md:py-6 z-40 transition-colors">
           <div className="flex items-center justify-between max-w-[1200px] mx-auto">
             {/* Previous */}
             <Button
               variant="outline"
               onClick={handlePrevious}
-              className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] text-[#525866] border-transparent hover:border-gray-200"
+              className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] dark:bg-gray-850 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
             >
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline-block">Previous</span>
@@ -235,13 +235,13 @@ function PaymentFlowContent() {
               <Button
                 onClick={() => setIsPartialPaymentOpen(true)}
                 variant="outline"
-                className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium border-[#003cbb] text-[#003cbb] hover:bg-[#f8faff] transition-all"
+                className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-all"
               >
                 Make Partial Payment
               </Button>
               <Button
                 onClick={handleFullPayment}
-                className="rounded-[10px] h-11 px-4 md:px-8 text-[14px] font-medium bg-[#003cbb] hover:bg-[#002e8f] text-white shadow-sm transition-all"
+                className="rounded-[10px] h-11 px-4 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm transition-all"
               >
                 Make full Payment Now
               </Button>
@@ -251,7 +251,7 @@ function PaymentFlowContent() {
             <div className="md:hidden flex-1 pl-3">
               <Button
                 onClick={() => setIsMobilePaymentSelectionOpen(true)}
-                className="w-full rounded-[10px] h-11 text-[14px] font-medium bg-[#003cbb] hover:bg-[#002e8f] text-white shadow-sm transition-all"
+                className="w-full rounded-[10px] h-11 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm transition-all"
               >
                 Make Payment
               </Button>
@@ -295,7 +295,7 @@ export default function PaymentFlow() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003cbb]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003cbb] dark:border-[#4d82ff]"></div>
       </div>
     }>
       <PaymentFlowContent />

@@ -72,158 +72,170 @@ function PaymentResultContent() {
       )}
 
       {/* Result Card */}
-      <div className="relative z-10 w-full max-w-[560px] bg-white rounded-[20px] border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-6 md:p-10 flex flex-col items-center">
-        {/* Status Icon */}
-        {isSuccess ? (
-          <div className="w-16 h-16 rounded-full bg-[#10b981] flex items-center justify-center mb-4 shadow-[0_4px_16px_rgba(16,185,129,0.3)]">
-            <Check className="w-8 h-8 text-white" strokeWidth={3} />
-          </div>
-        ) : (
-          <div className="w-16 h-16 rounded-full bg-[#ef4444] flex items-center justify-center mb-4 shadow-[0_4px_16px_rgba(239,68,68,0.3)]">
-            <X className="w-8 h-8 text-white" strokeWidth={3} />
-          </div>
-        )}
+      <div className="relative z-10 w-full max-w-[560px] bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-6 md:p-10 flex flex-col items-center overflow-hidden transition-all duration-200">
+        {/* Background Watermark Image */}
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.04] z-0 transition-opacity">
+          <img src="/images/BU Torch.png" alt="" className="w-[80%] object-contain" />
+        </div>
 
-        {/* Title */}
-        <h1 className="text-[22px] md:text-[26px] font-bold text-[#0a0d14] text-center">
-          {isSuccess ? "Payment Successful!" : "Payment Failed"}
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-[14px] text-[#525866] text-center mt-2 max-w-[400px] leading-relaxed">
-          {isSuccess
-            ? "Your registration payment has been confirmed. A receipt has been sent to your registered email address."
-            : "Something went wrong while processing your payment. Please try again or contact support."}
-        </p>
-
-        {/* Transaction Summary */}
-        {isSuccess && (
-          <div className="w-full mt-6 border border-gray-100 rounded-[16px] p-5">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[11px] font-bold text-[#868c98] uppercase tracking-wider">
-                Transaction Summary
-              </span>
-              <span className="text-[12px] font-medium text-[#525866] bg-[#f6f8fa] px-2.5 py-1 rounded-[8px]">
-                Ref: {ref}
-              </span>
+        <div className="relative z-10 w-full flex flex-col items-center">
+          {/* Status Icon */}
+          {isSuccess ? (
+            <div className="w-16 h-16 rounded-full bg-[#10b981] flex items-center justify-center mb-4 shadow-[0_4px_16px_rgba(16,185,129,0.3)]">
+              <Check className="w-8 h-8 text-white" strokeWidth={3} />
             </div>
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-[#ef4444] flex items-center justify-center mb-4 shadow-[0_4px_16px_rgba(239,68,68,0.3)]">
+              <X className="w-8 h-8 text-white" strokeWidth={3} />
+            </div>
+          )}
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-              {/* Student Name */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[12px] text-[#868c98]">Student Name</span>
-                <span className="text-[14px] font-semibold text-[#0a0d14]">
-                  Yakubu Onome Joy
+          {/* Title */}
+          <h1 className="text-[22px] md:text-[26px] font-bold text-[#0a0d14] dark:text-gray-100 text-center transition-colors">
+            {isSuccess ? "Payment Successful!" : "Payment Failed"}
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-[14px] text-[#525866] dark:text-gray-400 text-center mt-2 max-w-[400px] leading-relaxed transition-colors">
+            {isSuccess
+              ? "Your registration payment has been confirmed. A receipt has been sent to your registered email address."
+              : "Something went wrong while processing your payment. Please try again or contact support."}
+          </p>
+
+          {/* Transaction Summary */}
+          {isSuccess && (
+            <div className="w-full mt-6 border border-gray-100 dark:border-gray-800/80 rounded-[16px] p-5 transition-colors">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-400 uppercase tracking-wider transition-colors">
+                  Transaction Summary
+                </span>
+                <span className="text-[12px] font-medium text-[#525866] dark:text-gray-300 bg-[#f6f8fa] dark:bg-gray-800 px-2.5 py-1 rounded-[8px] transition-colors">
+                  Ref: {ref}
                 </span>
               </div>
 
-              {/* Amount Paid */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[12px] text-[#868c98]">Amount Paid</span>
-                <span className="text-[16px] font-bold text-[#10b981]">
-                  {formatPrice(amount)}
-                </span>
-              </div>
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                {/* Student Name */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] text-[#868c98] dark:text-gray-400 transition-colors">Student Name</span>
+                  <span className="text-[14px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                    Yakubu Onome Joy
+                  </span>
+                </div>
 
-              {/* Payment Method */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[12px] text-[#868c98]">Payment Method</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-gray-50 border border-gray-100 p-0.5">
-                    {getGatewayLogo() ? (
-                      <Image 
-                        src={getGatewayLogo()!} 
-                        alt={gateway} 
-                        width={16} 
-                        height={16} 
-                        className="object-contain" 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#6366f1] flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-white">
-                          {gateway.substring(0, 2)}
-                        </span>
-                      </div>
-                    )}
+                {/* Amount Paid */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] text-[#868c98] dark:text-gray-400 transition-colors">Amount Paid</span>
+                  <span className="text-[16px] font-bold text-[#10b981] transition-colors">
+                    {formatPrice(amount)}
+                  </span>
+                </div>
+
+                {/* Payment Method */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] text-[#868c98] dark:text-gray-400 transition-colors">Payment Method</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-0.5 transition-colors">
+                      {getGatewayLogo() ? (
+                        <Image 
+                          src={getGatewayLogo()!} 
+                          alt={gateway} 
+                          width={16} 
+                          height={16} 
+                          className="object-contain" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#6366f1] flex items-center justify-center">
+                          <span className="text-[10px] font-bold text-white">
+                            {gateway.substring(0, 2)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[14px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                      {gateway}
+                    </span>
                   </div>
-                  <span className="text-[14px] font-semibold text-[#0a0d14]">
-                    {gateway}
+                </div>
+
+                {/* Date & Time */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] text-[#868c98] dark:text-gray-400 transition-colors">Date & Time</span>
+                  <span className="text-[14px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                    {new Date().toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}{" "}
+                    •{" "}
+                    {new Date().toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
                   </span>
                 </div>
               </div>
-
-              {/* Date & Time */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[12px] text-[#868c98]">Date & Time</span>
-                <span className="text-[14px] font-semibold text-[#0a0d14]">
-                  {new Date().toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}{" "}
-                  •{" "}
-                  {new Date().toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </span>
-              </div>
             </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="w-full flex flex-col sm:flex-row items-center gap-3 mt-6">
-          <Button
-            onClick={handleContinueToDashboard}
-            className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium bg-[#003cbb] hover:bg-[#002e8f] text-white transition-all gap-2"
-          >
-            Continue to Dashboard
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-
-          {isSuccess && (
-            <Button
-              onClick={handleDownloadReceipt}
-              variant="outline"
-              className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium border-gray-200 text-[#0a0d14] hover:bg-gray-50 transition-all gap-2"
-            >
-              Download receipt
-              <Download className="w-4 h-4" />
-            </Button>
           )}
 
-          {!isSuccess && (
+          {/* Action Buttons */}
+          <div className="w-full flex flex-col sm:flex-row items-center gap-3 mt-6">
             <Button
-              onClick={() => router.back()}
-              variant="outline"
-              className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium border-gray-200 text-[#0a0d14] hover:bg-gray-50 transition-all gap-2"
+              onClick={handleContinueToDashboard}
+              className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium bg-[#003cbb] hover:bg-[#002e8f] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white transition-all gap-2"
             >
-              Try Again
+              Continue to Dashboard
+              <ChevronRight className="w-4 h-4" />
             </Button>
+
+            {isSuccess && (
+              <Button
+                onClick={handleDownloadReceipt}
+                variant="outline"
+                className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium border-gray-200 dark:border-gray-800 text-[#0a0d14] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-transparent transition-all gap-2"
+              >
+                Download receipt
+                <Download className="w-4 h-4" />
+              </Button>
+            )}
+
+            {!isSuccess && (
+              <Button
+                onClick={() => router.back()}
+                variant="outline"
+                className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium border-gray-200 dark:border-gray-800 text-[#0a0d14] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-transparent transition-all gap-2"
+              >
+                Try Again
+              </Button>
+            )}
+          </div>
+
+          {/* Footer Links */}
+          {isSuccess && (
+            <div className="flex flex-col items-center gap-2 mt-6">
+              <button
+                onClick={handleViewRegistrationStatus}
+                className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline flex items-center gap-1 transition-colors"
+              >
+                View Registration Status
+              </button>
+              <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
+                Need help?{" "}
+                <a 
+                  href="https://support.babcock.edu.ng/" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-[#003cbb] dark:text-[#4d82ff] font-medium hover:underline transition-colors"
+                >
+                  Contact Support
+                </a>
+              </span>
+            </div>
           )}
         </div>
-
-        {/* Footer Links */}
-        {isSuccess && (
-          <div className="flex flex-col items-center gap-2 mt-6">
-            <button
-              onClick={handleViewRegistrationStatus}
-              className="text-[14px] font-medium text-[#003cbb] hover:underline flex items-center gap-1"
-            >
-              View Registration Status
-            </button>
-            <span className="text-[13px] text-[#525866]">
-              Need help?{" "}
-              <button className="text-[#003cbb] font-medium hover:underline">
-                Contact Support
-              </button>
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

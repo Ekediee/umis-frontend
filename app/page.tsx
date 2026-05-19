@@ -48,7 +48,7 @@ export default function LoginPage() {
           <div className="w-[64px] h-[64px] lg:w-[72px] lg:h-[72px] rounded-full bg-[#F8F9FB] border border-gray-100 shadow-sm flex items-center justify-center mx-auto mb-6 lg:mb-8">
             <Image
               src="/images/bu_logo.png"
-              alt="UMIS Logo"
+              alt="Pulse Logo"
               width={32}
               height={32}
               className="object-contain lg:w-[40px] lg:h-[40px]"

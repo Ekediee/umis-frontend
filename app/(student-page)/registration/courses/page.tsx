@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { saveOfflineDraft, getOfflineDraft, clearOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
 import { WebStepper } from "@/components/registration/web-stepper";
 import { MobileFlowHeader } from "@/components/registration/mobile-flow-header";
 import { MobileProgressSheet } from "@/components/registration/mobile-progress-sheet";
@@ -33,6 +35,39 @@ export default function RegistrationCoursesFlow() {
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(["co1", "co2", "1", "2", "3", "4", "5", "6"]);
 
   const totalSteps = 3;
+
+  // Offline Draft Logic
+  useEffect(() => {
+    // Load draft on mount
+    const loadDraft = async () => {
+      const draft = await getOfflineDraft<{ group: string | null; courses: string[] }>(OFFLINE_COURSE_CART_KEY);
+      if (draft) {
+        if (draft.group) setSelectedGroup(draft.group);
+        if (draft.courses && draft.courses.length > 0) setSelectedCourseIds(draft.courses);
+        toast.info("Offline draft loaded", { description: "Your previous selections have been restored." });
+      }
+    };
+    loadDraft();
+
+    // Network listeners
+    const handleOffline = () => toast.warning("You are offline", { description: "Your course selections will be saved as a draft." });
+    const handleOnline = () => {
+      toast.success("Back online", { description: "Your drafts have been synchronized." });
+      // Here you would trigger real sync to backend if needed, or handle conflicts.
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
+  // Save to draft whenever selections change
+  useEffect(() => {
+    saveOfflineDraft(OFFLINE_COURSE_CART_KEY, { group: selectedGroup, courses: selectedCourseIds });
+  }, [selectedGroup, selectedCourseIds]);
 
   const handleNext = () => {
     if (currentStep === totalSteps) {
@@ -70,9 +105,18 @@ export default function RegistrationCoursesFlow() {
   const handleConfirmSubmit = () => {
     setIsSubmitting(true);
     // Mocking an API call
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsSubmitting(false);
       setIsConfirmModalOpen(false);
+      
+      // Check network status - handle offline gracefully
+      if (!navigator.onLine) {
+         toast.error("Offline Submission", { description: "You are currently offline. Your registration has been saved as a draft and will submit when you reconnect." });
+         return;
+      }
+      
+      // On success, clear the draft
+      await clearOfflineDraft(OFFLINE_COURSE_CART_KEY);
       // For now, always show success modal
       setIsSuccessModalOpen(true);
     }, 1500); // Increased delay for better UX
@@ -80,14 +124,14 @@ export default function RegistrationCoursesFlow() {
 
   if (hasOutstandingPayment) {
     return (
-      <div className="flex flex-col min-h-full h-full bg-white md:bg-transparent relative pt-6 md:pt-0">
+      <div className="flex flex-col min-h-full h-full bg-white dark:bg-black md:bg-transparent relative pt-6 md:pt-0">
         <OutstandingPayment />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-full h-full bg-white md:bg-transparent relative">
+    <div className="flex flex-col min-h-full h-full bg-white dark:bg-black md:bg-transparent relative">
       {/* Web Stepper (Hidden on mobile) */}
       <div className="hidden md:block">
         <WebStepper currentStep={currentStep} />
@@ -102,7 +146,7 @@ export default function RegistrationCoursesFlow() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 w-full px-4 md:px-8 py-6 md:py-12 flex flex-col items-center">
+      <div className="flex-1 w-full px-4 md:px-8 py-6 md:py-4 flex flex-col items-center">
         {currentStep === 1 && (
           <SelectClassGroup 
             selectedGroup={selectedGroup}

@@ -31,10 +31,10 @@ export function ActionBanner({
       className
     )}>
       <div className="relative z-10 max-w-[80%] md:max-w-[60%] flex flex-col gap-3">
-        <h3 className="text-[20px] md:text-[24px] font-bold text-[#0a0a0a] leading-tight">
+        <h3 className="text-[20px] md:text-[24px] font-bold text-[#0a0a0a] dark:text-gray-100 leading-tight">
           {title}
         </h3>
-        <p className="text-[14px] md:text-[16px] text-[#525866] leading-relaxed">
+        <p className="text-[14px] md:text-[16px] text-[#525866] dark:text-gray-300 leading-relaxed">
           {description}
         </p>
       </div>
@@ -44,9 +44,9 @@ export function ActionBanner({
           onClick={onClick}
           className={cn(
             "rounded-[12px] px-6 h-11 text-[15px] font-semibold transition-all flex items-center gap-2",
-            buttonVariant === "primary" && "bg-[#003cbb] hover:bg-[#002e8f] text-white ",
-            buttonVariant === "dark" && "bg-[#0a0d14] hover:bg-[#1a1d24] text-white",
-            buttonVariant === "outline" && "bg-[#eef3fd] hover:bg-[#e4ebfa] text-[#003cbb]"
+            buttonVariant === "primary" && "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white",
+            buttonVariant === "dark" && "bg-[#0a0d14] dark:bg-white hover:bg-[#1a1d24] dark:hover:bg-gray-100 text-white dark:text-gray-900",
+            buttonVariant === "outline" && "bg-[#eef3fd] dark:bg-gray-800 border border-[#ccdcfd] dark:border-gray-700 hover:bg-[#e4ebfa] dark:hover:bg-gray-750 text-[#003cbb] dark:text-gray-100 shadow-sm active:scale-95 transition-all"
           )}
         >
           {buttonText}

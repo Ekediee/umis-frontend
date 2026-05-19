@@ -82,7 +82,7 @@ export function ImageCarousel({ images, alt, className }: ImageCarouselProps) {
   return (
     <>
       <div
-        className={`relative group overflow-hidden rounded-[4px] ${className || "h-[152px] w-full"}`}
+        className={`relative group overflow-hidden rounded-[8px] ${className || "h-[152px] w-full"}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -125,17 +125,17 @@ export function ImageCarousel({ images, alt, className }: ImageCarouselProps) {
           <>
             <button
               onClick={handlePrev}
-              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 dark:border dark:border-gray-800 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
               type="button"
             >
-              <ChevronLeft className="w-4 h-4 text-[#0a0d14]" />
+              <ChevronLeft className="w-4 h-4 text-[#0a0d14] dark:text-gray-100" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 dark:border dark:border-gray-800 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
               type="button"
             >
-              <ChevronRight className="w-4 h-4 text-[#0a0d14]" />
+              <ChevronRight className="w-4 h-4 text-[#0a0d14] dark:text-gray-100" />
             </button>
 
             {/* Dot Indicators */}

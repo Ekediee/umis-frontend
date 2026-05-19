@@ -27,7 +27,7 @@ export function ProcessingOverlay({ isVisible }: ProcessingOverlayProps) {
       }`}
     >
       {/* Blurred backdrop */}
-      <div className="absolute inset-0 bg-white/70 backdrop-blur-lg" />
+      <div className="absolute inset-0 bg-white/70 dark:bg-black/75 backdrop-blur-lg transition-colors" />
 
       {/* Content */}
       <div className="relative flex flex-col items-center gap-6 z-10">
@@ -45,19 +45,19 @@ export function ProcessingOverlay({ isVisible }: ProcessingOverlayProps) {
 
         {/* Processing text */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] tracking-tight">
+          <span className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight transition-colors">
             Processing
           </span>
-          <span className="text-[14px] text-[#525866] text-center max-w-[280px]">
+          <span className="text-[14px] text-[#525866] dark:text-gray-400 text-center max-w-[280px] transition-colors">
             Please wait while we process your payment...
           </span>
         </div>
 
         {/* Animated dots */}
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#003cbb] animate-bounce" style={{ animationDelay: "0ms" }} />
-          <div className="w-2 h-2 rounded-full bg-[#003cbb] animate-bounce" style={{ animationDelay: "150ms" }} />
-          <div className="w-2 h-2 rounded-full bg-[#003cbb] animate-bounce" style={{ animationDelay: "300ms" }} />
+          <div className="w-2 h-2 rounded-full bg-[#003cbb] dark:bg-[#4d82ff] animate-bounce" style={{ animationDelay: "0ms" }} />
+          <div className="w-2 h-2 rounded-full bg-[#003cbb] dark:bg-[#4d82ff] animate-bounce" style={{ animationDelay: "150ms" }} />
+          <div className="w-2 h-2 rounded-full bg-[#003cbb] dark:bg-[#4d82ff] animate-bounce" style={{ animationDelay: "300ms" }} />
         </div>
       </div>
     </div>

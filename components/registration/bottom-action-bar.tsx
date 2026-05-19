@@ -24,7 +24,7 @@ export function BottomActionBar({
   className
 }: BottomActionBarProps) {
   return (
-    <div className={cn("fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-gray-100 p-4 md:px-8 md:py-6 z-40", className)}>
+    <div className={cn("fixed bottom-0 left-0 right-0 md:left-64 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 md:px-8 md:py-6 z-40", className)}>
       <div className="flex items-center justify-between max-w-[1200px] mx-auto">
         {/* Previous Button */}
         <Button
@@ -33,7 +33,7 @@ export function BottomActionBar({
           disabled={currentStep === 1}
           className={cn(
             "rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2",
-            currentStep === 1 ? "opacity-50 cursor-not-allowed bg-[#f6f8fa] text-[#cdd0d5] border-[#f6f8fa]" : "bg-[#f6f8fa] text-[#525866] border-transparent hover:border-gray-200"
+            currentStep === 1 ? "opacity-50 cursor-not-allowed bg-[#f6f8fa] dark:bg-gray-800 text-[#cdd0d5] dark:text-gray-600 border-[#f6f8fa] dark:border-gray-800" : "bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
           )}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -44,7 +44,7 @@ export function BottomActionBar({
         <Button
           onClick={onNext}
           disabled={isNextDisabled}
-          className="rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] hover:bg-[#002e8f] text-white shadow-sm gap-2 transition-all"
+          className="rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm gap-2 transition-all"
         >
           {nextLabel}
           <ChevronRight className="w-4 h-4" />
