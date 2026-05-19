@@ -25,7 +25,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 0,
     occupants: 0,
     capacity: 0,
-    images: ["/Off-campus image.png"],
+    images: ["/off-campus-image.png"], // Removed spaces
   },
   {
     id: "neal-wilson-classic",
@@ -34,7 +34,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 102000,
     occupants: 6,
     capacity: 350,
-    images: ["/Neal Wilson.png"],
+    images: ["/neal-wilson.png"], // Removed spaces
   },
   {
     id: "neal-wilson-premium",
@@ -43,7 +43,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 750000,
     occupants: 5,
     capacity: 400,
-    images: ["/Neal Wilson.png"],
+    images: ["/neal-wilson.png"], 
   },
   {
     id: "winslow-premium",
@@ -52,7 +52,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 100000,
     occupants: 4,
     capacity: 700,
-    images: ["/Winslow.png", "/Winslow2.png"],
+    images: ["/winslow.png", "/winslow-2.png"], // Standardized casing
   },
   {
     id: "winslow-classic",
@@ -61,7 +61,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 152000,
     occupants: 3,
     capacity: 300,
-    images: ["/Winslow.png", "/Winslow2.png"],
+    images: ["/winslow.png", "/winslow-2.png"],
   },
   {
     id: "gideon-troopers",
@@ -70,7 +70,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 500000,
     occupants: 4,
     capacity: 500,
-    images: ["/Gideon Troopers.png"],
+    images: ["/gideon-troopers.png"], // Removed spaces
   },
   {
     id: "bethel-splendor",
@@ -79,7 +79,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 500000,
     occupants: 4,
     capacity: 500,
-    images: ["/Bethel Splendor.png"],
+    images: ["/bethel-splendor.png"], // Removed spaces
   },
   {
     id: "samuel-akande",
@@ -88,7 +88,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 500000,
     occupants: 4,
     capacity: 500,
-    images: ["/Samuel Akande.png"],
+    images: ["/samuel-akande.png"], // Removed spaces
   },
   {
     id: "nelson-mandela",
@@ -97,7 +97,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 500000,
     occupants: 4,
     capacity: 500,
-    images: ["/Nelson mandela.png"],
+    images: ["/nelson-mandela.png"], // Removed spaces
   },
   {
     id: "welch-hall",
@@ -106,7 +106,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 400000,
     occupants: 4,
     capacity: 400,
-    images: ["/Welch Hall.png"],
+    images: ["/welch-hall.png"], // Removed spaces
   },
   {
     id: "topaz-hall",
@@ -115,7 +115,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 600000,
     occupants: 5,
     capacity: 600,
-    images: ["/Topaz Hall.png"],
+    images: ["/topaz-hall.png"], // Removed spaces
   },
   {
     id: "emerald-classic",
@@ -124,7 +124,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 1000000,
     occupants: 6,
     capacity: 600,
-    images: ["/Emrald Hall.png"],
+    images: ["/emerald-hall.png"], // Fixed spelling (Emrald -> emerald) and spaces
   },
   {
     id: "emerald-classic-plus",
@@ -133,7 +133,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 1000000,
     occupants: 4,
     capacity: 400,
-    images: ["/Emrald Hall.png"],
+    images: ["/emerald-hall.png"], // Fixed spelling and spaces
   },
   {
     id: "gamaliel",
@@ -142,7 +142,7 @@ export const RESIDENCE_HALLS: ResidenceHall[] = [
     price: 450000,
     occupants: 4,
     capacity: 450,
-    images: ["/Gamaliel.png"],
+    images: ["/gamaliel.png"],
   },
 ];
 

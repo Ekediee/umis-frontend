@@ -120,7 +120,6 @@ export function SelectCourses({ selectedCourseIds, onToggleCourse }: SelectCours
   };
 
 
-
   return (
     <div className="flex flex-col w-full max-w-[1200px] md:mx-0">
       

@@ -168,6 +168,7 @@ export function PaymentSummary({
                       src={residence.images[0]}
                       alt={residence.name}
                       fill
+                      unoptimized
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, 120px"
                     />
@@ -183,6 +184,7 @@ export function PaymentSummary({
                   src={residence.images[0]}
                   alt={residence.name}
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="100px"
                 />

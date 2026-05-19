@@ -144,7 +144,7 @@ function PaymentFlowContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-full h-full bg-white dark:bg-black md:bg-transparent relative transition-colors">
+    <div className="flex flex-col min-h-full h-full bg-white md:bg-transparent relative">
       <div className="hidden md:block">
         <PaymentStepper 
           currentStep={currentStep} 

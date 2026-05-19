@@ -75,6 +75,7 @@ export function SelectMealPlan({ selectedId, onSelect }: SelectMealPlanProps) {
                   src={meal.image}
                   alt={meal.name}
                   fill
+                  unoptimized
                   className="object-cover"
                   priority
                   sizes="(max-width: 768px) 100vw, 270px"
