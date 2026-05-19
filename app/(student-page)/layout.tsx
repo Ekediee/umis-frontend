@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <Sidebar />
       
       {/* Main Content Area overlapping the dark background */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#F4F5F7] overflow-hidden relative z-10">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#F4F5F7] dark:bg-black overflow-hidden relative z-10 transition-colors duration-200">
          <Header />
          <MainContent>
             {children}
