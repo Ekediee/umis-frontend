@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { WebStepper } from "@/components/registration/web-stepper";
 import { MobileFlowHeader } from "@/components/registration/mobile-flow-header";
@@ -11,6 +11,7 @@ import { SelectCourses } from "@/components/registration/steps/select-courses";
 import { Summary } from "@/components/registration/steps/summary";
 import { ConfirmationModal, SuccessModal, FailureModal } from "@/components/registration/registration-status-modals";
 import { OutstandingPayment } from "@/components/registration/outstanding-payment";
+import { getClassGroupsAction, type ClassGroup } from "@/app/actions/registration";
 
 export default function RegistrationCoursesFlow() {
   const router = useRouter();
@@ -26,8 +27,31 @@ export default function RegistrationCoursesFlow() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isFailureModalOpen, setIsFailureModalOpen] = useState(false);
   
-  // Step 1 State
+  // Step 1 — Class group fetch state
+  const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
+  const [classGroupsLoading, setClassGroupsLoading] = useState(true);
+  const [classGroupsError, setClassGroupsError] = useState<string | null>(null);
+
+  // Step 1 — Selection state (stores the group id as a string)
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchClassGroups() {
+      setClassGroupsLoading(true);
+      setClassGroupsError(null);
+      const result = await getClassGroupsAction();
+      if (cancelled) return;
+      if (result.error) {
+        setClassGroupsError(result.error);
+      } else {
+        setClassGroups(result.data ?? []);
+      }
+      setClassGroupsLoading(false);
+    }
+    fetchClassGroups();
+    return () => { cancelled = true; };
+  }, []);
 
   // Step 2 State (Mock compulsory defaults usually passed in)
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(["co1", "co2", "1", "2", "3", "4", "5", "6"]);
@@ -104,9 +128,12 @@ export default function RegistrationCoursesFlow() {
       {/* Main Content Area */}
       <div className="flex-1 w-full px-4 md:px-8 py-6 md:py-12 flex flex-col items-center">
         {currentStep === 1 && (
-          <SelectClassGroup 
+          <SelectClassGroup
             selectedGroup={selectedGroup}
             onSelectGroup={setSelectedGroup}
+            classGroups={classGroups}
+            isLoading={classGroupsLoading}
+            error={classGroupsError}
           />
         )}
         

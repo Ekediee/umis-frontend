@@ -1,26 +1,40 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { ClassGroup } from "@/app/actions/registration";
 
 interface SelectClassGroupProps {
   selectedGroup: string | null;
   onSelectGroup: (group: string) => void;
+  classGroups: ClassGroup[];
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-const CLASS_GROUPS = [
-  "SENG",
-  "SENG Group A",
-  "SENG Group B",
-  "SENG Group C",
-  "SENG Group D",
-  "SENG Group E",
-  "SENG Group F",
-];
+/** Pill-shaped loading skeleton */
+function GroupSkeleton() {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-[48px] w-[120px] rounded-[36px] bg-gray-100 animate-pulse"
+        />
+      ))}
+    </div>
+  );
+}
 
-export function SelectClassGroup({ selectedGroup, onSelectGroup }: SelectClassGroupProps) {
+export function SelectClassGroup({
+  selectedGroup,
+  onSelectGroup,
+  classGroups,
+  isLoading = false,
+  error = null,
+}: SelectClassGroupProps) {
   return (
     <div className="flex flex-col gap-6 md:gap-8 w-full max-w-[820px] mx-auto md:mx-0">
-      
+
       {/* Session Info Banner (Mobile Only, on Desktop it is in the WebStepper) */}
       <div className="md:hidden bg-[#eef3fd] rounded-[16px] p-4 flex items-center justify-between gap-2 border border-[#ccdaf9]">
         <span className="text-[14px] font-semibold text-[#003cbb] tracking-tight">
@@ -37,26 +51,45 @@ export function SelectClassGroup({ selectedGroup, onSelectGroup }: SelectClassGr
           Select Class Group
         </h3>
 
-        <div className="flex flex-wrap gap-3">
-          {CLASS_GROUPS.map((group) => {
-            const isSelected = selectedGroup === group;
+        {/* Loading State */}
+        {isLoading && <GroupSkeleton />}
 
-            return (
-              <button
-                key={group}
-                onClick={() => onSelectGroup(group)}
-                className={cn(
-                  "px-6 py-3 rounded-[36px] text-[15px] font-medium transition-all",
-                  isSelected
-                    ? "bg-[#f8faff] border border-[#003cbb] text-[#003cbb] shadow-[0px_1px_2px_0px_rgba(55,93,251,0.08)]"
-                    : "bg-[#f6f8fa] border border-transparent text-[#4e5155] hover:bg-[#e2e4e9]"
-                )}
-              >
-                {group}
-              </button>
-            );
-          })}
-        </div>
+        {/* Error State */}
+        {!isLoading && error && (
+          <div className="rounded-[12px] bg-red-50 border border-red-100 px-4 py-3 text-[14px] text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* Groups */}
+        {!isLoading && !error && (
+          <div className="flex flex-wrap gap-3">
+            {classGroups.length === 0 ? (
+              <p className="text-[14px] text-[#4e5155]">
+                No class groups available.
+              </p>
+            ) : (
+              classGroups.map((group) => {
+                const isSelected = selectedGroup === String(group.id);
+
+                return (
+                  <button
+                    key={group.id}
+                    onClick={() => onSelectGroup(String(group.id))}
+                    className={cn(
+                      "px-6 py-3 rounded-[36px] text-[15px] font-medium transition-all",
+                      isSelected
+                        ? "bg-[#f8faff] border border-[#003cbb] text-[#003cbb] shadow-[0px_1px_2px_0px_rgba(55,93,251,0.08)]"
+                        : "bg-[#f6f8fa] border border-transparent text-[#4e5155] hover:bg-[#e2e4e9]"
+                    )}
+                  >
+                    {group.name}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
     </div>

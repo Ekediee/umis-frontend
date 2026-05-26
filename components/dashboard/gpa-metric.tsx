@@ -1,9 +1,10 @@
 'use client'
 import { Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
+import { AcademicProgressProps } from "./academic-progress";
 
 
-const GPAMetric = () => {
+const GPAMetric = ({cgpa, semester_gpa, current_level}: AcademicProgressProps) => {
     const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
     const [showSemesterGpa, toggleSemesterGpa, mountedSemesterGpa] = usePersistentToggle("showSemesterGpa", true);
 
@@ -17,7 +18,7 @@ const GPAMetric = () => {
             <div className="bg-[#f6f8fa] rounded-[16px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] relative">
                 <div className="flex items-center gap-3 justify-between md:gap-5 w-full">
                     <span className="text-[24px] md:text-[28px] font-black text-[#253ea7] leading-none">
-                        {showCgpa ? "3.67" : "****"}
+                        {showCgpa ? cgpa?.toFixed(2) : "****"}
                     </span>
                     <button
                         type="button"
@@ -35,7 +36,7 @@ const GPAMetric = () => {
             <div className="bg-[#f6f8fa] rounded-[16px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] relative">
                 <div className="flex items-center gap-3 justify-between md:gap-5 w-full">
                     <span className="text-[24px] md:text-[28px] font-black text-[#2d9f75] leading-none">
-                        {showSemesterGpa ? "3.52" : "****"}
+                        {showSemesterGpa ? semester_gpa?.toFixed(2) : "****"}
                     </span>
                     <button
                         type="button"
@@ -51,7 +52,7 @@ const GPAMetric = () => {
 
             {/* CURRENT LEVEL */}
             <div className="col-span-2 md:col-span-1 bg-[#f6f8fa] rounded-[16px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px]">
-                <span className="text-[24px] md:text-[28px] font-black text-[#0a0d14] leading-none">200</span>
+                <span className="text-[24px] md:text-[28px] font-black text-[#0a0d14] leading-none">{current_level}</span>
                 <span className="text-[12px] font-normal text-[#4a5565] mt-1 uppercase">Level</span>
             </div>
         </div>

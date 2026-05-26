@@ -11,7 +11,7 @@ interface WelcomeBannerProps {
 
 export function WelcomeBanner({userData}: WelcomeBannerProps) {
 
-  const firstName = userData?.entity_name?.split(" ")[0] ?? "Student";
+  const firstName = userData?.user_data?.personal_information?.student_name?.split(" ")[0] ?? "Student";
   const welcomeMessage = `Welcome back ${firstName} Here is your academic overview`;
 
   return (

@@ -40,18 +40,29 @@ export interface GuardianInformation {
 }
 
 export interface PersonalInformation {
+  student_name: string | null;
+  matric_number: string | null;
   denomination: string | null;
   gender: string | null;
   marital_status: string | null;
   nationality: string | null;
   religion: string | null;
 }
+export interface AcademicInformation {
+  status: string | null;
+  study_level: number | null;
+  cummulative_gpa: number | null;
+  financial_approval: string | null;
+  is_off_campus: boolean | null;
+  off_campus_apprpval: string | null;
+  residency_status: string | null;
+}
 
 // 2. Define the user_data object that holds the nested interfaces
 export interface StudentData {
   account_number: string | null;
   contact_information: ContactInformation;
-  cummulative_gpa: number | null; 
+  cummulative_gpa: number | null;
   current_level: number | null;
   degree_id: string | null;
   degree_name: string | null;
@@ -65,6 +76,7 @@ export interface StudentData {
   school_name: string | null;
   status: string | null;
   student_name: string | null;
+  academic_information: AcademicInformation;
 }
 
 // 3. Define the main/root response object
@@ -74,13 +86,18 @@ export interface UMISResponse {
   user_data: StudentData;
 }
 
+// Check if we are in production AND if we haven't manually disabled secure cookies
+const useSecureCookies =
+  process.env.NODE_ENV === "production" &&
+  process.env.DISABLE_SECURE_COOKIES !== "true";
+
 export async function createSession(token: string, userData?: UMISResponse) {
   const cookieStore = await cookies();
 
   // Store the JWT token
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: useSecureCookies,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -90,7 +107,7 @@ export async function createSession(token: string, userData?: UMISResponse) {
   if (userData) {
     cookieStore.set(USER_DATA_COOKIE_NAME, JSON.stringify(userData), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: useSecureCookies,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 1 week (same lifetime as token)

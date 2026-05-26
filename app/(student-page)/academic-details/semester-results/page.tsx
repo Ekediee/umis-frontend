@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import GPAMetric from "@/components/dashboard/gpa-metric";
+import { useEffect, useState } from "react";
+import { UMISResponse } from "@/lib/session";
+import { getUserData } from "@/app/actions/user";
 
 export default function SemesterResultsPage() {
   const router = useRouter();
@@ -16,6 +19,12 @@ export default function SemesterResultsPage() {
     { name: "2019/2020.1", level: 200, hours: 20, gpa: 3.35, chours: 72, cgpa: 3.62 },
     { name: "2019/2020.2", level: 200, hours: 21, gpa: 4, chours: 93, cgpa: 3.71 },
   ];
+
+  const [userData, setUserData] = useState<UMISResponse | null>(null);
+    
+  useEffect(() => {
+    getUserData().then(setUserData);
+  }, []);
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 md:mt-0">
@@ -33,7 +42,10 @@ export default function SemesterResultsPage() {
 
       {/* Top Cards Wrapper */}
       <Card className="rounded-[24px] bg-white border-0 shadow-sm p-4 md:mb-0">
-        <GPAMetric />
+        <GPAMetric 
+          cgpa={userData?.user_data?.academic_information?.cummulative_gpa} 
+          current_level={userData?.user_data?.academic_information?.study_level} 
+        />
       </Card>
 
       {/* Table/List Area */}

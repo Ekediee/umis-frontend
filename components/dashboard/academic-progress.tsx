@@ -3,7 +3,7 @@
 import { TrendingUp, Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 
-interface AcademicProgressProps {
+export interface AcademicProgressProps {
   cgpa?: number | null;
   semester_gpa?: number | null;
   current_level?: number | null;

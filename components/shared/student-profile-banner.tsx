@@ -28,20 +28,21 @@ export function StudentProfileBanner({
 }: StudentProfileBannerProps) {
 
   const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
-  const mounted = mountedCgpa;
+  const [showMatric, toggleMatric, mountedMatric] = usePersistentToggle("showMatric", true);
+  const mounted = mountedCgpa && mountedMatric;
 
   console.log("This is the data", userData);
 
   // Derived display values from session data (with fallbacks)
   const rawName = userData?.entity_name ?? "—";
   const displayName = toTitleCase(rawName);
-  const displayMatric = userData?.user_data?.matric_number ?? "—";
+  const displayMatric = userData?.user_data?.personal_information?.matric_number ?? "—";
   const displayProgramme = userData?.user_data?.degree_name ?? "—";
-  const displayLevel = userData?.user_data?.current_level ?? "—";
+  const displayLevel = userData?.user_data?.academic_information?.study_level ?? "—";
   const displaySchool = userData?.user_data?.school_name ?? "—";
   const displayDepartment = userData?.user_data?.department ?? "—";
   const displayStatus = userData?.user_data?.status ?? "Active";
-  const displayCgpa = userData?.user_data?.cummulative_gpa?.toFixed(2) ?? "—";
+  const displayCgpa = userData?.user_data?.academic_information?.cummulative_gpa?.toFixed(2) ?? "—";
   
   return (
     <div className="w-full">
@@ -83,8 +84,22 @@ export function StudentProfileBanner({
 
           <div className="w-full flex items-center justify-between border-t border-gray-100 pt-5">
             <div>
-              <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
-              <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
+              <div className="flex items-center gap-1 text-gray-500">
+                <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
+                <button
+                  type="button"
+                  onClick={toggleMatric}
+                  className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
+                  aria-label={showMatric ? "Hide matric" : "Show matric"}
+                >
+                  {showMatric ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
+                </button>
+              </div>
+              {mounted && !showMatric ? (
+                <p className="text-[14px] md:text-[16px] font-bold text-gray-900">****</p>
+              ):(
+                <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
+              )}
             </div>
             <div className="flex flex-col items-end">
               <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Status</p>
@@ -129,8 +144,22 @@ export function StudentProfileBanner({
 
           <div className="w-full flex items-center justify-between border-t border-gray-100 pt-5">
             <div>
-              <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
-              <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
+              <div className="flex items-center gap-1 text-gray-500">
+                <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
+                <button
+                  type="button"
+                  onClick={toggleMatric}
+                  className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
+                  aria-label={showMatric ? "Hide matric" : "Show matric"}
+                >
+                  {showMatric ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
+                </button>
+              </div>
+              {mounted && !showMatric ? (
+                <p className="text-[14px] md:text-[16px] font-bold text-gray-900">****</p>
+              ):(
+                <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
+              )}
             </div>
             <div className="flex flex-col ">
               <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Status</p>
