@@ -106,11 +106,13 @@ export default function RegistrationPage() {
           description={regProps.description}
           buttonText={regProps.buttonText}
           buttonVariant={regProps.buttonVariant}
-          gradientClass="bg-gradient-to-br from-[#c2d6ff] to-[#ebf1ff]"
+          gradientClass="bg-gradient-to-br from-[#c2d6ff] to-[#ebf1ff] dark:from-[#1b2a4a] dark:to-[#111c30]"
           illustrationSrc="/Reg-image.png"
           onClick={() => {
             if (regState !== "completed") {
               router.push("/registration/courses");
+            } else {
+              router.push("/registration/course-form");
             }
           }}
         />
@@ -119,7 +121,7 @@ export default function RegistrationPage() {
           description={payProps.description}
           buttonText={payProps.buttonText}
           buttonVariant={payProps.buttonVariant}
-          gradientClass={payState === 'completed' ? "bg-gradient-to-br from-[#c2f5e1] to-[#e6fff5]" : "bg-gradient-to-br from-[#dcd6ff] to-[#cbc2ff]"}
+          gradientClass={payState === 'completed' ? "bg-gradient-to-br from-[#c2f5e1] to-[#e6fff5] dark:from-[#0a3825] dark:to-[#042114]" : "bg-gradient-to-br from-[#dcd6ff] to-[#cbc2ff] dark:from-[#2e234a] dark:to-[#1e1430]"}
           illustrationSrc="/Pay-image.png"
           onClick={() => {
             if (payState !== "completed") {
@@ -132,18 +134,18 @@ export default function RegistrationPage() {
       </div>
 
       {/* Clearance Requirements Section */}
-      <div className="bg-white rounded-[24px] p-4 md:p-8 border border-gray-100/50">
+      <div className="bg-white dark:bg-gray-900 rounded-[24px] p-4 md:p-8 border border-gray-100/50 dark:border-gray-800 transition-colors duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-[20px] font-bold text-[#0a0a0a]">Clearance Requirements</h2>
-            <p className="text-[14px] text-[#525866]">Complete all steps below to finalize your registration</p>
+            <h2 className="text-[20px] font-bold text-[#0a0a0a] dark:text-gray-100">Clearance Requirements</h2>
+            <p className="text-[14px] text-[#525866] dark:text-gray-400">Complete all steps below to finalize your registration</p>
           </div>
           
-          <div className="bg-[#F8F9FB] border border-gray-100 rounded-full px-5 py-2.5 flex items-center gap-4 self-start">
+          <div className="bg-[#F8F9FB] dark:bg-gray-850 border border-gray-100 dark:border-gray-700 rounded-full px-5 py-2.5 flex items-center gap-4 self-start transition-colors duration-200">
             <div className="flex flex-col">
-              <span className="text-[13px] font-bold text-[#0a0a0a]">1 of 7 Cleared</span>
+              <span className="text-[13px] font-bold text-[#0a0a0a] dark:text-gray-100">1 of 7 Cleared</span>
             </div>
-            <div className="w-[80px] h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-[80px] h-2 bg-gray-200 dark:bg-gray-750 rounded-full overflow-hidden">
               <div className="w-[14%] h-full bg-[#10b981] rounded-full" />
             </div>
           </div>
@@ -155,7 +157,8 @@ export default function RegistrationPage() {
             title="Submitted Registration"
             description="Initial registration form submission online"
             status="pending"
-            actionText="View Form"
+            actionText="View Course Form"
+            onAction={() => router.push("/registration/course-form")}
           />
           <ClearanceRequirement 
             icon={CreditCard}
@@ -195,13 +198,13 @@ export default function RegistrationPage() {
       {/* Alert & Exam Portal */}
       <div className="flex flex-col gap-6">
         {/* Info Alert */}
-        <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-[16px] p-4 md:p-5 flex gap-4">
-          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0">
-            <Info className="w-5 h-5 text-[#003cbb]" />
+        <div className="bg-[#eff6ff] dark:bg-[#1e3a8a]/5 border border-[#dbeafe]/80 dark:border-[#1e3a8a]/20 rounded-[24px] p-4 md:p-5 flex gap-4 transition-colors duration-200">
+          <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shrink-0 shadow-sm transition-colors duration-200">
+            <Info className="w-5 h-5 text-[#003cbb] dark:text-[#4d82ff]" />
           </div>
           <div className="flex flex-col gap-1">
-            <h5 className="text-[15px] font-bold text-[#1e3a8a]">Reason For No Approval</h5>
-            <p className="text-[14px] text-[#1e40af] leading-relaxed">
+            <h5 className="text-[15px] font-bold text-[#1e3a8a] dark:text-[#93c5fd]">Reason For No Approval</h5>
+            <p className="text-[14px] text-[#1e40af] dark:text-[#bfdbfe]/80 leading-relaxed">
               You must clear your Finance and Registry requirements before your registration can be marked as complete. 
               Please visit the Bursary department for financial clearance.
             </p>
@@ -209,7 +212,7 @@ export default function RegistrationPage() {
         </div>
 
         {/* Online Exam Portal Banner */}
-        <div className="bg-[#313cac] rounded-[16px] p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="bg-[#313cac] dark:bg-gradient-to-r dark:from-[#2e3796] dark:to-[#1f266b] rounded-[24px] p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-md">
           {/* Background Decorative Pattern */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent opacity-20" />
@@ -228,13 +231,13 @@ export default function RegistrationPage() {
           </div>
 
           <div className="relative z-10">
-            <button className="bg-white text-[#313cac] px-8 py-3 rounded-[12px] font-bold hover:bg-[#f8faff] transition-colors shadow-lg">
+            <button className="bg-white text-[#313cac] px-8 py-3 rounded-[12px] font-bold hover:bg-[#f8faff] transition-all shadow-lg active:scale-95">
               Access Portal
             </button>
           </div>
 
           {/* Illustration */}
-          <div className="absolute right-[-40px] top-[-40px] w-[300px] h-[300px] opacity-40 md:opacity-100 mix-blend-overlay md:mix-blend-normal">
+          <div className="absolute right-[-40px] top-[-40px] w-[300px] h-[300px] opacity-45 md:opacity-100 mix-blend-overlay md:mix-blend-normal">
             <Image
               src="/Users/pfy-210/.gemini/antigravity/brain/ad3981aa-aa22-4fec-aa6b-18fd311d5513/exam_portal_illustration_1777980904014.png"
               alt=""

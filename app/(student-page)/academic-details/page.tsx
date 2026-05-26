@@ -4,6 +4,7 @@ import { QuickActionsList } from "@/components/academic-details/quick-actions-li
 import { QuickInfo } from "@/components/academic-details/quick-info";
 import { CurrentSemesterRegistration } from "@/components/academic-details/current-semester-registration";
 import { AcademicAlerts } from "@/components/academic-details/academic-alerts";
+import { CGPAProgressionChart } from "@/components/academic-details/cgpa-progression-chart";
 
 
 export default function AcademicDetailsPage() {
@@ -19,6 +20,9 @@ export default function AcademicDetailsPage() {
               <GraduationProgress />
             </div>
             <div className="order-2 xl:order-3">
+              <CGPAProgressionChart />
+            </div>
+            <div className="order-4 xl:order-4">
               <QuickActionsList />
             </div>
           </div>

@@ -61,24 +61,24 @@ function CoursesContent() {
   const renderTable = (data: typeof MOCK_DATA.current) => (
     <div className="flex flex-col gap-3">
       {data.map((course, idx) => (
-        <Card key={idx} className="rounded-[16px] border border-transparent shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white hover:shadow-md transition-shadow">
+        <Card key={idx} className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200">
           <CardContent className="p-0">
             {/* DESKTOP VIEW */}
             <div className="hidden md:grid grid-cols-[1.5fr_3fr_1.5fr_1fr_1fr] items-center px-6">
-              <div className="font-bold text-[15px] text-gray-900">
+              <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
                 {course.code}
               </div>
-              <div className="text-[15px] text-gray-500 font-medium truncate pr-4">
+              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium truncate pr-4">
                 {course.title}
               </div>
-              <div className="text-[15px] text-gray-500 font-medium">
+              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium">
                 {course.lecturer}
               </div>
-              <div className="text-[15px] text-gray-500 font-medium">
+              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium">
                 {course.level}
               </div>
               <div className="flex justify-end pr-2">
-                <span className="text-[11px] font-bold text-[#003cbb] bg-[#E1E7FC] rounded-full px-3 py-1">
+                <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-[#E1E7FC] dark:bg-[#003cbb]/20 rounded-full px-3 py-1">
                   {course.units} UNITS
                 </span>
               </div>
@@ -87,19 +87,19 @@ function CoursesContent() {
             {/* MOBILE VIEW */}
             <div className="flex flex-col md:hidden p-5 gap-3">
                <div className="flex justify-between items-center">
-                  <div className="font-bold text-[16px] text-gray-900">{course.code}</div>
-                  <span className="text-[11px] font-bold text-[#003cbb] bg-[#E1E7FC] rounded-full px-3 py-1">
+                  <div className="font-bold text-[16px] text-gray-900 dark:text-gray-100">{course.code}</div>
+                  <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-[#E1E7FC] dark:bg-[#003cbb]/20 rounded-full px-3 py-1">
                     {course.units} UNITS
                   </span>
                </div>
                
-               <div className="text-[14px] text-gray-500 font-medium">
+               <div className="text-[14px] text-gray-500 dark:text-gray-400 font-medium">
                   {course.title}
                </div>
 
-               <div className="h-px bg-gray-100 my-1 w-full" />
+               <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 w-full" />
 
-               <div className="flex justify-between items-center text-[13px] text-gray-500 font-medium">
+               <div className="flex justify-between items-center text-[13px] text-gray-500 dark:text-gray-400 font-medium">
                   <div>{course.lecturer}</div>
                   <div>{course.level}</div>
                </div>
@@ -116,7 +116,7 @@ function CoursesContent() {
       <div>
         <Button 
           variant="outline" 
-          className="rounded-[10px] text-[#003cbb] font-semibold px-4 h-10 border-gray-200 hover:bg-[#f5f8fe] hover:text-[#003095] bg-white shadow-sm transition-colors"
+          className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 hover:text-[#003095] dark:hover:text-[#8ba7ff] bg-white dark:bg-gray-900 shadow-sm transition-colors"
           onClick={() => router.push('/academic-details')}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
@@ -126,7 +126,7 @@ function CoursesContent() {
 
       {/* Tabs & Content */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-200 mb-6 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-200 dark:border-gray-800 mb-6 gap-4 transition-colors">
           <TabsList className="bg-transparent overflow-x-auto flex-nowrap justify-start h-auto p-0 flex gap-6 md:gap-8 min-w-0 w-full md:w-auto border-none no-scrollbar">
             
             <TabsTrigger 
@@ -135,10 +135,9 @@ function CoursesContent() {
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
-                borderBottom: activeTab === "current" ? "2px solid #003cbb" : "2px solid transparent"
               }}
-              className={`px-0 py-3 md:pb-4 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "current" ? "text-[#003cbb]" : "text-gray-500 hover:text-gray-700"
+              className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
+                activeTab === "current" ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               Current Semester Courses
@@ -150,10 +149,9 @@ function CoursesContent() {
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
-                borderBottom: activeTab === "carry-over" ? "2px solid #003cbb" : "2px solid transparent"
               }}
-              className={`px-0 py-3 md:pb-4 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "carry-over" ? "text-[#003cbb]" : "text-gray-500 hover:text-gray-700"
+              className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
+                activeTab === "carry-over" ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               Carry Over courses
@@ -165,10 +163,9 @@ function CoursesContent() {
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
-                borderBottom: activeTab === "repeated" ? "2px solid #003cbb" : "2px solid transparent"
               }}
-              className={`px-0 py-3 md:pb-4 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "repeated" ? "text-[#003cbb]" : "text-gray-500 hover:text-gray-700"
+              className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
+                activeTab === "repeated" ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               Repeated Courses
@@ -176,11 +173,11 @@ function CoursesContent() {
 
           </TabsList>
 
-          <div className="font-bold text-gray-900 text-[15px] whitespace-nowrap self-end pb-4 hidden md:block">
+          <div className="font-bold text-gray-900 dark:text-gray-100 text-[15px] whitespace-nowrap self-end pb-4 hidden md:block">
             Total Units: {totalUnits}
           </div>
           {/* Mobile Total Units */}
-          <div className="font-bold text-gray-900 text-[15px] ml-auto block md:hidden mb-2">
+          <div className="font-bold text-gray-900 dark:text-gray-100 text-[15px] ml-auto block md:hidden mb-2">
             Total Units: {totalUnits}
           </div>
         </div>
@@ -239,7 +236,7 @@ function CoursesContent() {
 // Main page component wrapping the Suspense boundary
 export default function CoursesPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading courses...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Loading courses...</div>}>
       <CoursesContent />
     </Suspense>
   );

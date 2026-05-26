@@ -24,9 +24,9 @@ const MEAL_OPTIONS_DATA = [
 ];
 
 const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
-  CLASSIC: { bg: "bg-[#cac2ff]", text: "text-[#2b1664]" },
-  PREMIUM: { bg: "bg-[#c2d6ff]", text: "text-[#162664]" },
-  "CLASSIC+": { bg: "bg-[#c2f5e9]", text: "text-[#164564]" },
+  CLASSIC: { bg: "bg-[#cac2ff] dark:bg-[#cac2ff]/10", text: "text-[#2b1664] dark:text-[#b4aefc]" },
+  PREMIUM: { bg: "bg-[#c2d6ff] dark:bg-[#c2d6ff]/10", text: "text-[#162664] dark:text-[#a0c2ff]" },
+  "CLASSIC+": { bg: "bg-[#c2f5e9] dark:bg-[#c2f5e9]/10", text: "text-[#164564] dark:text-[#86efac]" },
 };
 
 function formatPrice(price: number): string {
@@ -55,13 +55,13 @@ export function PaymentSummary({
   const totalCost = MANDATORY_TOTAL + residencePrice + mealPrice;
 
   return (
-    <div className="w-full max-w-[1200px] md:h-[90%] h-[78vh] flex flex-col gap-5 overflow-y-auto">
+    <div className="w-full max-w-[1200px] pb-32 flex flex-col gap-5">
       {/* Header */}
       <div>
-        <h2 className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] tracking-tight">
+        <h2 className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight transition-colors">
           Review Your Selections
         </h2>
-        <p className="text-[14px] text-[#525866] mt-1">
+        <p className="text-[14px] text-[#525866] dark:text-gray-400 mt-1 transition-colors">
           Please review your choices before finalizing your registration.
         </p>
       </div>
@@ -74,10 +74,10 @@ export function PaymentSummary({
       {/* Summary Cards */}
       <div className="flex flex-col gap-4">
         {/* 1. Mandatory Basic Fees */}
-        <div className="bg-white rounded-[16px] border border-gray-100 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] p-5 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
           <div className="flex items-start gap-4">
             {/* Icon */}
-            <div className="w-10 h-10 rounded-[10px] bg-[#f0fdfa] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[10px] bg-[#f0fdfa] dark:bg-[#0d9488]/10 flex items-center justify-center shrink-0 transition-colors">
               <GraduationCap className="w-5 h-5 text-[#0d9488]" />
             </div>
 
@@ -85,26 +85,26 @@ export function PaymentSummary({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-[#868c98] uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
                     Mandatory Basic Fees
                   </span>
-                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14]">
+                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     Tuition & Institutional Fees
                   </span>
-                  <div className="flex items-center gap-1.5 text-[13px] text-[#525866] flex-wrap">
+                  <div className="flex items-center gap-1.5 text-[13px] text-[#525866] dark:text-gray-400 flex-wrap transition-colors">
                     <span>Tuition: {formatPrice(MANDATORY_FEES.tuition)}</span>
-                    <span className="text-[#cdd0d5]">·</span>
+                    <span className="text-[#cdd0d5] dark:text-gray-700">·</span>
                     <span>Lab: {formatPrice(MANDATORY_FEES.lab)}</span>
-                    <span className="text-[#cdd0d5]">·</span>
+                    <span className="text-[#cdd0d5] dark:text-gray-700">·</span>
                     <span>Dev: {formatPrice(MANDATORY_FEES.dev)}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
-                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14]">
+                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {formatPrice(MANDATORY_TOTAL)}
                   </span>
-                  <button className="text-[13px] font-medium text-[#003cbb] hover:underline">
+                  <button className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors">
                     Details
                   </button>
                 </div>
@@ -114,9 +114,9 @@ export function PaymentSummary({
         </div>
 
         {/* 2. Selected Residence */}
-        <div className="bg-white rounded-[16px] border border-gray-100 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] p-5 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[10px] bg-[#eff6ff] dark:bg-[#3b82f6]/10 flex items-center justify-center shrink-0 transition-colors">
               <Building2 className="w-5 h-5 text-[#3b82f6]" />
             </div>
 
@@ -124,7 +124,7 @@ export function PaymentSummary({
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-[#868c98] uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
                       Selected Residence
                     </span>
                     {residence && residence.type !== "OFF_CAMPUS" && (
@@ -137,23 +137,23 @@ export function PaymentSummary({
                       </span>
                     )}
                   </div>
-                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14]">
+                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {residence?.name || "Not selected"}
                   </span>
                   {residence && residence.type !== "OFF_CAMPUS" && (
-                    <span className="text-[13px] text-[#525866]">
+                    <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
                       {residence.occupants} occupants per room · Room: Pending assignment
                     </span>
                   )}
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
-                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14]">
+                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {formatPrice(residencePrice)}
                   </span>
                   <button
                     onClick={() => onChangeStep(1)}
-                    className="text-[13px] font-medium text-[#003cbb] hover:underline"
+                    className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
                   >
                     Change
                   </button>
@@ -194,35 +194,35 @@ export function PaymentSummary({
         </div>
 
         {/* 3. Selected Meal Plan */}
-        <div className="bg-white rounded-[16px] border border-gray-100 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] p-5 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-[10px] bg-[#fff7ed] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[10px] bg-[#fff7ed] dark:bg-[#f97316]/10 flex items-center justify-center shrink-0 transition-colors">
               <UtensilsCrossed className="w-5 h-5 text-[#f97316]" />
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-[#868c98] uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
                     Selected Meal Plan
                   </span>
-                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14]">
+                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {meal?.name || "Not selected"}
                   </span>
                   {meal && (
-                    <span className="text-[13px] text-[#525866]">
+                    <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
                       {meal.schedule} · {meal.mealsPerDay} meals per day
                     </span>
                   )}
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
-                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14]">
+                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {formatPrice(mealPrice)}
                   </span>
                   <button
                     onClick={() => onChangeStep(2)}
-                    className="text-[13px] font-medium text-[#003cbb] hover:underline"
+                    className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
                   >
                     Change
                   </button>
@@ -248,26 +248,26 @@ export function PaymentSummary({
         </div>
 
         {/* 4. Selected Worship Center */}
-        <div className="bg-white rounded-[16px] border border-gray-100 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] p-5 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-[10px] bg-[#faf5ff] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[10px] bg-[#faf5ff] dark:bg-[#a855f7]/10 flex items-center justify-center shrink-0 transition-colors">
               <Church className="w-5 h-5 text-[#a855f7]" />
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-[#868c98] uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
                     Selected Worship Center
                   </span>
-                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14]">
+                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {worship?.name || "Not selected"}
                   </span>
                 </div>
 
                 <button
                   onClick={() => onChangeStep(3)}
-                  className="text-[13px] font-medium text-[#003cbb] hover:underline shrink-0"
+                  className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline shrink-0 transition-colors"
                 >
                   Change
                 </button>
@@ -276,15 +276,15 @@ export function PaymentSummary({
               {/* Metadata chips */}
               {worship && (
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <span className="inline-flex items-center gap-1 bg-[#f6f8fa] text-[#525866] text-[12px] px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 text-[12px] px-2.5 py-1 rounded-full transition-colors">
                     <MapPin className="w-3 h-3" />
                     {worship.location}
                   </span>
-                  <span className="inline-flex items-center gap-1 bg-[#f6f8fa] text-[#525866] text-[12px] px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 text-[12px] px-2.5 py-1 rounded-full transition-colors">
                     <User className="w-3 h-3" />
                     Pastor {worship.pastor}
                   </span>
-                  <span className="inline-flex items-center gap-1 bg-[#ecfdf5] text-[#059669] text-[12px] font-medium px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-[#ecfdf5] dark:bg-[#059669]/10 text-[#059669] dark:text-[#34d399] text-[12px] font-medium px-2.5 py-1 rounded-full transition-colors">
                     <Users className="w-3 h-3" />
                     {worship.spacesLeft} spaces remaining
                   </span>
@@ -306,22 +306,22 @@ export function PaymentSummary({
 // Shared Total Cost Banner
 function TotalCostBanner({ total }: { total: number }) {
   return (
-    <div className="bg-[#e5ecfc] border border-[#003cbb] rounded-[16px] p-5 md:p-6 flex items-center justify-between">
+    <div className="bg-[#e5ecfc] dark:bg-[#003cbb]/10 border border-[#003cbb] dark:border-[#4d82ff] rounded-[16px] p-5 md:p-6 flex items-center justify-between dark:shadow-[0_0_15px_rgba(77,130,255,0.05)] transition-colors">
       <div className="flex flex-col gap-1">
-        <span className="text-[16px] md:text-[18px] font-bold text-[#0a0d14]">
+        <span className="text-[16px] md:text-[18px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
           Total Registration Cost
         </span>
-        <span className="text-[13px] text-[#525866]">
+        <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
           Due before semester commencement
         </span>
       </div>
 
       <div className="flex flex-col items-end gap-3">
-        <span className="inline-flex items-center gap-1 bg-[#fff7ed] text-[#f97316] text-[10px] font-medium px-2 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
+        <span className="inline-flex items-center gap-1 bg-[#fff7ed] dark:bg-[#f97316]/10 text-[#f97316] dark:text-[#fb923c] text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] dark:bg-[#fb923c]" />
           Pending Payment
         </span>
-        <span className="text-[24px] md:text-[28px] font-bold text-[#0a0d14] tracking-tight">
+        <span className="text-[24px] md:text-[28px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight transition-colors">
           {formatPrice(total)}
         </span>
       </div>
