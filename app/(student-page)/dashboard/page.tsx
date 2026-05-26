@@ -22,7 +22,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6 items-stretch">
         {/* Mobile: Quick Actions first, Desktop: Academic Progress first */}
         <div className="order-1 xl:order-1 h-full [&>div]:h-full min-h-[280px] xl:min-h-[320px]">
-          <AcademicProgress cgpa={userData?.user_data.cummulative_gpa} current_level={userData?.user_data.current_level} />
+          <AcademicProgress cgpa={userData?.user_data?.academic_information?.cummulative_gpa} current_level={userData?.user_data?.academic_information?.study_level} />
         </div>
         
         <div className="order-3 xl:order-2 h-full [&>div]:h-full min-h-[280px] xl:min-h-[320px]">

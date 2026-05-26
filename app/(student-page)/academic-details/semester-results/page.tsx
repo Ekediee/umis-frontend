@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import GPAMetric from "@/components/dashboard/gpa-metric";
-import { useState } from "react";
 import { MobilePageMenuSheet } from "@/components/layout/mobile-page-menu-sheet";
+import { useEffect, useState } from "react";
+import { UMISResponse } from "@/lib/session";
+import { getUserData } from "@/app/actions/user";
 
 export default function SemesterResultsPage() {
   const router = useRouter();
@@ -20,12 +22,18 @@ export default function SemesterResultsPage() {
     { name: "2019/2020.2", level: 200, hours: 21, gpa: 4, chours: 93, cgpa: 3.71 },
   ];
 
+  const [userData, setUserData] = useState<UMISResponse | null>(null);
+
+  useEffect(() => {
+    getUserData().then(setUserData);
+  }, []);
+
   return (
     <div className="flex flex-col gap-4 md:gap-6 w-full pb-25 px-4 md:px-6 md:mt-0">
       {/* Back button */}
       <div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 hover:text-[#003095] dark:hover:text-[#8ba7ff] bg-white dark:bg-gray-900 transition-colors"
           onClick={() => router.back()}
         >
@@ -35,21 +43,25 @@ export default function SemesterResultsPage() {
       </div>
 
       {/* Top Cards Wrapper */}
+
       <Card className="rounded-[24px] md:mx-auto w-full bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:mb-0 transition-colors duration-200">
-        <GPAMetric />
+        <GPAMetric
+          cgpa={userData?.user_data?.academic_information?.cummulative_gpa}
+          current_level={userData?.user_data?.academic_information?.study_level}
+        />
       </Card>
 
       {/* Table/List Area */}
       <div className="flex flex-col md:mx-auto w-full gap-4 text-gray-900">
-        
+
         {/* Mobile Header Box */}
         <div className="bg-white dark:bg-gray-800 rounded-[16px] px-5 py-3.5 shadow-sm md:hidden flex items-center justify-between transition-colors duration-200">
-            <span className="font-bold text-[15px] text-gray-900 dark:text-gray-100">Semester Result</span>
-            <button onClick={() => setIsMobileMenuOpen(true)} className="p-1 -mr-1">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0a0d14] dark:text-gray-100">
-                <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+          <span className="font-bold text-[15px] text-gray-900 dark:text-gray-100">Semester Result</span>
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-1 -mr-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0a0d14] dark:text-gray-100">
+              <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
         {/* Desktop Header - Hidden on mobile */}
@@ -68,7 +80,7 @@ export default function SemesterResultsPage() {
           {semesters.map((sem, idx) => {
             const [session, term] = sem.name.split('.');
             const termName = term === '1' ? '1st Semester' : term === '2' ? '2nd Semester' : term === '3' ? '3rd Semester' : `${term}th Semester`;
-            
+
             return (
               <Card key={idx} className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200">
                 <CardContent className="p-0">
@@ -77,30 +89,30 @@ export default function SemesterResultsPage() {
                     <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
                       {sem.name}
                     </div>
-                    
+
                     <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
                       {sem.level}
                     </div>
-                    
+
                     <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
                       {sem.hours}
                     </div>
-                    
+
                     <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
                       {sem.gpa}
                     </div>
-                    
+
                     <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
                       {sem.chours}
                     </div>
-                    
+
                     <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
                       {sem.cgpa}
                     </div>
 
                     <div className="flex justify-end">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-9 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 shadow-sm"
                         onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
                       >
@@ -122,26 +134,26 @@ export default function SemesterResultsPage() {
                         <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">Semester GPA</span>
                       </div>
                     </div>
-                    
+
                     <div className="h-px bg-gray-100 dark:bg-gray-800 w-full" />
 
                     <div className="grid grid-cols-3 gap-2">
-                       <div className="flex flex-col gap-1">
-                          <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">Hours</span>
-                          <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.hours}</span>
-                       </div>
-                       <div className="flex flex-col gap-1 text-center">
-                          <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C. Hours</span>
-                          <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.chours}</span>
-                       </div>
-                       <div className="flex flex-col gap-1 text-right">
-                          <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C.GPA</span>
-                          <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.cgpa}</span>
-                       </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">Hours</span>
+                        <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.hours}</span>
+                      </div>
+                      <div className="flex flex-col gap-1 text-center">
+                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C. Hours</span>
+                        <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.chours}</span>
+                      </div>
+                      <div className="flex flex-col gap-1 text-right">
+                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C.GPA</span>
+                        <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.cgpa}</span>
+                      </div>
                     </div>
 
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full rounded-[12px] text-[#003cbb] dark:text-[#4d82ff] font-semibold h-11 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 shadow-sm mt-1"
                       onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
                     >
@@ -155,9 +167,9 @@ export default function SemesterResultsPage() {
           })}
         </div>
 
-        <MobilePageMenuSheet 
-          isOpen={isMobileMenuOpen} 
-          onClose={() => setIsMobileMenuOpen(false)} 
+        <MobilePageMenuSheet
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
         />
       </div>
     </div>

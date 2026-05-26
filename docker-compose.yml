@@ -5,10 +5,13 @@
 #
 # Two services:
 #   nextjs — the Next.js production server (port 3000, internal only)
-#   nginx  — reverse proxy (port 80, exposed to the host/internet)
+#   apache — reverse proxy (port 80, exposed to the host/internet)
 #
-# Users connect to :80 (Nginx) → Nginx forwards to :3000 (Next.js).
+# Users connect to :80 (Apache) → Apache forwards to :3000 (Next.js).
 # Port 3000 is NEVER directly accessible from outside the host.
+#
+# TLS: Run `certbot --apache` on the host after first deploy.
+#       Certbot will add the :443 mapping and SSL VirtualHost automatically.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -27,7 +30,7 @@ services:
       - .env
 
     # Port 3000 is intentionally NOT mapped to the host.
-    # Only Nginx (via the umis-net network) can reach it.
+    # Only Apache (via the umis-net network) can reach it.
     expose:
       - "3000"
 
@@ -42,32 +45,33 @@ services:
       retries: 3
       start_period: 40s
 
-  # ── Nginx Reverse Proxy ────────────────────────────────────────────────────
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: umis-nginx-prod
+  # ── Apache Reverse Proxy ──────────────────────────────────────────────────
+  apache:
+    image: httpd:2.4
+    container_name: umis-apache-prod
     restart: unless-stopped
 
     ports:
       # Port 80 is the only port exposed to the outside world.
-      # Certbot will add :443 here after TLS setup on the Debian server.
+      # After running `certbot --apache` on the host, Certbot will add :443
+      # automatically — no manual docker-compose change needed at that point.
       - "80:80"
 
     volumes:
-      # Mount our custom Nginx config (read-only — Nginx should never write to it)
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Mount our custom Apache config (read-only — Apache should never write to it)
+      - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
 
     networks:
       - umis-net
 
-    # Nginx depends on the Next.js service being healthy before it starts routing
+    # Apache depends on the Next.js service being healthy before it starts routing
     depends_on:
       nextjs:
         condition: service_healthy
 
 # ── Private Network ────────────────────────────────────────────────────────────
 # Both services communicate over this isolated network.
-# 'nextjs' is unreachable from the host or internet — only Nginx can reach it.
+# 'nextjs' is unreachable from the host or internet — only Apache can reach it.
 networks:
   umis-net:
     driver: bridge

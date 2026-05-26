@@ -6,7 +6,7 @@ import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { Button } from "@/components/ui/button";
 import { GPAWhatIfSimulator } from "@/components/academic-details/gpa-what-if-simulator";
 
-interface AcademicProgressProps {
+export interface AcademicProgressProps {
   cgpa?: number | null;
   semester_gpa?: number | null;
   current_level?: number | null;
