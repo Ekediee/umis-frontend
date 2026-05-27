@@ -69,7 +69,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Safe for all Unicode characters (e.g. Naira currency symbol ₦)
         const stableId = (data.type + data.message)
           .split("")
-          .reduce((acc, char) => {
+          .reduce((acc: number, char: string) => {
             const hash = (acc << 5) - acc + char.charCodeAt(0);
             return hash & hash;
           }, 0)
