@@ -16,14 +16,14 @@ export function LoginForm() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    
+
     startTransition(async () => {
       const result = await loginAction(formData);
-      
+
       if (result?.error) {
         toast.error(result.error);
       } else if (result?.success) {
-        console.log(result.data);
+
         toast.success("Login successful! Redirecting...");
         router.push("/dashboard");
       }
@@ -67,8 +67,8 @@ export function LoginForm() {
             placeholder="••••••••••"
             className="block w-full pl-[42px] pr-[42px] py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
           />
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
           >
@@ -98,8 +98,8 @@ export function LoginForm() {
       </div>
 
       {/* Submit Button */}
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         disabled={isPending}
         className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium shadow-[0_4px_14px_rgba(24,73,214,0.25)] transition-all flex items-center justify-center h-auto disabled:opacity-70 disabled:cursor-not-allowed"
       >

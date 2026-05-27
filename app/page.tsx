@@ -17,6 +17,7 @@ export default function LoginPage() {
                 src="/images/Login image [UMIS [1.0].png"
                 alt="Dashboard Mockups"
                 fill
+                unoptimized
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
                 className="object-cover object-top opacity-90 mix-blend-multiply"
                 priority
@@ -51,6 +52,7 @@ export default function LoginPage() {
               alt="Pulse Logo"
               width={32}
               height={32}
+              unoptimized
               className="object-contain lg:w-[40px] lg:h-[40px]"
             />
           </div>

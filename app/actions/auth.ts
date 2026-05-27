@@ -40,8 +40,6 @@ export async function loginAction(formData: FormData) {
 
     const data = await response.json();
 
-    console.log("Login data", data);
-
     // Token is at data.token or data.data.token
     const token = data.data.token
 

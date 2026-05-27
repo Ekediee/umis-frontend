@@ -30,6 +30,6 @@ export const config = {
      * - images (local images in public folder)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|images|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|images|favicon.ico|manifest.json|sw.js).*)',
   ],
 }

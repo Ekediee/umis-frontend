@@ -31,8 +31,6 @@ export function StudentProfileBanner({
   const [showMatric, toggleMatric, mountedMatric] = usePersistentToggle("showMatric", true);
   const mounted = mountedCgpa && mountedMatric;
 
-  console.log("This is the data", userData);
-
   // Derived display values from session data (with fallbacks)
   const rawName = userData?.entity_name ?? "—";
   const displayName = toTitleCase(rawName);
