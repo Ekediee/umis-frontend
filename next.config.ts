@@ -8,7 +8,6 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   transpilePackages: ["@base-ui/react"],
   webpack: (config) => {
     config.watchOptions = {

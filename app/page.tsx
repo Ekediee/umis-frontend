@@ -14,7 +14,7 @@ export default function LoginPage() {
           <div className="flex-1 relative flex items-center justify-center w-full h-full">
             <div className="absolute inset-0 w-full h-full lg:p-12 lg:pb-0">
               <Image
-                src="/images/Login image [UMIS [1.0].png"
+                src="/images/Login Image [UMIS [1.0].png"
                 alt="Dashboard Mockups"
                 fill
                 unoptimized
