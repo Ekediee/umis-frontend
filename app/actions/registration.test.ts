@@ -153,7 +153,7 @@ describe("getClassGroupsAction — HTTP responses", () => {
     await getClassGroupsAction();
 
     const [url, options] = fetchSpy.mock.calls[0];
-    expect(url).toContain("/api/v1/student/class-group");
+    expect(url).toContain("/api/v1/student/class-option");
     expect(options?.headers?.["Authorization"]).toBe(`Bearer ${MOCK_TOKEN}`);
   });
 });

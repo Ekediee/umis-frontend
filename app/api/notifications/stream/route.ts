@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
+import { withLogging } from "@/lib/logger";
 
-export async function GET(req: Request) {
+export const GET = withLogging(async function GET(req: Request) {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -49,4 +50,4 @@ export async function GET(req: Request) {
       'Connection': 'keep-alive',
     },
   });
-}
+});

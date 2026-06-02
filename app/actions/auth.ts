@@ -2,6 +2,7 @@
 
 import { createSession } from "@/lib/session";
 import { UMISResponse } from "@/lib/session";
+import { loggedFetch } from "@/lib/logger";
 
 export async function loginAction(formData: FormData) {
   const user_name = formData.get("user_name") as string;
@@ -18,7 +19,7 @@ export async function loginAction(formData: FormData) {
       return { error: "Internal server error: Missing API configuration" };
     }
 
-    const response = await fetch(`${apiUrl}/api/auth/login`, {
+    const response = await loggedFetch(`${apiUrl}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

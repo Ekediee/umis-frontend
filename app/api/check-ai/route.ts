@@ -3,7 +3,9 @@
  * Tests connectivity to Google Gemini and validates the API key.
  * Visit http://localhost:3000/api/check-ai in your browser to see results.
  */
-export async function GET() {
+import { withLogging, loggedFetch } from "@/lib/logger";
+
+export const GET = withLogging(async function GET(req: Request) {
   const results: Record<string, any> = {
     timestamp: new Date().toISOString(),
     envKey: {
@@ -39,7 +41,7 @@ export async function GET() {
   try {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch('https://generativelanguage.googleapis.com/', { signal: ctrl.signal });
+    const res = await loggedFetch('https://generativelanguage.googleapis.com/', { signal: ctrl.signal });
     clearTimeout(timeout);
     results.networkReachable = true;
     results.httpStatus = res.status;
@@ -77,4 +79,4 @@ export async function GET() {
   return Response.json(results, {
     headers: { 'Content-Type': 'application/json' },
   });
-}
+});

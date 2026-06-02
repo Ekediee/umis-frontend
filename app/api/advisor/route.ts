@@ -1,4 +1,5 @@
 import { streamText } from 'ai';
+import { withLogging } from '@/lib/logger';
 
 // Safely attempt to load the Google AI provider dynamically
 let googleProvider: any = null;
@@ -52,7 +53,7 @@ const RAW_STREAM_HEADERS = {
   'x-accel-buffering': 'no',
 };
 
-export async function POST(req: Request) {
+export const POST = withLogging(async function POST(req: Request) {
   const body = await req.json();
   const rawMessages = body?.messages ?? [];
 
@@ -115,4 +116,4 @@ Stick to the 21-unit maximum this semester. I strongly recommend dropping one el
   return new Response(createOfflineRawTextStream(demoText), {
     headers: RAW_STREAM_HEADERS,
   });
-}
+});

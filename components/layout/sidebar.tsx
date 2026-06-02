@@ -112,7 +112,7 @@ export function Sidebar() {
           <div className="relative">
             <Avatar className="w-10 h-10 border border-gray-100 dark:border-gray-700">
               <AvatarFallback className="bg-[#f5f8fe] dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] font-medium">YJ</AvatarFallback>
-              <AvatarImage src="/Student Image.png" alt="Yakubu Onome Joy" />
+              <AvatarImage src="/student-image.png" alt="Yakubu Onome Joy" />
             </Avatar>
           </div>
           <div className="flex-1 min-w-0">

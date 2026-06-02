@@ -1,4 +1,5 @@
 import { streamText } from 'ai';
+import { withLogging } from '@/lib/logger';
 import { getAIHandbookContext } from '../../../lib/ai/handbook-loader';
 
 // Safely attempt to load the Google AI provider dynamically
@@ -53,7 +54,7 @@ const RAW_STREAM_HEADERS = {
   'x-accel-buffering': 'no',
 };
 
-export async function POST(req: Request) {
+export const POST = withLogging(async function POST(req: Request) {
   const body = await req.json();
   const rawMessages = body?.messages ?? [];
 
@@ -104,4 +105,4 @@ ${handbookContext}
   return new Response(createOfflineRawTextStream(demoText), {
     headers: RAW_STREAM_HEADERS,
   });
-}
+});

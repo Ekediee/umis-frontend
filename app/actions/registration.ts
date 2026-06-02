@@ -1,6 +1,7 @@
 "use server";
 
 import { getSessionToken } from "@/lib/session";
+import { loggedFetch } from "@/lib/logger";
 
 // ── Raw API shapes ────────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ export const getClassGroupsAction = async (): Promise<ClassGroupsResult> => {
   }
 
   try {
-    const response = await fetch(`${apiUrl}/api/v1/student/class-group`, {
+    const response = await loggedFetch(`${apiUrl}/api/v1/student/class-option`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -65,7 +66,7 @@ export const getClassGroupsAction = async (): Promise<ClassGroupsResult> => {
     });
 
     if (!response.ok) {
-      let errorMessage = "Failed to fetch class groups";
+      let errorMessage = "Failed to fetch class options";
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
