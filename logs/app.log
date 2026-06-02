@@ -24,3 +24,7 @@
 [2026-06-02T11:15:23.493Z] [ERROR] Outgoing API Response Error: GET https://api.test.com/api/v1/student/class-option - Status: 403 - Duration: 2ms
 [2026-06-02T11:17:56.616Z] [INFO] Outgoing API Request: POST https://umis-sb.babcock.edu.ng/api/auth/login {"headers":{"Content-Type":"application/json"},"body":"{\"user_name\":\"23/0039\",\"password\":\"*****\"}"}
 [2026-06-02T11:17:57.274Z] [INFO] Outgoing API Response Success: POST https://umis-sb.babcock.edu.ng/api/auth/login - Status: 200 - Duration: 689ms
+[2026-06-02T13:52:15.996Z] [INFO] Incoming API Request: GET /api/notifications/stream
+[2026-06-02T13:52:16.002Z] [INFO] Incoming API Response Success: GET /api/notifications/stream - Status: 200 - Duration: 7ms
+[2026-06-02T14:35:08.640Z] [INFO] Incoming API Request: GET /api/notifications/stream
+[2026-06-02T14:35:08.648Z] [INFO] Incoming API Response Success: GET /api/notifications/stream - Status: 200 - Duration: 9ms

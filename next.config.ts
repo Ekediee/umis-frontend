@@ -8,6 +8,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   transpilePackages: ["@base-ui/react"],
   webpack: (config) => {
     config.watchOptions = {
@@ -23,8 +24,7 @@ const nextConfig: NextConfig = {
       ],
     }
     return config
-  },
-  turbopack: {},
+  }
 };
 
 export default withSerwist(nextConfig);

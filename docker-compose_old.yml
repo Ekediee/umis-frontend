@@ -1,0 +1,89 @@
+# ─── Production Compose ───────────────────────────────────────────────────────
+# Usage:
+#   cp .env.example .env   # first time only — fill in real secrets
+#   docker compose up -d --build
+#
+# Two services:
+#   nextjs — the Next.js production server (port 3000, internal only)
+#   apache — reverse proxy (port 80, exposed to the host/internet)
+#
+# Users connect to :80 (Apache) → Apache forwards to :3000 (Next.js).
+# Port 3000 is NEVER directly accessible from outside the host.
+#
+# TLS: Run `certbot --apache` on the host after first deploy.
+#       Certbot will add the :443 mapping and SSL VirtualHost automatically.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Next.js Application Server ─────────────────────────────────────────────
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: umis-frontend-prod
+    restart: unless-stopped
+
+    # Load all runtime secrets and config from .env on the host.
+    # Never bake secrets into the image — they stay on the server filesystem only.
+    env_file:
+      - .env
+
+    # Port 3000 is intentionally NOT mapped to the host.
+    # Only Apache (via the umis-net network) can reach it.
+    expose:
+      - "3000"
+
+    volumes:
+      - logs_data:/app/logs
+
+    networks:
+      - umis-net
+
+    # Health check: restart the container if Next.js stops responding
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── Apache Reverse Proxy ──────────────────────────────────────────────────
+  apache:
+    image: httpd:2.4
+    container_name: umis-apache-prod
+    restart: unless-stopped
+
+    ports:
+      # Port 80 is the only port exposed to the outside world.
+      # After running `certbot --apache` on the host, Certbot will add :443
+      # automatically — no manual docker-compose change needed at that point.
+      - "80:80"
+      # HTTPS (for when we finally add SSL in the future)
+      - "443:443"
+
+    volumes:
+      # Mount our custom Apache config (read-only — Apache should never write to it)
+      - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+      
+      # Shared SSL certificates
+      - /etc/letsencrypt:/etc/letsencrypt:ro 
+
+    networks:
+      - umis-net
+
+    # Apache depends on the Next.js service being healthy before it starts routing
+    depends_on:
+      nextjs:
+        condition: service_healthy
+
+# ── Private Network ────────────────────────────────────────────────────────────
+# Both services communicate over this isolated network.
+# 'nextjs' is unreachable from the host or internet — only Apache can reach it.
+networks:
+  umis-net:
+    driver: bridge
+
+volumes:
+  logs_data:
+    driver: local

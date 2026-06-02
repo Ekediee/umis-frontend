@@ -70,7 +70,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 
-# Port is internal — Nginx maps port 80 → 3000 (see docker-compose.yml)
+# Port is internal — Apache maps port 80 → 3000 (see docker-compose.yml)
 EXPOSE 3000
 
 # Start the standalone Next.js server
