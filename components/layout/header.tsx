@@ -77,7 +77,7 @@ export function Header() {
           <button type="button" className="p-1 touch-manipulation">
             <Avatar className="w-9 h-9 border border-gray-100 dark:border-gray-700">
               <AvatarFallback className="bg-[#f5f8fe] dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] font-medium text-xs">YJ</AvatarFallback>
-              <AvatarImage src="//student-image.png" alt="Yakubu Onome Joy" />
+              <AvatarImage src="/student-image.png" alt="Yakubu Onome Joy" />
             </Avatar>
           </button>
           <span className="absolute bottom-[4px] right-[0px] w-[14px] h-[14px] bg-[#003cbb] border-[2px] border-white rounded-full flex items-center justify-center pointer-events-none">

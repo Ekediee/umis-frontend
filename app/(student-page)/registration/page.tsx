@@ -15,19 +15,70 @@ import {
   MonitorPlay,
   ListTodo
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { getSemesterRegistrationStatusAction, registerSemesterAction, SemesterInfo } from "@/app/actions/registration";
+import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 
 // Mock data for registration states
 const REGISTRATION_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
 const PAYMENT_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
+
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Formats an ISO date string ("YYYY-MM-DD") to "DD Mon YYYY", e.g. "05 Jan 2026". */
+function formatDate(iso: string | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
 
 export default function RegistrationPage() {
   const router = useRouter();
   const [regState, setRegState] = useState(REGISTRATION_STATE);
   const [payState, setPayState] = useState(PAYMENT_STATE);
 
+  /** Holds the active semester info; null means not yet registered / unknown. */
+  const [semesterInfo, setSemesterInfo] = useState<SemesterInfo | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isSemesterConfirmOpen, setIsSemesterConfirmOpen] = useState(false);
+
+  // Derived convenience boolean — truthy when semester info has been fetched
+  const isRegisteredForSemester = semesterInfo !== null;
+
+  useEffect(() => {
+    async function fetchRegistrationStatus() {
+      setIsLoadingStatus(true);
+      const result = await getSemesterRegistrationStatusAction();
+      if (result.error) {
+        toast.error(result.error);
+        setSemesterInfo(null); // fallback — treat as not registered
+      } else {
+        setSemesterInfo(result.data ?? null);
+      }
+      setIsLoadingStatus(false);
+    }
+    fetchRegistrationStatus();
+  }, []);
+
   const getRegBannerProps = () => {
+    if (isLoadingStatus) {
+      return {
+        buttonText: "Loading...",
+        buttonVariant: "primary" as const,
+        description: "Checking your registration status..."
+      };
+    }
+    if (!isRegisteredForSemester) {
+      return {
+        buttonText: "Commence Registration",
+        buttonVariant: "primary" as const,
+        description: "You must register for the semester before you can register courses."
+      };
+    }
     if (regState === "completed") {
       return {
         buttonText: "Print Course Form",
@@ -80,21 +131,21 @@ export default function RegistrationPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
         <SummaryCard 
           title="Session" 
-          value="2025/2026" 
-          subValue=".2P" 
-          badgeText="Second Semester" 
+          value={semesterInfo?.semester.split(".")[0] ?? "—"}
+          subValue={semesterInfo ? "." + semesterInfo.semester.split(".")[1] : undefined}
+          badgeText="Current Semester" 
         />
         <SummaryCard 
           title="Start Date" 
-          value="15 Jan 2026" 
+          value={formatDate(semesterInfo?.startDate)} 
         />
         <SummaryCard 
           title="End Date" 
-          value="30 Apr 2026" 
+          value={formatDate(semesterInfo?.endDate)} 
         />
         <SummaryCard 
           title="Last date for Registration" 
-          value="15 Mar 2026" 
+          value={formatDate(semesterInfo?.lateRegDate)} 
           isWarning 
         />
       </div>
@@ -109,7 +160,11 @@ export default function RegistrationPage() {
           gradientClass="bg-gradient-to-br from-[#c2d6ff] to-[#ebf1ff] dark:from-[#1b2a4a] dark:to-[#111c30]"
           illustrationSrc="/Reg-image.png"
           onClick={() => {
-            if (regState !== "completed") {
+            if (isLoadingStatus) return;
+            if (!semesterInfo) {
+              // No active semester registered yet — open the commencement confirm modal
+              setIsSemesterConfirmOpen(true);
+            } else if (regState !== "completed") {
               router.push("/registration/courses");
             } else {
               router.push("/registration/course-form");
@@ -248,6 +303,26 @@ export default function RegistrationPage() {
           </div>
         </div>
       </div>
+
+      <SemesterRegistrationConfirmModal 
+        isOpen={isSemesterConfirmOpen}
+        onClose={() => setIsSemesterConfirmOpen(false)}
+        onConfirm={async () => {
+          setIsRegistering(true);
+          const result = await registerSemesterAction();
+          setIsRegistering(false);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            // Re-fetch semester info so semesterInfo state is populated with real data
+            const statusResult = await getSemesterRegistrationStatusAction();
+            setSemesterInfo(statusResult.data ?? null);
+            setIsSemesterConfirmOpen(false);
+            toast.success("Successfully registered for the semester!");
+          }
+        }}
+        isLoading={isRegistering}
+      />
     </div>
   );
 }

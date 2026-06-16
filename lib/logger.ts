@@ -180,8 +180,19 @@ export async function loggedFetch(
         `Outgoing API Response Success: ${method} ${url} - Status: ${response.status} - Duration: ${duration}ms`
       );
     } else {
+      let bodyText = "";
+      try {
+        const cloned = response.clone();
+        bodyText = await cloned.text();
+        if (bodyText.length > 300) {
+          bodyText = bodyText.substring(0, 300) + "...";
+        }
+      } catch {
+        // fallback if cloning/reading fails
+      }
+
       logger.error(
-        `Outgoing API Response Error: ${method} ${url} - Status: ${response.status} - Duration: ${duration}ms`
+         `Outgoing API Response Error: ${method} ${url} - Status: ${response.status} (${response.statusText}) - Duration: ${duration}ms${bodyText ? ` - Body: ${bodyText}` : ""}`
       );
     }
 

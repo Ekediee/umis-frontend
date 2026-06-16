@@ -31,7 +31,11 @@ vi.mock("next/headers", () => ({
 }));
 
 // ---- Import after mocks ------------------------------------------------------
-import { getClassGroupsAction } from "@/app/actions/registration";
+import { 
+  getClassGroupsAction, 
+  getSemesterRegistrationStatusAction, 
+  registerSemesterAction 
+} from "@/app/actions/registration";
 
 // ---- Helpers -----------------------------------------------------------------
 const MOCK_TOKEN = "test-bearer-token";
@@ -40,18 +44,21 @@ const MOCK_TOKEN = "test-bearer-token";
 const MOCK_API_RESPONSE = {
   status: true,
   message: "Class group retrieved successfully",
-  data: [
-    { class_option: { class_option_id: 143, class_option_name: "Soft Eng Group A" } },
-    { class_option: { class_option_id: 144, class_option_name: "Soft Eng Group B" } },
-    { class_option: { class_option_id: 154, class_option_name: "Soft Eng Group C" } },
-  ],
+  data: {
+    has_many_class_option: true,
+    class_options: [
+      { class_option_id: "143", class_option_name: "Soft Eng Group A" },
+      { class_option_id: "144", class_option_name: "Soft Eng Group B" },
+      { class_option_id: "154", class_option_name: "Soft Eng Group C" },
+    ]
+  }
 };
 
 /** Normalised shape the UI expects */
 const EXPECTED_GROUPS = [
-  { id: 143, name: "Soft Eng Group A" },
-  { id: 144, name: "Soft Eng Group B" },
-  { id: 154, name: "Soft Eng Group C" },
+  { id: "143", name: "Soft Eng Group A" },
+  { id: "144", name: "Soft Eng Group B" },
+  { id: "154", name: "Soft Eng Group C" },
 ];
 
 function mockFetch(status: number, body: unknown) {
@@ -157,3 +164,115 @@ describe("getClassGroupsAction — HTTP responses", () => {
     expect(options?.headers?.["Authorization"]).toBe(`Bearer ${MOCK_TOKEN}`);
   });
 });
+
+/** Real backend payload for the /commence endpoint */
+const MOCK_SEMESTER_RESPONSE = {
+  status: true,
+  message: "Commencement Semester found",
+  data: {
+    semester: "2025/2026.2",
+    start_date: "2026-01-05",
+    end_date: "2026-04-24",
+    late_reg_date: "2026-04-24",
+  },
+};
+
+/** Normalised shape the UI expects */
+const EXPECTED_SEMESTER_INFO = {
+  semester: "2025/2026.2",
+  startDate: "2026-01-05",
+  endDate: "2026-04-24",
+  lateRegDate: "2026-04-24",
+};
+
+describe("getSemesterRegistrationStatusAction — environment / auth guards", () => {
+  it("returns an error when API_URL is not set", async () => {
+    delete process.env.API_URL;
+    cookieStore._store["token"] = MOCK_TOKEN;
+
+    const result = await getSemesterRegistrationStatusAction();
+
+    expect(result.error).toBeDefined();
+    expect(result.data).toBeUndefined();
+  });
+
+  it("returns an error when no session token is present", async () => {
+    // No token in cookie store
+    const result = await getSemesterRegistrationStatusAction();
+
+    expect(result.error).toMatch(/not authenticated/i);
+    expect(result.data).toBeUndefined();
+  });
+});
+
+describe("getSemesterRegistrationStatusAction — HTTP responses", () => {
+  beforeEach(() => {
+    cookieStore._store["token"] = MOCK_TOKEN;
+  });
+
+  it("returns SemesterInfo when the API responds successfully", async () => {
+    mockFetch(200, MOCK_SEMESTER_RESPONSE);
+
+    const result = await getSemesterRegistrationStatusAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.data).toEqual(EXPECTED_SEMESTER_INFO);
+  });
+
+  it("maps snake_case API fields to camelCase SemesterInfo fields", async () => {
+    mockFetch(200, MOCK_SEMESTER_RESPONSE);
+
+    const result = await getSemesterRegistrationStatusAction();
+
+    expect(result.data?.semester).toBe("2025/2026.2");
+    expect(result.data?.startDate).toBe("2026-01-05");
+    expect(result.data?.endDate).toBe("2026-04-24");
+    expect(result.data?.lateRegDate).toBe("2026-04-24");
+  });
+
+  it("returns an error when the API responds with a non-OK status", async () => {
+    mockFetch(500, { status: false, message: "Server error" });
+
+    const result = await getSemesterRegistrationStatusAction();
+
+    expect(result.error).toBe("Server error");
+    expect(result.data).toBeUndefined();
+  });
+
+  it("returns an error when fetch throws a network error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("Network error"))
+    );
+
+    const result = await getSemesterRegistrationStatusAction();
+
+    expect(result.error).toMatch(/connect/i);
+    expect(result.data).toBeUndefined();
+  });
+});
+
+describe("registerSemesterAction", () => {
+  beforeEach(() => {
+    cookieStore._store["token"] = MOCK_TOKEN;
+  });
+
+  it("returns success: true when API registers successfully", async () => {
+    mockFetch(200, { status: true, message: "Registered successfully" });
+
+    const result = await registerSemesterAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.success).toBe(true);
+  });
+
+  it("returns an error when registration fails", async () => {
+    mockFetch(400, { status: false, message: "Cannot register: Outstanding balance" });
+
+    const result = await registerSemesterAction();
+
+    expect(result.error).toBe("Cannot register: Outstanding balance");
+    expect(result.success).toBeUndefined();
+  });
+});
+

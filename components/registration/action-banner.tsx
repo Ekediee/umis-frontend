@@ -61,6 +61,7 @@ export function ActionBanner({
           alt=""
           width={300}
           height={300}
+          unoptimized
           className="object-contain"
         />
       </div>

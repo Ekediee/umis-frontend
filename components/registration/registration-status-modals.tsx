@@ -174,3 +174,27 @@ export function FailureModal({ isOpen, onClose, onConfirm }: ModalProps) {
     />
   );
 }
+
+export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, isLoading }: ModalProps) {
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      icon={AlertCircle}
+      iconBgClass="bg-[#FEF3EB] dark:bg-[#F97316]/20"
+      iconColorClass="text-[#F97316] dark:text-[#f89856]"
+      title="Register for Semester"
+      description={
+        <p>
+          Are you sure you want to register for this semester? By confirming, you agree to begin your academic session registration and proceed to the course selection workspace.
+        </p>
+      }
+      primaryActionText="Confirm & Register"
+      secondaryActionText="Cancel"
+      onPrimaryAction={onConfirm}
+      onSecondaryAction={onClose}
+      isLoading={isLoading}
+    />
+  );
+}
+

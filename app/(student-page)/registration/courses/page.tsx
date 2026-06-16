@@ -13,7 +13,7 @@ import { SelectCourses } from "@/components/registration/steps/select-courses";
 import { Summary } from "@/components/registration/steps/summary";
 import { ConfirmationModal, SuccessModal, FailureModal } from "@/components/registration/registration-status-modals";
 import { OutstandingPayment } from "@/components/registration/outstanding-payment";
-import { getClassGroupsAction, type ClassGroup } from "@/app/actions/registration";
+import { getClassGroupsAction, getCoursesAction, type ClassGroup, type CourseItem } from "@/app/actions/registration";
 
 export default function RegistrationCoursesFlow() {
   const router = useRouter();
@@ -31,6 +31,7 @@ export default function RegistrationCoursesFlow() {
   
   // Step 1 — Class group fetch state
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
+  const [hasManyClassOptions, setHasManyClassOptions] = useState(true);
   const [classGroupsLoading, setClassGroupsLoading] = useState(true);
   const [classGroupsError, setClassGroupsError] = useState<string | null>(null);
 
@@ -43,11 +44,21 @@ export default function RegistrationCoursesFlow() {
       setClassGroupsLoading(true);
       setClassGroupsError(null);
       const result = await getClassGroupsAction();
+      console.log("groups", result);
       if (cancelled) return;
       if (result.error) {
         setClassGroupsError(result.error);
       } else {
-        setClassGroups(result.data ?? []);
+        const groups = result.data ?? [];
+        setClassGroups(groups);
+        setHasManyClassOptions(result.hasMany ?? true);
+
+        // If there is only one class option, auto-select it and jump straight
+        // to step 2 so the student doesn't see a single-item picker.
+        if (!result.hasMany && groups.length === 1) {
+          setSelectedGroup(groups[0].id);
+          setCurrentStep(2);
+        }
       }
       setClassGroupsLoading(false);
     }
@@ -55,10 +66,35 @@ export default function RegistrationCoursesFlow() {
     return () => { cancelled = true; };
   }, []);
 
-  // Step 2 State (Mock compulsory defaults usually passed in)
-  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(["co1", "co2", "1", "2", "3", "4", "5", "6"]);
+  // Step 2 — Course fetch state
+  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
+
+  // Step 2 — Selection state (starts empty; no mock defaults)
+  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
   const totalSteps = 3;
+
+  // Fetch courses whenever the selected class group changes
+  useEffect(() => {
+    if (!selectedGroup) return;
+    let cancelled = false;
+    async function fetchCourses() {
+      setCoursesLoading(true);
+      setCoursesError(null);
+      const result = await getCoursesAction(selectedGroup!);
+      if (cancelled) return;
+      if (result.error) {
+        setCoursesError(result.error);
+      } else {
+        setCourses(result.data ?? []);
+      }
+      setCoursesLoading(false);
+    }
+    fetchCourses();
+    return () => { cancelled = true; };
+  }, [selectedGroup]);
 
   // Offline Draft Logic
   useEffect(() => {
@@ -104,7 +140,10 @@ export default function RegistrationCoursesFlow() {
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
+    // When there is only one class option the student was auto-advanced to
+    // step 2, so step 1 is not navigable. Clamp the minimum to 2 in that case.
+    const minStep = hasManyClassOptions ? 1 : 2;
+    if (currentStep > minStep) {
       setCurrentStep(prev => prev - 1);
     }
   };
@@ -182,7 +221,10 @@ export default function RegistrationCoursesFlow() {
         )}
         
         {currentStep === 2 && (
-          <SelectCourses 
+          <SelectCourses
+            courses={courses}
+            isLoading={coursesLoading}
+            error={coursesError}
             selectedCourseIds={selectedCourseIds}
             onToggleCourse={toggleCourse}
           />
