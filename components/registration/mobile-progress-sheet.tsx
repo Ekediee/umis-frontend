@@ -3,13 +3,21 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { useRegistration } from "@/components/providers/registration-provider";
+
 interface MobileProgressSheetProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentStep: number;
+  isOpen?: boolean;
+  onClose?: () => void;
+  currentStep?: number;
 }
 
-export function MobileProgressSheet({ isOpen, onClose, currentStep }: MobileProgressSheetProps) {
+export function MobileProgressSheet(props: MobileProgressSheetProps) {
+  const context = useRegistration();
+
+  const isOpen = props.isOpen !== undefined ? props.isOpen : context.isMobileSheetOpen;
+  const onClose = props.onClose !== undefined ? props.onClose : () => context.setIsMobileSheetOpen(false);
+  const currentStep = props.currentStep !== undefined ? props.currentStep : context.currentStep;
+
   if (!isOpen) return null;
 
   const steps = [

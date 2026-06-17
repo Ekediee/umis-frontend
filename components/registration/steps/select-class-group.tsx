@@ -2,11 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { ClassGroup } from "@/app/actions/registration";
+import { useRegistration } from "@/components/providers/registration-provider";
 
 interface SelectClassGroupProps {
-  selectedGroup: string | null;
-  onSelectGroup: (group: string) => void;
-  classGroups: ClassGroup[];
+  selectedGroup?: string | null;
+  onSelectGroup?: (group: string | null) => void;
+  classGroups?: ClassGroup[];
   isLoading?: boolean;
   error?: string | null;
 }
@@ -25,13 +26,14 @@ function GroupSkeleton() {
   );
 }
 
-export function SelectClassGroup({
-  selectedGroup,
-  onSelectGroup,
-  classGroups,
-  isLoading = false,
-  error = null,
-}: SelectClassGroupProps) {
+export function SelectClassGroup(props: SelectClassGroupProps) {
+  const context = useRegistration();
+  
+  const selectedGroup = props.selectedGroup !== undefined ? props.selectedGroup : context.selectedGroup;
+  const onSelectGroup = props.onSelectGroup !== undefined ? props.onSelectGroup : context.setSelectedGroup;
+  const classGroups = props.classGroups !== undefined ? props.classGroups : context.classGroups;
+  const isLoading = props.isLoading !== undefined ? props.isLoading : context.classGroupsLoading;
+  const error = props.error !== undefined ? props.error : context.classGroupsError;
   return (
     <div className="flex flex-col gap-6 md:gap-8 w-full max-w-[820px] mx-auto md:mx-0">
 

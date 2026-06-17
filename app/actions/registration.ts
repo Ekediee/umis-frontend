@@ -34,6 +34,7 @@ export interface ClassGroupsResult {
   data?: ClassGroup[];
   /** Mirrors has_many_class_option from the API — false means only one group exists. */
   hasMany?: boolean;
+  message?: string;
   error?: string;
 }
 
@@ -97,7 +98,7 @@ export const getClassGroupsAction = async (): Promise<ClassGroupsResult> => {
       name: item.class_option_name,
     }));
     console.log("groups", groups);
-    return { data: groups, hasMany: json?.data?.has_many_class_option };
+    return { data: groups, hasMany: json?.data?.has_many_class_option, message: json?.message };
   } catch (error) {
     console.error("getClassGroupsAction error:", error);
     return {
@@ -108,6 +109,10 @@ export const getClassGroupsAction = async (): Promise<ClassGroupsResult> => {
 
 // ── Raw API shapes — courses ───────────────────────────────────────────────────
 
+/**
+ * Flat course object returned by the new API shape.
+ * Instructor name is now inlined directly on the course — no separate wrapper.
+ */
 interface RawCourse {
   qcourseid: number;
   courseid: string;
@@ -117,21 +122,19 @@ interface RawCourse {
   yeartaken: number;
   coursename: string | null;
   creditunit: string | null;
-}
-
-interface RawInstructor {
   instructorname: string;
 }
 
-interface RawCourseItem {
-  course: RawCourse;
-  instructor: RawInstructor;
+/** `data` envelope returned by /api/v1/student/select-course/{id} */
+interface RawCoursesData {
+  student_type: string;
+  courses: RawCourse[];
 }
 
 interface RawCoursesResponse {
   status: boolean;
   message: string;
-  data: RawCourseItem[];
+  data: RawCoursesData;
 }
 
 // ── Normalised shape used by the UI ──────────────────────────────────────────
@@ -152,7 +155,12 @@ export interface CourseItem {
 }
 
 export interface CoursesResult {
-  data?: CourseItem[];
+  data?: {
+    /** E.g. "Undergraduate" */
+    studentType: string;
+    courses: CourseItem[];
+  };
+  message?: string;
   error?: string;
 }
 
@@ -204,19 +212,22 @@ export const getCoursesAction = async (classOptionId: string): Promise<CoursesRe
 
     const json: RawCoursesResponse = await response.json();
 
-    const courses: CourseItem[] = Array.isArray(json?.data)
-      ? json.data.map((item) => ({
-          id: String(item.course.qcourseid),
-          code: item.course.courseid.trim(),
-          title: item.course.coursetitle.trim(),
-          units: item.course.credithours,
-          lecturer: item.instructor.instructorname.trim(),
-          level: formatLevel(item.course.yeartaken),
+    const courses: CourseItem[] = Array.isArray(json?.data?.courses)
+      ? json.data.courses.map((item) => ({
+          id: String(item.qcourseid),
+          code: item.courseid.trim(),
+          title: item.coursetitle.trim(),
+          units: item.credithours,
+          lecturer: item.instructorname.trim(),
+          level: formatLevel(item.yeartaken),
         }))
       : [];
 
-    console.log("courses", courses);
-    return { data: courses };
+    // console.log("courses", courses);
+    return {
+      data: { studentType: json?.data?.student_type, courses },
+      message: json?.message,
+    };
   } catch (error) {
     console.error("getCoursesAction error:", error);
     return {
@@ -257,6 +268,7 @@ export interface SemesterInfo {
 
 export interface RegistrationStatusResult {
   data?: SemesterInfo;
+  message?: string;
   error?: string;
 }
 
@@ -305,6 +317,7 @@ export const getSemesterRegistrationStatusAction = async (): Promise<Registratio
         endDate: json.data.end_date,
         lateRegDate: json.data.late_reg_date,
       },
+      message: json?.message,
     };
   } catch (error) {
     console.error("getSemesterRegistrationStatusAction error:", error);
@@ -316,6 +329,7 @@ export const getSemesterRegistrationStatusAction = async (): Promise<Registratio
 
 export interface RegisterSemesterResult {
   success?: boolean;
+  message?: string;
   error?: string;
 }
 
@@ -357,7 +371,7 @@ export const registerSemesterAction = async (): Promise<RegisterSemesterResult> 
 
     const json = await response.json();
     const success = json?.status ?? json?.success ?? true;
-    return { success };
+    return { success, message: json?.message };
   } catch (error) {
     console.error("registerSemesterAction error:", error);
     return {

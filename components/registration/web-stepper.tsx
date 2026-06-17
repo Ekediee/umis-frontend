@@ -4,11 +4,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
+import { useRegistration } from "@/components/providers/registration-provider";
+
 interface WebStepperProps {
-  currentStep: number;
+  currentStep?: number;
 }
 
-export function WebStepper({ currentStep }: WebStepperProps) {
+export function WebStepper(props: WebStepperProps) {
+  const context = useRegistration();
+  const currentStep = props.currentStep !== undefined ? props.currentStep : context.currentStep;
   const router = useRouter();
 
   const steps = [

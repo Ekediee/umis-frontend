@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { AICourseAdvisor } from "@/components/registration/ai-course-advisor";
 import { type CourseItem } from "@/app/actions/registration";
+import { useRegistration } from "@/components/providers/registration-provider";
 
 // ── Course Card (mobile) ──────────────────────────────────────────────────────
 
@@ -121,20 +122,22 @@ const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
 interface SelectCoursesProps {
   /** Live courses returned from the API for the selected class group */
-  courses: CourseItem[];
-  isLoading: boolean;
-  error: string | null;
-  selectedCourseIds: string[];
-  onToggleCourse: (courseId: string) => void;
+  courses?: CourseItem[];
+  isLoading?: boolean;
+  error?: string | null;
+  selectedCourseIds?: string[];
+  onToggleCourse?: (courseId: string) => void;
 }
 
-export function SelectCourses({
-  courses,
-  isLoading,
-  error,
-  selectedCourseIds,
-  onToggleCourse,
-}: SelectCoursesProps) {
+export function SelectCourses(props: SelectCoursesProps) {
+  const context = useRegistration();
+
+  const courses = props.courses !== undefined ? props.courses : context.courses;
+  const isLoading = props.isLoading !== undefined ? props.isLoading : context.coursesLoading;
+  const error = props.error !== undefined ? props.error : context.coursesError;
+  const selectedCourseIds = props.selectedCourseIds !== undefined ? props.selectedCourseIds : context.selectedCourseIds;
+  const onToggleCourse = props.onToggleCourse !== undefined ? props.onToggleCourse : context.toggleCourse;
+
   const [activeTab, setActiveTab] = useState<"carry_over" | "current">("current");
 
   // ── Pagination ──────────────────────────────────────────────────────────────
@@ -188,7 +191,7 @@ export function SelectCourses({
       currentCourses.forEach(c => { if (!isSelected(c)) onToggleCourse(c.id); });
     }
   };
-
+console.log("selectedCourses", selectedCourses)
   return (
     <div className="flex flex-col w-full max-w-[1200px] md:mx-0">
 

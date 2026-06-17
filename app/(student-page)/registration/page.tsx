@@ -58,6 +58,9 @@ export default function RegistrationPage() {
         setSemesterInfo(null); // fallback — treat as not registered
       } else {
         setSemesterInfo(result.data ?? null);
+        if (result.message) {
+          toast.success(result.message);
+        }
       }
       setIsLoadingStatus(false);
     }
@@ -318,7 +321,7 @@ export default function RegistrationPage() {
             const statusResult = await getSemesterRegistrationStatusAction();
             setSemesterInfo(statusResult.data ?? null);
             setIsSemesterConfirmOpen(false);
-            toast.success("Successfully registered for the semester!");
+            toast.success(result.message || "Successfully registered for the semester!");
           }
         }}
         isLoading={isRegistering}

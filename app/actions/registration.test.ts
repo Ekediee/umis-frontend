@@ -33,6 +33,7 @@ vi.mock("next/headers", () => ({
 // ---- Import after mocks ------------------------------------------------------
 import { 
   getClassGroupsAction, 
+  getCoursesAction,
   getSemesterRegistrationStatusAction, 
   registerSemesterAction 
 } from "@/app/actions/registration";
@@ -119,13 +120,14 @@ describe("getClassGroupsAction — HTTP responses", () => {
     expect(result.data).toBeUndefined();
   });
 
-  it("normalises the nested class_option shape into { id, name } pairs", async () => {
+  it("normalises the nested class_option shape into { id, name } pairs and returns message", async () => {
     mockFetch(200, MOCK_API_RESPONSE);
 
     const result = await getClassGroupsAction();
 
     expect(result.error).toBeUndefined();
     expect(result.data).toEqual(EXPECTED_GROUPS);
+    expect(result.message).toBe("Class group retrieved successfully");
   });
 
   it("returns an empty array when data is missing from the response", async () => {
@@ -210,13 +212,14 @@ describe("getSemesterRegistrationStatusAction — HTTP responses", () => {
     cookieStore._store["token"] = MOCK_TOKEN;
   });
 
-  it("returns SemesterInfo when the API responds successfully", async () => {
+  it("returns SemesterInfo and message when the API responds successfully", async () => {
     mockFetch(200, MOCK_SEMESTER_RESPONSE);
 
     const result = await getSemesterRegistrationStatusAction();
 
     expect(result.error).toBeUndefined();
     expect(result.data).toEqual(EXPECTED_SEMESTER_INFO);
+    expect(result.message).toBe("Commencement Semester found");
   });
 
   it("maps snake_case API fields to camelCase SemesterInfo fields", async () => {
@@ -257,13 +260,14 @@ describe("registerSemesterAction", () => {
     cookieStore._store["token"] = MOCK_TOKEN;
   });
 
-  it("returns success: true when API registers successfully", async () => {
+  it("returns success: true and message when API registers successfully", async () => {
     mockFetch(200, { status: true, message: "Registered successfully" });
 
     const result = await registerSemesterAction();
 
     expect(result.error).toBeUndefined();
     expect(result.success).toBe(true);
+    expect(result.message).toBe("Registered successfully");
   });
 
   it("returns an error when registration fails", async () => {
@@ -276,3 +280,135 @@ describe("registerSemesterAction", () => {
   });
 });
 
+// ── getCoursesAction ──────────────────────────────────────────────────────────
+
+/** Real backend payload for the /select-course/{id} endpoint (new shape) */
+const MOCK_COURSES_RESPONSE = {
+  status: true,
+  message: "Courses retrieved successfully",
+  data: {
+    student_type: "Undergraduate",
+    courses: [
+      {
+        courseid: "GST 312",
+        coursename: null,
+        creditunit: null,
+        coursetitle: "Peace and Conflict Resolution",
+        credithours: 2,
+        lecturehours: 2,
+        yeartaken: 3,
+        qcourseid: 220889,
+        instructorname: "APAT  KIDEN TANIMU",
+      },
+      {
+        courseid: "CSC 308",
+        coursename: null,
+        creditunit: null,
+        coursetitle: "Operating Systems",
+        credithours: 3,
+        lecturehours: 3,
+        yeartaken: 3,
+        qcourseid: 221787,
+        instructorname: "AJAYI  Wumi",
+      },
+    ],
+  },
+};
+
+/** Normalised shape the UI expects */
+const EXPECTED_COURSES = [
+  {
+    id: "220889",
+    code: "GST 312",
+    title: "Peace and Conflict Resolution",
+    units: 2,
+    lecturer: "APAT  KIDEN TANIMU",
+    level: "Year 3",
+  },
+  {
+    id: "221787",
+    code: "CSC 308",
+    title: "Operating Systems",
+    units: 3,
+    lecturer: "AJAYI  Wumi",
+    level: "Year 3",
+  },
+];
+
+describe("getCoursesAction — auth guards", () => {
+  it("returns an error when API_URL is not set", async () => {
+    delete process.env.API_URL;
+    cookieStore._store["token"] = MOCK_TOKEN;
+
+    const result = await getCoursesAction("143");
+
+    expect(result.error).toBeDefined();
+    expect(result.data).toBeUndefined();
+  });
+
+  it("returns an error when no session token is present", async () => {
+    const result = await getCoursesAction("143");
+
+    expect(result.error).toMatch(/not authenticated/i);
+    expect(result.data).toBeUndefined();
+  });
+});
+
+describe("getCoursesAction — HTTP responses", () => {
+  beforeEach(() => {
+    cookieStore._store["token"] = MOCK_TOKEN;
+  });
+
+  it("maps the flat course shape to CourseItem[] and returns studentType and message", async () => {
+    mockFetch(200, MOCK_COURSES_RESPONSE);
+
+    const result = await getCoursesAction("143");
+
+    expect(result.error).toBeUndefined();
+    expect(result.message).toBe("Courses retrieved successfully");
+    expect(result.data?.studentType).toBe("Undergraduate");
+    expect(result.data?.courses).toEqual(EXPECTED_COURSES);
+  });
+
+  it("returns an error when the API responds with a non-OK status", async () => {
+    mockFetch(403, { status: false, message: "Forbidden" });
+
+    const result = await getCoursesAction("143");
+
+    expect(result.error).toBeDefined();
+    expect(result.data).toBeUndefined();
+  });
+
+  it("returns an empty courses array when data.courses is missing", async () => {
+    mockFetch(200, { status: true, message: "ok", data: { student_type: "Undergraduate" } });
+
+    const result = await getCoursesAction("143");
+
+    expect(result.error).toBeUndefined();
+    expect(result.data?.courses).toEqual([]);
+  });
+
+  it("returns an error when fetch throws a network error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+
+    const result = await getCoursesAction("143");
+
+    expect(result.error).toMatch(/connect/i);
+    expect(result.data).toBeUndefined();
+  });
+
+  it("sends the correct URL with the classOptionId and Authorization header", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => MOCK_COURSES_RESPONSE,
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await getCoursesAction("143");
+
+    const [url, options] = fetchSpy.mock.calls[0];
+    expect(url).toContain("/api/v1/student/select-course/143");
+    expect(options?.headers?.["Authorization"]).toBe(`Bearer ${MOCK_TOKEN}`);
+  });
+});

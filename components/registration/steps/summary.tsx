@@ -4,18 +4,26 @@ import { Box, BookOpen, ShieldCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-interface SummaryProps {
-  selectedGroup: string | null;
-  selectedCourseIds: string[];
-}
-
+import { useRegistration } from "@/components/providers/registration-provider";
 import { MOCK_COURSES } from "@/lib/mock-data";
 
-export function Summary({ selectedGroup, selectedCourseIds }: SummaryProps) {
-  // Course is selected if its ID is in selectedCourseIds
-  const selectedCourses = MOCK_COURSES.filter(c => selectedCourseIds.includes(c.id));
-  const carryOverCourses = selectedCourses.filter(c => c.isCarryOver);
-  const currentCourses = selectedCourses.filter(c => !c.isCarryOver);
+interface SummaryProps {
+  selectedGroup?: string | null;
+  selectedCourseIds?: string[];
+}
+
+export function Summary(props: SummaryProps) {
+  const context = useRegistration();
+
+  const selectedGroup = props.selectedGroup !== undefined ? props.selectedGroup : context.selectedGroup;
+  const selectedCourseIds = props.selectedCourseIds !== undefined ? props.selectedCourseIds : context.selectedCourseIds;
+
+  // Resolve actual selected courses from the context's dynamic courses, or fallback to mock data if empty
+  const allAvailableCourses = context.courses.length > 0 ? context.courses : MOCK_COURSES;
+  const selectedCourses = allAvailableCourses.filter(c => selectedCourseIds.includes(c.id));
+
+  const carryOverCourses = selectedCourses.filter(c => (c as any).isCarryOver);
+  const currentCourses = selectedCourses.filter(c => !(c as any).isCarryOver);
   const totalUnits = selectedCourses.reduce((sum, course) => sum + course.units, 0);
 
   const CourseCard = ({ course }: { course: any }) => (
@@ -169,7 +177,7 @@ export function Summary({ selectedGroup, selectedCourseIds }: SummaryProps) {
         <div className="flex flex-col gap-3">
           <h3 className="text-[15px] font-bold text-[#0a0d14] dark:text-gray-100">Current Semester Courses</h3>
           <div className="flex flex-col gap-3">
-            {currentCourses.map(course => <CourseCard key={course.id} course={course} />)}
+            {currentCourses.map((course: any) => <CourseCard key={course.id} course={course} />)}
           </div>
         </div>
       </div>
