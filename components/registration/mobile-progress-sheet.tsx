@@ -3,7 +3,8 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { useRegistration } from "@/components/providers/registration-provider";
+import { useContext } from "react";
+import { RegistrationContext } from "@/components/providers/registration-provider";
 
 interface MobileProgressSheetProps {
   isOpen?: boolean;
@@ -12,18 +13,19 @@ interface MobileProgressSheetProps {
 }
 
 export function MobileProgressSheet(props: MobileProgressSheetProps) {
-  const context = useRegistration();
+  const context = useContext(RegistrationContext);
 
-  const isOpen = props.isOpen !== undefined ? props.isOpen : context.isMobileSheetOpen;
-  const onClose = props.onClose !== undefined ? props.onClose : () => context.setIsMobileSheetOpen(false);
-  const currentStep = props.currentStep !== undefined ? props.currentStep : context.currentStep;
+  const isOpen = props.isOpen !== undefined ? props.isOpen : (context?.isMobileSheetOpen ?? false);
+  const onClose = props.onClose !== undefined ? props.onClose : (context?.setIsMobileSheetOpen ? () => context.setIsMobileSheetOpen(false) : () => {});
+  const currentStep = props.currentStep !== undefined ? props.currentStep : (context?.currentStep ?? 1);
 
   if (!isOpen) return null;
 
   const steps = [
     { id: 1, title: "Commence Registration" },
     { id: 2, title: "Select Courses" },
-    { id: 3, title: "Summary" }
+    { id: 3, title: "Select Worship Center" },
+    { id: 4, title: "Summary" }
   ];
 
   return (

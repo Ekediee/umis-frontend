@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { useRegistration } from "@/components/providers/registration-provider";
+import { useContext } from "react";
+import { RegistrationContext } from "@/components/providers/registration-provider";
 
 interface BottomActionBarProps {
   currentStep?: number;
@@ -17,14 +18,14 @@ interface BottomActionBarProps {
 }
 
 export function BottomActionBar(props: BottomActionBarProps) {
-  const context = useRegistration();
+  const context = useContext(RegistrationContext);
 
-  const currentStep = props.currentStep !== undefined ? props.currentStep : context.currentStep;
-  const totalSteps = props.totalSteps !== undefined ? props.totalSteps : context.totalSteps;
-  const onPrevious = props.onPrevious !== undefined ? props.onPrevious : context.handlePrevious;
-  const onNext = props.onNext !== undefined ? props.onNext : context.handleNext;
-  const nextLabel = props.nextLabel !== undefined ? props.nextLabel : context.nextLabel;
-  const isNextDisabled = props.isNextDisabled !== undefined ? props.isNextDisabled : context.isNextDisabled;
+  const currentStep = props.currentStep !== undefined ? props.currentStep : (context?.currentStep ?? 1);
+  const totalSteps = props.totalSteps !== undefined ? props.totalSteps : (context?.totalSteps ?? 1);
+  const onPrevious = props.onPrevious !== undefined ? props.onPrevious : (context?.handlePrevious ?? (() => {}));
+  const onNext = props.onNext !== undefined ? props.onNext : (context?.handleNext ?? (() => {}));
+  const nextLabel = props.nextLabel !== undefined ? props.nextLabel : (context?.nextLabel ?? "Next");
+  const isNextDisabled = props.isNextDisabled !== undefined ? props.isNextDisabled : (context?.isNextDisabled ?? false);
   const className = props.className;
   return (
     <div className={cn("fixed bottom-0 left-0 right-0 md:left-64 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 md:px-8 md:py-6 z-40", className)}>

@@ -6,6 +6,7 @@ import { MobileProgressSheet } from "@/components/registration/mobile-progress-s
 import { BottomActionBar } from "@/components/registration/bottom-action-bar";
 import { SelectClassGroup } from "@/components/registration/steps/select-class-group";
 import { SelectCourses } from "@/components/registration/steps/select-courses";
+import { SelectWorshipCenter } from "@/components/registration/steps/select-worship-center";
 import { Summary } from "@/components/registration/steps/summary";
 import { ConfirmationModal, SuccessModal, FailureModal } from "@/components/registration/registration-status-modals";
 import { OutstandingPayment } from "@/components/registration/outstanding-payment";
@@ -23,6 +24,8 @@ function RegistrationCoursesFlowContent() {
     isSubmitting,
     handleConfirmSubmit,
     hasOutstandingPayment,
+    selectedWorshipCenterId,
+    setSelectedWorshipCenterId,
   } = useRegistration();
 
   if (hasOutstandingPayment) {
@@ -49,7 +52,14 @@ function RegistrationCoursesFlowContent() {
         
         {currentStep === 2 && <SelectCourses />}
 
-        {currentStep === 3 && <Summary />}
+        {currentStep === 3 && (
+          <SelectWorshipCenter
+            selectedId={selectedWorshipCenterId}
+            onSelect={setSelectedWorshipCenterId}
+          />
+        )}
+
+        {currentStep === 4 && <Summary />}
       </div>
 
       {/* Bottom Action Bar */}

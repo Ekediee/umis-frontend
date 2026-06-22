@@ -45,6 +45,10 @@ interface SelectMealPlanProps {
   onSelect: (id: string) => void;
 }
 
+function formatPrice(price: number): string {
+  return `₦${price.toLocaleString()}`;
+}
+
 export function SelectMealPlan({ selectedId, onSelect }: SelectMealPlanProps) {
   return (
     <div className="w-full max-w-[1200px] h-[79vh] overflow-y-auto flex flex-col gap-5">
@@ -82,11 +86,14 @@ export function SelectMealPlan({ selectedId, onSelect }: SelectMealPlanProps) {
                 />
               </div>
 
-              {/* Meal Name */}
-              <div className="flex items-center px-1">
+              {/* Meal Name & Price */}
+              <div className="flex flex-col px-1 gap-1">
                 <p className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 leading-tight transition-colors">
                   {meal.name}
                 </p>
+                <span className="text-[14px] md:text-[16px] font-bold text-[#003cbb] dark:text-[#4d82ff] tracking-tight">
+                  {formatPrice(meal.price)}
+                </span>
               </div>
 
               {/* Selection Indicator */}

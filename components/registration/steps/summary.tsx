@@ -1,11 +1,12 @@
 "use client";
 
-import { Box, BookOpen, ShieldCheck } from "lucide-react";
+import { Box, BookOpen, ShieldCheck, Church } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 import { useRegistration } from "@/components/providers/registration-provider";
 import { MOCK_COURSES } from "@/lib/mock-data";
+import { WORSHIP_CENTERS } from "@/components/registration/steps/select-worship-center";
 
 interface SummaryProps {
   selectedGroup?: string | null;
@@ -17,6 +18,9 @@ export function Summary(props: SummaryProps) {
 
   const selectedGroup = props.selectedGroup !== undefined ? props.selectedGroup : context.selectedGroup;
   const selectedCourseIds = props.selectedCourseIds !== undefined ? props.selectedCourseIds : context.selectedCourseIds;
+  const selectedWorshipCenterId = context.selectedWorshipCenterId;
+
+  const worshipCenter = WORSHIP_CENTERS.find(w => w.id === selectedWorshipCenterId);
 
   // Resolve actual selected courses from the context's dynamic courses, or fallback to mock data if empty
   const allAvailableCourses = context.courses.length > 0 ? context.courses : MOCK_COURSES;
@@ -108,7 +112,7 @@ export function Summary(props: SummaryProps) {
       </div>
 
       {/* Review Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         
         {/* Total Units Selected */}
         <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
@@ -140,11 +144,24 @@ export function Summary(props: SummaryProps) {
           <div className="flex flex-col">
             <span className="text-[14px] text-[#525866] dark:text-gray-400">Classification</span>
             <div className="flex items-center gap-2">
-              <span className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] dark:text-gray-100 leading-tight">Normal Load</span>
+              <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 leading-tight">Normal Load</span>
               <span className="bg-[#f6f8fa] dark:bg-gray-850 text-[#525866] dark:text-gray-400 text-[11px] font-bold px-2 py-0.5 rounded-md">200L</span>
             </div>
           </div>
         </div>
+
+        {/* Worship Center */}
+        {worshipCenter && (
+          <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+            <div className="w-12 h-12 rounded-full bg-[#faf5ff] dark:bg-[#a855f7]/15 flex items-center justify-center shrink-0">
+              <Church className="w-6 h-6 text-[#a855f7]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[14px] text-[#525866] dark:text-gray-400">Worship Center</span>
+              <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 truncate w-full leading-tight" title={worshipCenter.name}>{worshipCenter.name}</span>
+            </div>
+          </div>
+        )}
 
       </div>
 

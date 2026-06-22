@@ -10,13 +10,13 @@ import { MobileFlowHeader } from "@/components/registration/mobile-flow-header";
 import { BottomActionBar } from "@/components/registration/bottom-action-bar";
 import { SelectResidence } from "@/components/fees/steps/select-residence";
 import { SelectMealPlan } from "@/components/fees/steps/select-meal-plan";
-import { SelectWorshipCenter } from "@/components/fees/steps/select-worship-center";
 import { PaymentSummary } from "@/components/fees/steps/payment-summary";
-import { SelectGateway } from "@/components/fees/steps/select-gateway";
+import { WalletPayment } from "@/components/fees/steps/wallet-payment";
 import { PartialPaymentModal } from "@/components/fees/partial-payment-modal";
 import { PaymentProgressSheet } from "@/components/fees/payment-progress-sheet";
 import { PaymentMethodSheet } from "@/components/fees/payment-method-sheet";
 import { ProcessingOverlay } from "@/components/fees/processing-overlay";
+import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 
 function PaymentFlowContent() {
   const router = useRouter();
@@ -28,6 +28,8 @@ function PaymentFlowContent() {
   const [isPartialPaymentOpen, setIsPartialPaymentOpen] = useState(false);
   const [isMobilePaymentSelectionOpen, setIsMobilePaymentSelectionOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   // Derive labels
   const sessionLabel = "2025/2026";
@@ -36,10 +38,8 @@ function PaymentFlowContent() {
   // Selection State
   const [selectedResidence, setSelectedResidence] = useState<string | null>(null);
   const [selectedMealPlan, setSelectedMealPlan] = useState<string | null>(null);
-  const [selectedWorshipCenter, setSelectedWorshipCenter] = useState<string | null>(null);
-  const [selectedGateway, setSelectedGateway] = useState<string | null>(null);
 
-  const totalSteps = 5;
+  const totalSteps = 4;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -61,9 +61,8 @@ function PaymentFlowContent() {
     switch (currentStep) {
       case 1: return "Select Residence";
       case 2: return "Select Meal Plan";
-      case 3: return "Select Worship Center";
-      case 4: return "Summary";
-      case 5: return "Payment";
+      case 3: return "Summary";
+      case 4: return "Payment";
       default: return "Make Payment";
     }
   };
@@ -71,8 +70,7 @@ function PaymentFlowContent() {
   const getNextLabel = () => {
     switch (currentStep) {
       case 1: return "Proceed";
-      case 2: return "Proceed";
-      case 3: return "Proceed to Summary";
+      case 2: return "Proceed to Summary";
       default: return "Proceed";
     }
   };
@@ -81,34 +79,33 @@ function PaymentFlowContent() {
     switch (currentStep) {
       case 1: return !selectedResidence;
       case 2: return !selectedMealPlan;
-      case 3: return !selectedWorshipCenter;
       default: return false;
     }
   };
 
   const handleFullPayment = () => {
     // Navigate to gateway selection step
-    setCurrentStep(5);
+    setCurrentStep(4);
   };
 
   const handleCancelPayment = () => {
     // Go back to summary
-    setCurrentStep(4);
-    setSelectedGateway(null);
+    setCurrentStep(3);
   };
 
   const handlePayNow = () => {
-    if (!selectedGateway) return;
-
     // Show processing overlay
     setIsProcessing(true);
 
-    // Simulate external gateway redirect + response (2s delay)
+    // Simulate payment via wallet (2.5s delay)
     setTimeout(() => {
       setIsProcessing(false);
+      // Deduct from wallet balance
       const total = computeTotal();
+      setWalletBalance(prev => Math.max(0, prev - total));
+      
       router.push(
-        `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=${selectedGateway === "payzeep" ? "Payzeep" : "Flutterwave"}`
+        `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=Wallet`
       );
     }, 2500);
   };
@@ -178,34 +175,26 @@ function PaymentFlowContent() {
         )}
 
         {currentStep === 3 && (
-          <SelectWorshipCenter
-            selectedId={selectedWorshipCenter}
-            onSelect={setSelectedWorshipCenter}
-          />
-        )}
-
-        {currentStep === 4 && (
           <PaymentSummary
             selectedResidenceId={selectedResidence}
             selectedMealPlanId={selectedMealPlan}
-            selectedWorshipCenterId={selectedWorshipCenter}
             onChangeStep={handleChangeStep}
           />
         )}
 
-        {currentStep === 5 && (
-          <SelectGateway
-            selectedGateway={selectedGateway}
-            onSelect={setSelectedGateway}
+        {currentStep === 4 && (
+          <WalletPayment
+            walletBalance={walletBalance}
             totalAmount={computeTotal()}
             onCancelPayment={handleCancelPayment}
             onPayNow={handlePayNow}
+            onFundWallet={() => setIsFundWalletModalOpen(true)}
           />
         )}
       </div>
 
-      {/* Bottom Action Bar — Steps 1-3 use standard bar */}
-      {currentStep < 4 && (
+      {/* Bottom Action Bar — Steps 1-2 use standard bar */}
+      {currentStep < 3 && (
         <BottomActionBar
           currentStep={currentStep}
           totalSteps={totalSteps}
@@ -216,8 +205,8 @@ function PaymentFlowContent() {
         />
       )}
 
-      {/* Step 4: Custom Payment Bottom Bar */}
-      {currentStep === 4 && (
+      {/* Step 3: Custom Payment Bottom Bar */}
+      {currentStep === 3 && (
         <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 md:px-8 md:py-6 z-40 transition-colors">
           <div className="flex items-center justify-between max-w-[1200px] mx-auto">
             {/* Previous */}
@@ -260,14 +249,14 @@ function PaymentFlowContent() {
         </div>
       )}
 
-      {/* Step 5 has its own bottom actions embedded in SelectGateway */}
+      {/* Step 4 has its own bottom actions embedded in SelectGateway */}
 
       {/* Partial Payment Modal (Desktop and Mobile flow) */}
       <PartialPaymentModal
         isOpen={isPartialPaymentOpen}
         onClose={() => setIsPartialPaymentOpen(false)}
         totalAmount={computeTotal()}
-        onPayNow={() => setCurrentStep(5)}
+        onPayNow={() => setCurrentStep(4)}
       />
 
       {/* Mobile Payment Selection Sheet */}
@@ -283,6 +272,12 @@ function PaymentFlowContent() {
         isOpen={isMobileSheetOpen}
         onClose={() => setIsMobileSheetOpen(false)}
         currentStep={currentStep}
+      />
+
+      <FundWalletModal
+        isOpen={isFundWalletModalOpen}
+        onClose={() => setIsFundWalletModalOpen(false)}
+        onSuccess={(amount) => setWalletBalance(prev => prev + amount)}
       />
 
       {/* Processing Overlay */}

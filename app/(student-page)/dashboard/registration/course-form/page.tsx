@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useRef, useState, Suspense, useEffect } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { getUserData } from "@/app/actions/user";
+import { getStudentProfileAction } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
+import { getClassGroupsAction, getCoursesAction, CourseItem } from "@/app/actions/registration";
+import { getOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
+import { WORSHIP_CENTERS } from "@/components/registration/steps/select-worship-center";
 
 const COURSE_LIST = [
   { id: "GST 312", title: "Peace and Conflict Resolution", units: "2.0", option: "Soft Eng", lecturer: "APAT KIDEN TANIMU" },
@@ -23,11 +26,40 @@ const COURSE_LIST = [
 
 function CourseFormContent() {
   const [userData, setUserData] = useState<UMISResponse | null>(null);
+  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [selectedWorshipCenter, setSelectedWorshipCenter] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    getUserData().then(setUserData);
+    getStudentProfileAction().then(setUserData);
+
+    async function loadCourses() {
+      try {
+        const groupRes = await getClassGroupsAction();
+        if (groupRes.data && groupRes.data.length > 0) {
+          const coursesRes = await getCoursesAction(groupRes.data[0].id);
+          if (coursesRes.data?.courses) {
+            setCourses(coursesRes.data.courses);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load courses from API:", error);
+      }
+    }
+
+    async function loadDraft() {
+      const draft = await getOfflineDraft<{ group: string | null; courses: string[], worshipCenter: string | null }>(OFFLINE_COURSE_CART_KEY);
+      if (draft && draft.worshipCenter) {
+        const wc = WORSHIP_CENTERS.find(w => w.id === draft.worshipCenter);
+        if (wc) {
+          setSelectedWorshipCenter(wc.name);
+        }
+      }
+    }
+
+    loadCourses();
+    loadDraft();
   }, []);
 
   const handleDownload = async () => {
@@ -64,6 +96,29 @@ function CourseFormContent() {
   };
 
   const student = userData?.user_data;
+
+  const rawLevel = student?.academic_information?.study_level || student?.current_level;
+  const displayLevel = rawLevel ? (Number(rawLevel) < 10 ? Number(rawLevel) * 100 : rawLevel) : "300";
+
+  const displayCgpa = typeof student?.academic_information?.cummulative_gpa === 'number'
+    ? student.academic_information.cummulative_gpa.toFixed(2)
+    : typeof student?.cummulative_gpa === 'number'
+    ? student.cummulative_gpa.toFixed(2)
+    : student?.academic_information?.cummulative_gpa || student?.cummulative_gpa || "4.36";
+
+  const displayFullName = student?.personal_information?.student_name || student?.student_name || userData?.entity_name || "YAKUBU ONOME JOY";
+
+  const displayMatricNumber = student?.personal_information?.matric_number || student?.matric_number || "23/0039";
+
+  const displayCourses = (courses.length > 0 ? courses : COURSE_LIST).map(course => ({
+    code: 'code' in course ? (course.code as string) : (course.id as string),
+    title: course.title,
+    units: typeof course.units === 'number' ? course.units.toFixed(1) : course.units,
+    option: 'option' in course ? (course.option as string) : (student?.department || "Software Engineering"),
+    lecturer: course.lecturer
+  }));
+
+  const totalUnits = displayCourses.reduce((sum, c) => sum + parseFloat(c.units || "0"), 0).toFixed(1);
 
   return (
     <div className="px-4 md:px-8 pb-12 print:px-0 print:pb-0 print:bg-white">
@@ -160,10 +215,10 @@ function CourseFormContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div className="col-span-1 bg-[#f8fafc] border border-[#f1f5f9] rounded-lg p-5">
                 <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Full Name</p>
-                <p className="text-[18px] font-bold text-gray-900 uppercase">{student?.student_name || "YAKUBU ONOME JOY"}</p>
+                <p className="text-[18px] font-bold text-gray-900 uppercase">{displayFullName}</p>
                 <div className="mt-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Matric Number</p>
-                  <p className="text-[16px] font-mono font-bold text-gray-800">{student?.matric_number || "23/0039"}</p>
+                  <p className="text-[16px] font-mono font-bold text-gray-800">{displayMatricNumber}</p>
                 </div>
               </div>
               <div className="col-span-1 bg-[#f8fafc] border border-[#f1f5f9] rounded-lg p-5 flex flex-col justify-between">
@@ -173,7 +228,7 @@ function CourseFormContent() {
                 </div>
                 <div className="mt-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Level</p>
-                  <p className="text-[16px] font-bold text-gray-800">{student?.current_level || "300"}.0</p>
+                  <p className="text-[16px] font-bold text-gray-800">{displayLevel}.0</p>
                 </div>
               </div>
               <div className="col-span-1 bg-[#f8fafc] border border-[#f1f5f9] rounded-lg p-5 flex flex-col justify-between">
@@ -203,11 +258,11 @@ function CourseFormContent() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-8 px-2">
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Sex</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information.gender || "Female"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.gender || "Female"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Marital Status</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information.marital_status || "Single"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.marital_status || "Single"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Birth Date</p>
@@ -215,22 +270,26 @@ function CourseFormContent() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Religion</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information.religion || "Christian (SDA)"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.religion || "Christian (SDA)"}</p>
                 </div>
-                <div className="col-span-2">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Worship Center</p>
+                  <p className="text-[14px] font-medium text-gray-900">{selectedWorshipCenter || "—"}</p>
+                </div>
+                <div className="col-span-1 md:col-span-3">
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Residence</p>
                   <p className="text-[14px] font-medium text-gray-900">{student?.is_off_campus ? "Off Campus" : "On Campus"}</p>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 md:col-span-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Address</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.contact_information.residential_address || "11 Eleku Street, Ilishan Remo"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.contact_information?.residential_address || "11 Eleku Street, Ilishan Remo"}</p>
                 </div>
               </div>
 
               {/* CGPA Banner */}
               <div className="mt-8 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
                 <p className="text-[11px] font-bold text-[#1e3a8a] uppercase tracking-wider">Current CGPA</p>
-                <p className="text-[20px] font-bold text-[#1e3a8a]">{student?.cummulative_gpa || "4.36"}</p>
+                <p className="text-[20px] font-bold text-[#1e3a8a]">{displayCgpa}</p>
               </div>
             </div>
 
@@ -242,7 +301,7 @@ function CourseFormContent() {
                   <h2 className="text-[18px] font-bold text-gray-800 uppercase tracking-wide">Selected Course List</h2>
                 </div>
                 <div className="text-[14px] font-bold text-gray-400 uppercase">
-                  Total Units: <span className="text-blue-900 text-[16px]">20.0</span>
+                  Total Units: <span className="text-blue-900 text-[16px]">{totalUnits}</span>
                 </div>
               </div>
 
@@ -258,9 +317,9 @@ function CourseFormContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {COURSE_LIST.map((course, idx) => (
+                    {displayCourses.map((course, idx) => (
                       <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-4 py-3.5 text-[14px] font-mono font-bold text-blue-900">{course.id}</td>
+                        <td className="px-4 py-3.5 text-[14px] font-mono font-bold text-blue-900">{course.code}</td>
                         <td className="px-4 py-3.5 text-[14px] font-medium text-gray-800">{course.title}</td>
                         <td className="px-4 py-3.5 text-[14px] text-gray-700 text-center">{course.units}</td>
                         <td className="px-4 py-3.5 text-[14px] text-gray-500">{course.option}</td>
@@ -286,7 +345,7 @@ function CourseFormContent() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Level</p>
-                  <p className="text-[14px] font-bold text-gray-900">{student?.current_level || "300"}.0</p>
+                  <p className="text-[14px] font-bold text-gray-900">{displayLevel}.0</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Fees</p>

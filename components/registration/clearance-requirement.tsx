@@ -52,7 +52,7 @@ export function ClearanceRequirement({
   const StatusIcon = config.icon;
 
   return (
-    <div className="bg-[#F8F9FB] dark:bg-gray-900 rounded-[24px] p-5 flex flex-col items-start md:justify-between gap-4 group transition-all border border-transparent dark:border-gray-800 hover:border-gray-100 dark:hover:border-gray-700">
+    <div className="bg-[#f4f4f5] dark:bg-gray-900 rounded-[24px] p-5 flex flex-col items-start md:justify-between gap-4 group transition-all border border-transparent dark:border-gray-800 hover:border-gray-100 dark:hover:border-gray-700">
       <div className="flex flex-row gap-4 items-start justify-between  w-full flex-1">
         <div className="w-12 h-12 rounded-full bg-[#e2e4e9] dark:bg-gray-800 flex items-center justify-center shrink-0">
           <Icon className="w-6 h-6 text-[#0a0d14] dark:text-gray-100" />

@@ -4,21 +4,23 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-import { useRegistration } from "@/components/providers/registration-provider";
+import { useContext } from "react";
+import { RegistrationContext } from "@/components/providers/registration-provider";
 
 interface WebStepperProps {
   currentStep?: number;
 }
 
 export function WebStepper(props: WebStepperProps) {
-  const context = useRegistration();
-  const currentStep = props.currentStep !== undefined ? props.currentStep : context.currentStep;
+  const context = useContext(RegistrationContext);
+  const currentStep = props.currentStep !== undefined ? props.currentStep : (context?.currentStep ?? 1);
   const router = useRouter();
 
   const steps = [
     { id: 1, title: "Select Class Group" },
     { id: 2, title: "Select Courses" },
-    { id: 3, title: "Summary" }
+    { id: 3, title: "Select Worship Center" },
+    { id: 4, title: "Summary" }
   ];
 
   return (

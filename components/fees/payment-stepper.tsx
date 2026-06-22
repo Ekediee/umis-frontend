@@ -13,9 +13,8 @@ interface PaymentStepperProps {
 const steps = [
   { id: 1, title: "Select Residence" },
   { id: 2, title: "Select Meal Plan" },
-  { id: 3, title: "Select Worship Center" },
-  { id: 4, title: "Summary" },
-  { id: 5, title: "Payment Gateway" }
+  { id: 3, title: "Summary" },
+  { id: 4, title: "Payment Gateway" }
 ];
 
 export function PaymentStepper({ 
