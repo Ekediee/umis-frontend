@@ -3,7 +3,8 @@
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { useRegistration } from "@/components/providers/registration-provider";
+import { useContext } from "react";
+import { RegistrationContext } from "@/components/providers/registration-provider";
 
 interface MobileFlowHeaderProps {
   currentStep?: number;
@@ -14,12 +15,12 @@ interface MobileFlowHeaderProps {
 
 export function MobileFlowHeader(props: MobileFlowHeaderProps) {
   const router = useRouter();
-  const context = useRegistration();
+  const context = useContext(RegistrationContext);
 
-  const currentStep = props.currentStep !== undefined ? props.currentStep : context.currentStep;
-  const totalSteps = props.totalSteps !== undefined ? props.totalSteps : context.totalSteps;
-  const title = props.title !== undefined ? props.title : context.getStepTitle();
-  const onProgressClick = props.onProgressClick !== undefined ? props.onProgressClick : () => context.setIsMobileSheetOpen(true);
+  const currentStep = props.currentStep !== undefined ? props.currentStep : (context?.currentStep ?? 1);
+  const totalSteps = props.totalSteps !== undefined ? props.totalSteps : (context?.totalSteps ?? 1);
+  const title = props.title !== undefined ? props.title : (context?.getStepTitle() ?? "");
+  const onProgressClick = props.onProgressClick !== undefined ? props.onProgressClick : (context?.setIsMobileSheetOpen ? () => context.setIsMobileSheetOpen(true) : () => {});
   
   // Calculate dash array for circle progress
   const radius = 16;

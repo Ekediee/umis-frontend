@@ -95,7 +95,7 @@ describe('RegistrationProvider', () => {
     );
 
     expect(screen.getByTestId('current-step').textContent).toBe('1');
-    expect(screen.getByTestId('total-steps').textContent).toBe('3');
+    expect(screen.getByTestId('total-steps').textContent).toBe('4');
     expect(screen.getByTestId('selected-group').textContent).toBe('none');
     expect(screen.getByTestId('is-next-disabled').textContent).toBe('yes');
 

@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getSemesterRegistrationStatusAction, registerSemesterAction, SemesterInfo } from "@/app/actions/registration";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
+import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 
 // Mock data for registration states
 const REGISTRATION_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
@@ -45,6 +46,8 @@ export default function RegistrationPage() {
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isSemesterConfirmOpen, setIsSemesterConfirmOpen] = useState(false);
+  const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   // Derived convenience boolean — truthy when semester info has been fetched
   const isRegisteredForSemester = semesterInfo !== null;
@@ -170,7 +173,7 @@ export default function RegistrationPage() {
             } else if (regState !== "completed") {
               router.push("/registration/courses");
             } else {
-              router.push("/registration/course-form");
+              router.push("/dashboard/registration/course-form");
             }
           }}
         />
@@ -216,15 +219,15 @@ export default function RegistrationPage() {
             description="Initial registration form submission online"
             status="pending"
             actionText="View Course Form"
-            onAction={() => router.push("/registration/course-form")}
+            onAction={() => router.push("/dashboard/registration/course-form")}
           />
           <ClearanceRequirement 
             icon={CreditCard}
             title="Finance"
             description="Tuition and fee clearance from Bursary"
             status="not_approved"
-            actionText="Pay Now"
-            onAction={() => router.push("/dashboard/finance/fees")}
+            actionText="Fund Wallet"
+            onAction={() => setIsFundWalletModalOpen(true)}
           />
           <ClearanceRequirement 
             icon={UserCheck}
@@ -325,6 +328,15 @@ export default function RegistrationPage() {
           }
         }}
         isLoading={isRegistering}
+      />
+
+      <FundWalletModal
+        isOpen={isFundWalletModalOpen}
+        onClose={() => setIsFundWalletModalOpen(false)}
+        onSuccess={(amount) => {
+          setWalletBalance(prev => prev + amount);
+          toast.success(`Successfully funded wallet with ₦${amount.toLocaleString()}`);
+        }}
       />
     </div>
   );

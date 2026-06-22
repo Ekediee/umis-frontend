@@ -4,7 +4,6 @@ import { Building2, UtensilsCrossed, Church, GraduationCap, MapPin, User, Users 
 import { cn } from "@/lib/utils";
 import { RESIDENCE_HALLS, type ResidenceHall } from "./select-residence";
 import { type MealOption } from "./select-meal-plan";
-import { WORSHIP_CENTERS, type WorshipCenter } from "./select-worship-center";
 import Image from "next/image";
 
 // Mandatory fees — mock data, API will feed later
@@ -36,19 +35,16 @@ function formatPrice(price: number): string {
 interface PaymentSummaryProps {
   selectedResidenceId: string | null;
   selectedMealPlanId: string | null;
-  selectedWorshipCenterId: string | null;
   onChangeStep: (step: number) => void;
 }
 
 export function PaymentSummary({
   selectedResidenceId,
   selectedMealPlanId,
-  selectedWorshipCenterId,
   onChangeStep,
 }: PaymentSummaryProps) {
   const residence = RESIDENCE_HALLS.find((h) => h.id === selectedResidenceId);
   const meal = MEAL_OPTIONS_DATA.find((m) => m.id === selectedMealPlanId);
-  const worship = WORSHIP_CENTERS.find((w) => w.id === selectedWorshipCenterId);
 
   const residencePrice = residence?.price || 0;
   const mealPrice = meal?.price || 0;
@@ -247,52 +243,7 @@ export function PaymentSummary({
           </div>
         </div>
 
-        {/* 4. Selected Worship Center */}
-        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-[10px] bg-[#faf5ff] dark:bg-[#a855f7]/10 flex items-center justify-center shrink-0 transition-colors">
-              <Church className="w-5 h-5 text-[#a855f7]" />
-            </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
-                    Selected Worship Center
-                  </span>
-                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {worship?.name || "Not selected"}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => onChangeStep(3)}
-                  className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline shrink-0 transition-colors"
-                >
-                  Change
-                </button>
-              </div>
-
-              {/* Metadata chips */}
-              {worship && (
-                <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <span className="inline-flex items-center gap-1 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 text-[12px] px-2.5 py-1 rounded-full transition-colors">
-                    <MapPin className="w-3 h-3" />
-                    {worship.location}
-                  </span>
-                  <span className="inline-flex items-center gap-1 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 text-[12px] px-2.5 py-1 rounded-full transition-colors">
-                    <User className="w-3 h-3" />
-                    Pastor {worship.pastor}
-                  </span>
-                  <span className="inline-flex items-center gap-1 bg-[#ecfdf5] dark:bg-[#059669]/10 text-[#059669] dark:text-[#34d399] text-[12px] font-medium px-2.5 py-1 rounded-full transition-colors">
-                    <Users className="w-3 h-3" />
-                    {worship.spacesLeft} spaces remaining
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Desktop: Total Cost Banner at bottom */}

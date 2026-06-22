@@ -41,6 +41,10 @@ interface RegistrationContextType {
   setSelectedCourseIds: (ids: string[]) => void;
   toggleCourse: (id: string) => void;
 
+  // Step 3: Worship Center
+  selectedWorshipCenterId: string | null;
+  setSelectedWorshipCenterId: (id: string | null) => void;
+
   // Modals & Submission States
   isConfirmModalOpen: boolean;
   setIsConfirmModalOpen: (open: boolean) => void;
@@ -64,7 +68,7 @@ interface RegistrationContextType {
   setIsMobileSheetOpen: (open: boolean) => void;
 }
 
-const RegistrationContext = createContext<RegistrationContextType | undefined>(undefined);
+export const RegistrationContext = createContext<RegistrationContextType | undefined>(undefined);
 
 export function RegistrationProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -75,7 +79,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   // Stepper state
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   // Modals state
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -95,6 +99,9 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
+
+  // Worship center state
+  const [selectedWorshipCenterId, setSelectedWorshipCenterId] = useState<string | null>(null);
 
   const MAX_UNITS = 23;
 
@@ -156,10 +163,11 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   // Load draft from Offline Storage on mount
   useEffect(() => {
     const loadDraft = async () => {
-      const draft = await getOfflineDraft<{ group: string | null; courses: string[] }>(OFFLINE_COURSE_CART_KEY);
+      const draft = await getOfflineDraft<{ group: string | null; courses: string[], worshipCenter: string | null }>(OFFLINE_COURSE_CART_KEY);
       if (draft) {
         if (draft.group) setSelectedGroup(draft.group);
         if (draft.courses && draft.courses.length > 0) setSelectedCourseIds(draft.courses);
+        if (draft.worshipCenter) setSelectedWorshipCenterId(draft.worshipCenter);
         toast.info("Offline draft loaded", { description: "Your previous selections have been restored." });
       }
     };
@@ -179,12 +187,12 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Save to draft whenever selectedGroup or selectedCourseIds changes
+  // Save to draft whenever selectedGroup or selectedCourseIds or selectedWorshipCenterId changes
   useEffect(() => {
-    if (selectedGroup !== null || selectedCourseIds.length > 0) {
-      saveOfflineDraft(OFFLINE_COURSE_CART_KEY, { group: selectedGroup, courses: selectedCourseIds });
+    if (selectedGroup !== null || selectedCourseIds.length > 0 || selectedWorshipCenterId !== null) {
+      saveOfflineDraft(OFFLINE_COURSE_CART_KEY, { group: selectedGroup, courses: selectedCourseIds, worshipCenter: selectedWorshipCenterId });
     }
-  }, [selectedGroup, selectedCourseIds]);
+  }, [selectedGroup, selectedCourseIds, selectedWorshipCenterId]);
 
   // Actions
   const handleNext = () => {
@@ -232,7 +240,8 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     switch (currentStep) {
       case 1: return "Select Class Group";
       case 2: return "Select Courses";
-      case 3: return "Summary";
+      case 3: return "Select Worship Center";
+      case 4: return "Summary";
       default: return "Registration";
     }
   };
@@ -243,11 +252,13 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
 
   const isNextDisabled = 
     (currentStep === 1 && !selectedGroup) ||
-    (currentStep === 2 && selectedCourseIds.length === 0);
+    (currentStep === 2 && selectedCourseIds.length === 0) ||
+    (currentStep === 3 && !selectedWorshipCenterId);
 
   const nextLabel = 
     currentStep === 1 ? "Select Courses" : 
-    currentStep === 2 ? "Summary" : 
+    currentStep === 2 ? "Select Worship Center" : 
+    currentStep === 3 ? "Summary" : 
     "Submit Registration";
 
   return (
@@ -271,6 +282,8 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
         selectedCourseIds,
         setSelectedCourseIds,
         toggleCourse,
+        selectedWorshipCenterId,
+        setSelectedWorshipCenterId,
         isConfirmModalOpen,
         setIsConfirmModalOpen,
         isSuccessModalOpen,
