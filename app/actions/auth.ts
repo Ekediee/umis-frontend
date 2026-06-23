@@ -57,6 +57,6 @@ export async function loginAction(formData: FormData) {
     return { success: true, data: data };
   } catch (error) {
     console.error("Login API Error:", error);
-    return { error: "Failed to connect to the authentication service. Please try again later." };
+    return { error: `Failed to connect to the authentication service. Please try again later: ${error}` };
   }
 }
