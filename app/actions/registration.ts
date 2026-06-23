@@ -380,3 +380,101 @@ export const registerSemesterAction = async (): Promise<RegisterSemesterResult> 
   }
 };
 
+// ── Worship Centers ───────────────────────────────────────────────────────────
+
+// ── Raw API shape ─────────────────────────────────────────────────────────────
+
+interface RawWorshipCenter {
+  sabbath_class_id: number;
+  sabbath_class_name: string;
+  location_on_campus: string;
+  pastor_in_charge: string;
+  declared_capacity: number;
+  occupied_space: number;
+  space_left: number;
+}
+
+interface RawWorshipCentersResponse {
+  status: boolean;
+  message: string;
+  data: RawWorshipCenter[];
+}
+
+// ── Normalised shape used by the UI ──────────────────────────────────────────
+
+export interface WorshipCenter {
+  /** Stringified sabbath_class_id */
+  id: string;
+  name: string;
+  location: string;
+  pastor: string;
+  declaredCapacity: number;
+  /** Remaining seats for new students: declared_capacity - new_student */
+  spacesLeft: number;
+}
+
+export interface WorshipCentersResult {
+  data?: WorshipCenter[];
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Fetches all available worship centers.
+ * Endpoint: GET /api/v1/worship-centers
+ */
+export const getWorshipCentersAction = async (): Promise<WorshipCentersResult> => {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    console.error("API_URL is not defined in environment variables");
+    return { error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken();
+  if (!token) {
+    return { error: "You are not authenticated. Please log in again." };
+  }
+
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/worship-centers`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to fetch worship centers";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Response body wasn't JSON — keep the fallback message
+      }
+      return { error: errorMessage };
+    }
+
+    const json: RawWorshipCentersResponse = await response.json();
+
+    const centers: WorshipCenter[] = Array.isArray(json?.data)
+      ? json.data
+          .map((item) => ({
+            id: String(item.sabbath_class_id),
+            name: item.sabbath_class_name,
+            location: item.location_on_campus,
+            pastor: item.pastor_in_charge,
+            declaredCapacity: item.declared_capacity,
+            spacesLeft: Math.max(0, item.declared_capacity - item.occupied_space),
+          }))
+      : [];
+
+    return { data: centers, message: json?.message };
+  } catch (error) {
+    console.error("getWorshipCentersAction error:", error);
+    return {
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+};

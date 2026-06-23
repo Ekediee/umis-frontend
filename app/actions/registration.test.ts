@@ -35,7 +35,8 @@ import {
   getClassGroupsAction, 
   getCoursesAction,
   getSemesterRegistrationStatusAction, 
-  registerSemesterAction 
+  registerSemesterAction,
+  getWorshipCentersAction
 } from "@/app/actions/registration";
 
 // ---- Helpers -----------------------------------------------------------------
@@ -412,3 +413,97 @@ describe("getCoursesAction — HTTP responses", () => {
     expect(options?.headers?.["Authorization"]).toBe(`Bearer ${MOCK_TOKEN}`);
   });
 });
+
+describe("getWorshipCentersAction — environment / auth guards", () => {
+  it("returns an error when API_URL is not set", async () => {
+    delete process.env.API_URL;
+    cookieStore._store["token"] = MOCK_TOKEN;
+
+    const result = await getWorshipCentersAction();
+
+    expect(result.error).toBeDefined();
+    expect(result.data).toBeUndefined();
+  });
+
+  it("returns an error when no session token is present", async () => {
+    const result = await getWorshipCentersAction();
+
+    expect(result.error).toMatch(/not authenticated/i);
+    expect(result.data).toBeUndefined();
+  });
+});
+
+describe("getWorshipCentersAction — HTTP responses", () => {
+  beforeEach(() => {
+    cookieStore._store["token"] = MOCK_TOKEN;
+  });
+
+  it("returns mapped worship centers when API responds successfully", async () => {
+    const mockWorshipCentersResponse = {
+      status: true,
+      message: "Worship centers retrieved successfully",
+      data: [
+        {
+          sabbath_class_id: 1,
+          sabbath_class_name: "Hope Chapel",
+          location_on_campus: "Main Campus",
+          pastor_in_charge: "Pastor John",
+          declared_capacity: 100,
+          occupied_space: 40,
+        },
+        {
+          sabbath_class_id: 2,
+          sabbath_class_name: "Faith Chapel",
+          location_on_campus: "West Campus",
+          pastor_in_charge: "Pastor Jane",
+          declared_capacity: 150,
+          occupied_space: 150,
+        }
+      ]
+    };
+
+    mockFetch(200, mockWorshipCentersResponse);
+
+    const result = await getWorshipCentersAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.message).toBe("Worship centers retrieved successfully");
+    expect(result.data).toEqual([
+      {
+        id: "1",
+        name: "Hope Chapel",
+        location: "Main Campus",
+        pastor: "Pastor John",
+        declaredCapacity: 100,
+        spacesLeft: 60,
+      },
+      {
+        id: "2",
+        name: "Faith Chapel",
+        location: "West Campus",
+        pastor: "Pastor Jane",
+        declaredCapacity: 150,
+        spacesLeft: 0,
+      }
+    ]);
+  });
+
+  it("returns an error when the API responds with a non-OK status", async () => {
+    mockFetch(500, { status: false, message: "Server error" });
+
+    const result = await getWorshipCentersAction();
+
+    expect(result.error).toBe("Server error");
+    expect(result.data).toBeUndefined();
+  });
+
+  it("returns an error when fetch throws a network error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+
+    const result = await getWorshipCentersAction();
+
+    expect(result.error).toMatch(/connect/i);
+    expect(result.data).toBeUndefined();
+  });
+});
+

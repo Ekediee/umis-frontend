@@ -11,54 +11,85 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useRegistration } from "@/components/providers/registration-provider";
 
-// Data interface — structured for future API integration
-export interface WorshipCenter {
-  id: string;
-  name: string;
-  location: string;
-  pastor: string;
-  spacesLeft: number;
-}
-
-// Mock data from Figma
-const WORSHIP_CENTERS: WorshipCenter[] = [
-  { id: "beula", name: "Beula Chapel", location: "Platinum Hall Auditorium", pastor: "Emmanuel Enyigare", spacesLeft: 144 },
-  { id: "canaan-land", name: "Canaan Land Chapel", location: "Nelson Mandela Auditorium", pastor: "Olugbenga Idowu", spacesLeft: 185 },
-  { id: "christ-foundation", name: "Christ Our Foundation Church", location: "Law Activity Hall Iperu Campus", pastor: "Emereonye Ndubuisi M.", spacesLeft: 155 },
-  { id: "covenant", name: "Covenant Chapel", location: "White Hall Auditorium", pastor: "Gambo Daudu", spacesLeft: 43 },
-  { id: "dominion", name: "Dominion Chapel", location: "Ogden Hall Auditorium", pastor: "Biague LaguBibiaiai", spacesLeft: 155 },
-  { id: "glory-land", name: "Glory Land Chapel", location: "Winslow Hall", pastor: "G.I. Okan-Sironiko", spacesLeft: 141 },
-  { id: "grace", name: "Grace Chapel", location: "WRA", pastor: "Chukwuemeka Abaribe", spacesLeft: 203 },
-  { id: "heir-kingdom", name: "Heir of the Kingdom Chapel", location: "BUTH 600 Seater", pastor: "John Sotunsa", spacesLeft: 128 },
-  { id: "heritage", name: "Heritage Church", location: "Old Cafeteria", pastor: "Adeoti J.A.F", spacesLeft: 152 },
-  { id: "holy-spirit", name: "Holy Spirit Chapel", location: "New Auditorium", pastor: "Sarah Omoniyi", spacesLeft: 170 },
-  { id: "living-faith", name: "Living Faith Chapel", location: "Community Center", pastor: "Emeka Ndukwu", spacesLeft: 200 },
-  { id: "mountain-fire", name: "Mountain of Fire Chapel", location: "Faith Hall", pastor: "Chinonso Okeke", spacesLeft: 110 },
-  { id: "new-beginning", name: "New Beginning Chapel", location: "Heritage Auditorium", pastor: "Sola Ogunyinka", spacesLeft: 163 },
-  { id: "victory", name: "Victory Chapel", location: "The Great Hall", pastor: "Tunde Afolabi", spacesLeft: 125 },
-];
-
-// Export for use in summary
-export { WORSHIP_CENTERS };
+// Re-export the canonical WorshipCenter type (used by summary.tsx)
+export type { WorshipCenter } from "@/app/actions/registration";
 
 const ITEMS_PER_PAGE = 10;
 
 interface SelectWorshipCenterProps {
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
+  worshipCenters?: import("@/app/actions/registration").WorshipCenter[];
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-export function SelectWorshipCenter({ selectedId, onSelect }: SelectWorshipCenterProps) {
+/** Table row skeleton for the desktop loading state */
+function TableRowSkeleton() {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="w-[80px] pl-6">
+        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      </TableCell>
+      <TableCell>
+        <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      </TableCell>
+      <TableCell>
+        <div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      </TableCell>
+      <TableCell>
+        <div className="h-4 w-36 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      </TableCell>
+      <TableCell className="text-right pr-6">
+        <div className="h-6 w-12 rounded-[8px] bg-gray-200 dark:bg-gray-700 animate-pulse ml-auto" />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+/** Card skeleton for the mobile loading state */
+function CardSkeleton() {
+  return (
+    <div className="flex items-start gap-3 p-4 rounded-[16px] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div className="w-5 h-5 mt-0.5 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0" />
+      <div className="flex-1 flex flex-col gap-2">
+        <div className="h-4 w-36 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="h-3 w-48 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="h-3 w-32 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
+  const context = useRegistration();
+
+  // Prefer explicit props, fall back to context values
+  const selectedId =
+    props.selectedId !== undefined ? props.selectedId : context.selectedWorshipCenterId;
+  const onSelect =
+    props.onSelect !== undefined ? props.onSelect : context.setSelectedWorshipCenterId;
+  const worshipCenters =
+    props.worshipCenters !== undefined ? props.worshipCenters : context.worshipCenters;
+  const isLoading =
+    props.isLoading !== undefined ? props.isLoading : context.worshipCentersLoading;
+  const error =
+    props.error !== undefined ? props.error : context.worshipCentersError;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filtered = useMemo(() =>
-    WORSHIP_CENTERS.filter((wc) =>
-      wc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wc.pastor.toLowerCase().includes(searchQuery.toLowerCase())
-    ), [searchQuery]
+  const filtered = useMemo(
+    () =>
+      worshipCenters.filter(
+        (wc) =>
+          wc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          wc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          wc.pastor.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [searchQuery, worshipCenters]
   );
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -71,7 +102,9 @@ export function SelectWorshipCenter({ selectedId, onSelect }: SelectWorshipCente
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
-  };  return (
+  };
+
+  return (
     <div className="w-full max-w-[1200px] pb-32 flex flex-col gap-5">
       {/* Header Row */}
       <div className="flex items-center justify-between gap-4">
@@ -103,6 +136,13 @@ export function SelectWorshipCenter({ selectedId, onSelect }: SelectWorshipCente
         />
       </div>
 
+      {/* Error State */}
+      {!isLoading && error && (
+        <div className="rounded-[12px] bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 px-4 py-3 text-[14px] text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
       {/* Desktop Table View */}
       <div className="hidden md:flex flex-col">
         <div className="rounded-[16px] overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors">
@@ -125,22 +165,35 @@ export function SelectWorshipCenter({ selectedId, onSelect }: SelectWorshipCente
               </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedDesktop.map((wc) => {
+              {/* Loading skeletons */}
+              {isLoading &&
+                Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                  <TableRowSkeleton key={i} />
+                ))}
+
+              {/* Data rows */}
+              {!isLoading &&
+                paginatedDesktop.map((wc) => {
                   const isSelected = selectedId === wc.id;
                   return (
                     <TableRow
                       key={wc.id}
                       className={cn(
                         "cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors",
-                        isSelected && "bg-[#f8faff] dark:bg-[#003cbb]/10 hover:bg-[#f8faff] dark:hover:bg-[#003cbb]/10"
+                        isSelected &&
+                          "bg-[#f8faff] dark:bg-[#003cbb]/10 hover:bg-[#f8faff] dark:hover:bg-[#003cbb]/10"
                       )}
                       onClick={() => onSelect(wc.id)}
                     >
                       <TableCell className="w-[80px] pl-6">
-                        <div className={cn(
-                          "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                          isSelected ? "border-[#003cbb] dark:border-[#4d82ff]" : "border-[#cdd0d5] dark:border-gray-700"
-                        )}>
+                        <div
+                          className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                            isSelected
+                              ? "border-[#003cbb] dark:border-[#4d82ff]"
+                              : "border-[#cdd0d5] dark:border-gray-700"
+                          )}
+                        >
                           {isSelected && (
                             <div className="w-2.5 h-2.5 rounded-full bg-[#003cbb] dark:bg-[#4d82ff]" />
                           )}
@@ -159,26 +212,26 @@ export function SelectWorshipCenter({ selectedId, onSelect }: SelectWorshipCente
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <span className="inline-flex bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] font-bold text-[12px] px-3 py-1 rounded-[8px] tracking-wider transition-colors">
-                          {wc.spacesLeft}
+                          {wc.spacesLeft}/<span className="text-[#525866] dark:text-gray-400 text-[12px]">{wc.declaredCapacity}</span>
                         </span>
                       </TableCell>
                     </TableRow>
                   );
                 })}
 
-                {paginatedDesktop.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-[#525866] dark:text-gray-400">
-                      No worship centers found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+              {!isLoading && !error && paginatedDesktop.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-[#525866] dark:text-gray-400">
+                    No worship centers found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
           </Table>
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {!isLoading && totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 px-2">
             <span className="text-[13px] text-[#525866] dark:text-gray-400">
               Page {currentPage} of {totalPages}
@@ -226,56 +279,66 @@ export function SelectWorshipCenter({ selectedId, onSelect }: SelectWorshipCente
 
       {/* Mobile Card List */}
       <div className="md:hidden flex flex-col gap-3">
-        {filtered.map((wc) => {
-          const isSelected = selectedId === wc.id;
-          return (
-            <div
-              key={wc.id}
-              onClick={() => onSelect(wc.id)}
-              className={cn(
-                "flex items-start gap-3 p-4 rounded-[16px] cursor-pointer transition-all border",
-                isSelected
-                  ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
-                  : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
-              )}
-            >
-              {/* Radio */}
-              <div className="pt-0.5">
-                <div className={cn(
-                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                  isSelected ? "border-[#003cbb] dark:border-[#4d82ff]" : "border-[#cdd0d5] dark:border-gray-700"
-                )}>
-                  {isSelected && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#003cbb] dark:bg-[#4d82ff]" />
-                  )}
+        {/* Loading skeletons */}
+        {isLoading &&
+          Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+
+        {/* Data cards */}
+        {!isLoading &&
+          filtered.map((wc) => {
+            const isSelected = selectedId === wc.id;
+            return (
+              <div
+                key={wc.id}
+                onClick={() => onSelect(wc.id)}
+                className={cn(
+                  "flex items-start gap-3 p-4 rounded-[16px] cursor-pointer transition-all border",
+                  isSelected
+                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
+                    : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
+                )}
+              >
+                {/* Radio */}
+                <div className="pt-0.5">
+                  <div
+                    className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                      isSelected
+                        ? "border-[#003cbb] dark:border-[#4d82ff]"
+                        : "border-[#cdd0d5] dark:border-gray-700"
+                    )}
+                  >
+                    {isSelected && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#003cbb] dark:bg-[#4d82ff]" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[15px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                      {wc.name}
+                    </span>
+                    <span className="inline-flex bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] font-bold text-[11px] px-2 py-0.5 rounded-[6px] shrink-0 transition-colors">
+                      {wc.spacesLeft} left
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[13px] text-[#525866] dark:text-gray-400">
+                      📍 {wc.location}
+                    </span>
+                    <span className="text-[13px] text-[#525866] dark:text-gray-400">
+                      👤 {wc.pastor}
+                    </span>
+                  </div>
                 </div>
               </div>
+            );
+          })}
 
-              {/* Content */}
-              <div className="flex-1 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {wc.name}
-                  </span>
-                  <span className="inline-flex bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] font-bold text-[11px] px-2 py-0.5 rounded-[6px] shrink-0 transition-colors">
-                    {wc.spacesLeft} left
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[13px] text-[#525866] dark:text-gray-400">
-                    📍 {wc.location}
-                  </span>
-                  <span className="text-[13px] text-[#525866] dark:text-gray-400">
-                    👤 {wc.pastor}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {filtered.length === 0 && (
+        {!isLoading && !error && filtered.length === 0 && (
           <div className="text-center py-8 text-[#525866] dark:text-gray-400">
             No worship centers found.
           </div>

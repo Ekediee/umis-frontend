@@ -9,9 +9,8 @@ import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { getStudentProfileAction } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
-import { getClassGroupsAction, getCoursesAction, CourseItem } from "@/app/actions/registration";
+import { getClassGroupsAction, getCoursesAction, CourseItem, getWorshipCentersAction } from "@/app/actions/registration";
 import { getOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
-import { WORSHIP_CENTERS } from "@/components/registration/steps/select-worship-center";
 
 const COURSE_LIST = [
   { id: "GST 312", title: "Peace and Conflict Resolution", units: "2.0", option: "Soft Eng", lecturer: "APAT KIDEN TANIMU" },
@@ -51,9 +50,16 @@ function CourseFormContent() {
     async function loadDraft() {
       const draft = await getOfflineDraft<{ group: string | null; courses: string[], worshipCenter: string | null }>(OFFLINE_COURSE_CART_KEY);
       if (draft && draft.worshipCenter) {
-        const wc = WORSHIP_CENTERS.find(w => w.id === draft.worshipCenter);
-        if (wc) {
-          setSelectedWorshipCenter(wc.name);
+        try {
+          const res = await getWorshipCentersAction();
+          if (res.data) {
+            const wc = res.data.find(w => w.id === draft.worshipCenter);
+            if (wc) {
+              setSelectedWorshipCenter(wc.name);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load worship centers:", error);
         }
       }
     }

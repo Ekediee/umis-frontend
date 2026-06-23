@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 import { useRegistration } from "@/components/providers/registration-provider";
 import { MOCK_COURSES } from "@/lib/mock-data";
-import { WORSHIP_CENTERS } from "@/components/registration/steps/select-worship-center";
 
 interface SummaryProps {
   selectedGroup?: string | null;
@@ -20,7 +19,7 @@ export function Summary(props: SummaryProps) {
   const selectedCourseIds = props.selectedCourseIds !== undefined ? props.selectedCourseIds : context.selectedCourseIds;
   const selectedWorshipCenterId = context.selectedWorshipCenterId;
 
-  const worshipCenter = WORSHIP_CENTERS.find(w => w.id === selectedWorshipCenterId);
+  const worshipCenter = context.worshipCenters.find(w => w.id === selectedWorshipCenterId);
 
   // Resolve actual selected courses from the context's dynamic courses, or fallback to mock data if empty
   const allAvailableCourses = context.courses.length > 0 ? context.courses : MOCK_COURSES;

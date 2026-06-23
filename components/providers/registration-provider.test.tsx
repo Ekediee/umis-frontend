@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RegistrationProvider, useRegistration } from './registration-provider';
-import { getClassGroupsAction, getCoursesAction } from '@/app/actions/registration';
+import { getClassGroupsAction, getCoursesAction, getWorshipCentersAction } from '@/app/actions/registration';
 import { getOfflineDraft } from '@/lib/offline-storage';
 
 // Mock the modules
@@ -25,6 +25,7 @@ vi.mock('sonner', () => ({
 vi.mock('@/app/actions/registration', () => ({
   getClassGroupsAction: vi.fn(),
   getCoursesAction: vi.fn(),
+  getWorshipCentersAction: vi.fn(),
 }));
 
 vi.mock('@/lib/offline-storage', () => ({
@@ -85,6 +86,11 @@ describe('RegistrationProvider', () => {
       },
     });
     vi.mocked(getOfflineDraft).mockResolvedValue(undefined);
+    vi.mocked(getWorshipCentersAction).mockResolvedValue({
+      data: [
+        { id: 'worship-1', name: 'Worship Center 1', location: 'Loc 1', pastor: 'Pastor A', declaredCapacity: 100, spacesLeft: 50 },
+      ]
+    });
   });
 
   it('renders with initial values and fetches class groups', async () => {

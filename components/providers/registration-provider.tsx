@@ -6,8 +6,10 @@ import { toast } from "sonner";
 import { 
   getClassGroupsAction, 
   getCoursesAction, 
+  getWorshipCentersAction,
   type ClassGroup, 
-  type CourseItem 
+  type CourseItem,
+  type WorshipCenter
 } from "@/app/actions/registration";
 import { 
   saveOfflineDraft, 
@@ -42,6 +44,9 @@ interface RegistrationContextType {
   toggleCourse: (id: string) => void;
 
   // Step 3: Worship Center
+  worshipCenters: WorshipCenter[];
+  worshipCentersLoading: boolean;
+  worshipCentersError: string | null;
   selectedWorshipCenterId: string | null;
   setSelectedWorshipCenterId: (id: string | null) => void;
 
@@ -101,6 +106,9 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
   // Worship center state
+  const [worshipCenters, setWorshipCenters] = useState<WorshipCenter[]>([]);
+  const [worshipCentersLoading, setWorshipCentersLoading] = useState(true);
+  const [worshipCentersError, setWorshipCentersError] = useState<string | null>(null);
   const [selectedWorshipCenterId, setSelectedWorshipCenterId] = useState<string | null>(null);
 
   const MAX_UNITS = 23;
@@ -133,6 +141,32 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       setClassGroupsLoading(false);
     }
     fetchClassGroups();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch Worship Centers on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchWorshipCenters() {
+      setWorshipCentersLoading(true);
+      setWorshipCentersError(null);
+      const result = await getWorshipCentersAction();
+      // Always clear the loading state, even if the effect was cleaned up
+      if (!cancelled) {
+        if (result.error) {
+          setWorshipCentersError(result.error);
+          toast.error(result.error);
+        } else {
+          setWorshipCenters(result.data ?? []);
+        }
+        setWorshipCentersLoading(false);
+      } else {
+        // Effect was cleaned up (Strict Mode double-invocation) but we still
+        // need loading to resolve for the second run.
+        setWorshipCentersLoading(false);
+      }
+    }
+    fetchWorshipCenters();
     return () => { cancelled = true; };
   }, []);
 
@@ -282,6 +316,9 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
         selectedCourseIds,
         setSelectedCourseIds,
         toggleCourse,
+        worshipCenters,
+        worshipCentersLoading,
+        worshipCentersError,
         selectedWorshipCenterId,
         setSelectedWorshipCenterId,
         isConfirmModalOpen,
