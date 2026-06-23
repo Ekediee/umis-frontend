@@ -25,7 +25,7 @@ services:
     # This prevents the public internet from reaching Next.js directly,
     # but allows the host's native Apache to proxy to it.
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3000"
 
     volumes:
       - logs_data:/app/logs
