@@ -130,3 +130,54 @@ Babcock University enforces a strict corporate dress code on weekdays (8:00 AM t
 * **Corporate Decency:** The university maintains a zero-tolerance policy for suggestive, revealing, or tight-fitting clothing to protect the faith-based campus environment.
 * **Curfew Lockout:** Any student found outside their hostel after 10:00 PM without an official late-pass faces immediate disciplinary panel action.
 * **Chapel Records:** Your spiritual attendance record is directly tied to your end-of-semester administrative clearance.
+
+---
+
+## 4. App Navigation & Portal UI Workflows
+Students can perform various administrative and financial actions on the Babcock Student Portal. Use these step-by-step navigation instructions to guide them:
+
+### A. Student Wallet & Funding
+* **Where:** Navigate to **Finance** module homepage (`/dashboard/finance`).
+* **Funding your Wallet:**
+  1. Locate the purple/blue gradient **Wallet Card** on the right side of the screen.
+  2. Click the **"Fund Wallet"** button on the card.
+  3. Enter the amount to fund in the modal and click "Proceed".
+  4. Select a payment method (e.g., Payzeep, Flutterwave) and click "Confirm Payment".
+  5. The simulation will run, the modal will show success, and your wallet balance will instantly update.
+* **Hiding/Showing Wallet Balance:** Click the **Eye icon** next to the wallet balance on the Wallet Card to toggle its visibility.
+
+### B. Paying School Fees (Semester or Session)
+* **Where:** Navigate to **Finance** homepage, then click **"Pay School Fees"** under the "Pay for current semester" card.
+* **Steps:**
+  1. Select either **"Semester Plan"** or **"Full Session Plan"**.
+  2. Walk through the stepper options: Select Residence -> Select Meal Plan -> Summary.
+  3. On the **Summary** step:
+     - On desktop: Click "Make full Payment Now" or "Make Partial Payment" to open the partial payment configuration.
+     - On mobile: Click the "Make Payment" button to open the bottom sheet where you can select full or partial payment options.
+  4. On the final **Payment** step, you will pay via your Student Wallet:
+     - If your wallet balance is sufficient, click the **"Pay Now"** button.
+     - If your wallet balance is insufficient, a warning will show your shortfall. Click the **"Fund Wallet"** button right there in the flow to top up the difference, then click "Pay Now" to complete.
+
+### C. Viewing and Downloading Invoices/Receipts
+* **Where:** Scroll to the **Payment History** section at the bottom of the **Finance** homepage.
+* **View Invoice:** Click the **Eye icon** in the row of the desired semester to view the digital invoice/receipt.
+* **Download Invoice:** Click the **Download icon** in the row of the desired semester to save it to your local device.
+
+### D. Course Registration Flow
+* **Where:** Navigate to **Registration** module (`/registration`).
+* **Steps:**
+  1. Click **"Register Courses"**.
+  2. **Select Class Group** from the dropdown and click "Proceed".
+  3. **Select Courses** you want to take (ensuring total units do not exceed 23, standard limit 21). Click "Proceed".
+  4. **Select Worship Center** from the options (new registration step). Click "Proceed".
+  5. Review the registration **Summary** and click "Register".
+  6. Click **"Fund Wallet"** under the Clearance Requirements to clear your registration fees immediately.
+
+### E. Checking Academic Grades & GPA
+* **Where:** Go to **Academic Details** -> **Semester Results** in the navigation menu, or check the **Academic Progress** card on the dashboard.
+* **Toggle GPA Visibility:** If you want to hide or show your CGPA / Semester GPA numbers from view, click the **Eye icon** next to the GPA score in the card.
+
+### F. Updating Next of Kin
+* **Where:** Go to **My Profile** in the navigation menu.
+* **Steps:** Update the fields in the "Next of Kin" form card at the bottom of the profile page and click "Save Changes".
+

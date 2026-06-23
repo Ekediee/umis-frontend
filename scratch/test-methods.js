@@ -6,7 +6,7 @@ async function test() {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) return console.log('No key');
   
-  const model = google('gemini-2.5-flash');
+  const model = google('gemini-3.5-flash');
   const result = await streamText({
     model,
     messages: [{ role: 'user', content: 'test' }],

@@ -12,8 +12,8 @@ async function test() {
   }
 
   try {
-    const model = google('gemini-2.5-flash');
-    console.log('Testing gemini-2.5-flash...');
+    const model = google('gemini-3.5-flash');
+    console.log('Testing gemini-3.5-flash...');
     const result = await generateText({
       model,
       prompt: 'Reply with exactly one word: working',

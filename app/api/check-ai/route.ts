@@ -58,7 +58,7 @@ export const GET = withLogging(async function GET(req: Request) {
     process.env.GOOGLE_GENERATIVE_AI_API_KEY = apiKey;
 
     const { generateText } = require('ai');
-    const model = googleProvider('gemini-2.5-flash');
+    const model = googleProvider('gemini-3.5-flash');
     const result = await generateText({ model, prompt: 'Reply with exactly one word: working' });
     results.apiKeyValid = true;
     results.testResponse = result.text?.trim();

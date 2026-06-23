@@ -25,8 +25,11 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Bottom gradient dark overlay (from bottom up) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none z-10 lg:hidden"></div>
+
           {/* Bottom Dark Section (Text Div) */}
-          <div className="bg-transparent absolute bottom-8 lg:bottom-0 z-10 w-full pt-[40px] pb-[30px] lg:pb-[60px] px-6 lg:px-12 flex flex-col items-center text-center ">
+          <div className="bg-transparent absolute bottom-8 lg:bottom-0 z-20 w-full pt-[40px] pb-[30px] lg:pb-[60px] px-6 lg:px-12 flex flex-col items-center text-center ">
             <div className="absolute top-0 left-0 w-full h-[1px]"></div>
 
             <h2 className="text-[20px] lg:text-[24px] font-semibold text-white mb-2 lg:mb-4 tracking-tight">

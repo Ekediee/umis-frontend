@@ -3,7 +3,7 @@ const { streamText } = require('ai');
 const { google } = require('@ai-sdk/google');
 
 async function test() {
-  const model = google('gemini-2.5-flash');
+  const model = google('gemini-3.5-flash');
   const result = await streamText({
     model,
     messages: [{ role: 'user', content: 'Say hi' }],

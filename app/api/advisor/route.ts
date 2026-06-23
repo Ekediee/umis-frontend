@@ -69,7 +69,7 @@ export const POST = withLogging(async function POST(req: Request) {
   if (googleProvider && process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     try {
       const result = await streamText({
-        model: googleProvider('gemini-2.5-flash'),
+        model: googleProvider('gemini-3.5-flash'),
         messages,
         system: `You are the Babcock University AI Course Advisor. 
 Your goal is to analyze the student's selected courses and overall academic status (e.g. CGPA, credit units) to:
