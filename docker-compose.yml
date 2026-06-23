@@ -34,7 +34,7 @@ services:
       - 196.11.231.82
 
     extra_hosts:
-      - "${API_URL}:196.11.231.82"
+      - "umis-sb.babcock.edu.ng:196.11.231.82"
 
     # Health check: restart the container if Next.js stops responding
     healthcheck:
