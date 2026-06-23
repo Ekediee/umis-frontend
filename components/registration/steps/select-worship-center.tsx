@@ -212,7 +212,7 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <span className="inline-flex bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] font-bold text-[12px] px-3 py-1 rounded-[8px] tracking-wider transition-colors">
-                          {wc.spacesLeft}/<span className="text-[#525866] dark:text-gray-400 text-[12px]">{wc.declaredCapacity}</span>
+                          {wc.spacesLeft} /<span className="text-[#525866] dark:text-gray-400 text-[12px]"> {wc.declaredCapacity}</span>
                         </span>
                       </TableCell>
                     </TableRow>

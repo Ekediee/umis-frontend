@@ -30,6 +30,13 @@ services:
     volumes:
       - logs_data:/app/logs
 
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 10.160.0.254
+      - 196.11.231.82
+      - 172.19.64.197
+
     # Health check: restart the container if Next.js stops responding
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
