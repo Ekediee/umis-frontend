@@ -113,7 +113,7 @@ export const getClassGroupsAction = async (): Promise<ClassGroupsResult> => {
  * Flat course object returned by the new API shape.
  * Instructor name is now inlined directly on the course — no separate wrapper.
  */
-interface RawCourse {
+export interface RawCourse {
   qcourseid: number;
   courseid: string;
   coursetitle: string;
@@ -159,6 +159,8 @@ export interface CoursesResult {
     /** E.g. "Undergraduate" */
     studentType: string;
     courses: CourseItem[];
+    /** Raw API courses — retained so the provider can build the submission payload. */
+    rawCourses: RawCourse[];
   };
   message?: string;
   error?: string;
@@ -171,10 +173,11 @@ function formatLevel(yeartaken: number): string {
 }
 
 /**
- * Fetches the list of courses for a given class option / group.
- * Endpoint: GET /api/v1/student/select-course/{classOptionId}
+ * Fetches the list of courses for one or more class option groups.
+ * Endpoint: POST /api/v1/student/select-course
+ * Body: { class_option_ids: string[] }
  */
-export const getCoursesAction = async (classOptionId: string): Promise<CoursesResult> => {
+export const getCoursesAction = async (classOptionIds: string[]): Promise<CoursesResult> => {
   const apiUrl = process.env.API_URL;
   if (!apiUrl) {
     console.error("API_URL is not defined in environment variables");
@@ -188,13 +191,14 @@ export const getCoursesAction = async (classOptionId: string): Promise<CoursesRe
 
   try {
     const response = await loggedFetch(
-      `${apiUrl}/api/v1/student/select-course/${classOptionId}`,
+      `${apiUrl}/api/v1/student/select-course`,
       {
-        method: "GET",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ class_option_ids: classOptionIds }),
         cache: "no-store",
       }
     );
@@ -212,20 +216,21 @@ export const getCoursesAction = async (classOptionId: string): Promise<CoursesRe
 
     const json: RawCoursesResponse = await response.json();
 
-    const courses: CourseItem[] = Array.isArray(json?.data?.courses)
-      ? json.data.courses.map((item) => ({
-          id: String(item.qcourseid),
-          code: item.courseid.trim(),
-          title: item.coursetitle.trim(),
-          units: item.credithours,
-          lecturer: item.instructorname.trim(),
-          level: formatLevel(item.yeartaken),
-        }))
+    const rawCourses: RawCourse[] = Array.isArray(json?.data?.courses)
+      ? json.data.courses
       : [];
 
-    // console.log("courses", courses);
+    const courses: CourseItem[] = rawCourses.map((item) => ({
+      id: String(item.qcourseid),
+      code: item.courseid.trim(),
+      title: item.coursetitle.trim(),
+      units: item.credithours,
+      lecturer: item.instructorname.trim(),
+      level: formatLevel(item.yeartaken),
+    }));
+
     return {
-      data: { studentType: json?.data?.student_type, courses },
+      data: { studentType: json?.data?.student_type, courses, rawCourses },
       message: json?.message,
     };
   } catch (error) {
@@ -473,6 +478,86 @@ export const getWorshipCentersAction = async (): Promise<WorshipCentersResult> =
     return { data: centers, message: json?.message };
   } catch (error) {
     console.error("getWorshipCentersAction error:", error);
+    return {
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+};
+
+// ── Submit Course Selection ───────────────────────────────────────────────────
+
+/** Shape of each course entry sent to the submission endpoint. */
+export interface RawCourseSubmit {
+  courseid: string;
+  coursename: string | null;
+  creditunit: string | null;
+  credithours: number;
+  lecturehours: number;
+  yeartaken: number;
+  qcourseid: number;
+}
+
+/** Full request payload for POST /api/v1/student/submit-course-selection */
+export interface SubmitCoursePayload {
+  worship_center_id: string;
+  max_credit_unit: number;
+  min_credit_unit: number;
+  courses: RawCourseSubmit[];
+}
+
+export interface SubmitCourseSelectionResult {
+  success?: boolean;
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Submits the student's final course selection to the backend.
+ * Endpoint: POST /api/v1/student/submit-course-selection
+ */
+export const submitCourseSelectionAction = async (
+  payload: SubmitCoursePayload
+): Promise<SubmitCourseSelectionResult> => {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    console.error("API_URL is not defined in environment variables");
+    return { error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken();
+  if (!token) {
+    return { error: "You are not authenticated. Please log in again." };
+  }
+
+  try {
+    const response = await loggedFetch(
+      `${apiUrl}/api/v1/student/submit-course-selection`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to submit course selection";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Response body wasn't JSON — keep the fallback message
+      }
+      return { error: errorMessage };
+    }
+
+    const json = await response.json();
+    const success = json?.status ?? json?.success ?? true;
+    return { success, message: json?.message };
+  } catch (error) {
+    console.error("submitCourseSelectionAction error:", error);
     return {
       error: "Could not connect to the server. Please try again later.",
     };

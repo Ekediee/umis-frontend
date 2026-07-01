@@ -37,7 +37,7 @@ function CourseFormContent() {
       try {
         const groupRes = await getClassGroupsAction();
         if (groupRes.data && groupRes.data.length > 0) {
-          const coursesRes = await getCoursesAction(groupRes.data[0].id);
+          const coursesRes = await getCoursesAction([groupRes.data[0].id]);
           if (coursesRes.data?.courses) {
             setCourses(coursesRes.data.courses);
           }

@@ -341,14 +341,14 @@ describe("getCoursesAction — auth guards", () => {
     delete process.env.API_URL;
     cookieStore._store["token"] = MOCK_TOKEN;
 
-    const result = await getCoursesAction("143");
+    const result = await getCoursesAction(["143"]);
 
     expect(result.error).toBeDefined();
     expect(result.data).toBeUndefined();
   });
 
   it("returns an error when no session token is present", async () => {
-    const result = await getCoursesAction("143");
+    const result = await getCoursesAction(["143"]);
 
     expect(result.error).toMatch(/not authenticated/i);
     expect(result.data).toBeUndefined();
@@ -363,7 +363,7 @@ describe("getCoursesAction — HTTP responses", () => {
   it("maps the flat course shape to CourseItem[] and returns studentType and message", async () => {
     mockFetch(200, MOCK_COURSES_RESPONSE);
 
-    const result = await getCoursesAction("143");
+    const result = await getCoursesAction(["143"]);
 
     expect(result.error).toBeUndefined();
     expect(result.message).toBe("Courses retrieved successfully");
@@ -374,7 +374,7 @@ describe("getCoursesAction — HTTP responses", () => {
   it("returns an error when the API responds with a non-OK status", async () => {
     mockFetch(403, { status: false, message: "Forbidden" });
 
-    const result = await getCoursesAction("143");
+    const result = await getCoursesAction(["143"]);
 
     expect(result.error).toBeDefined();
     expect(result.data).toBeUndefined();
@@ -383,7 +383,7 @@ describe("getCoursesAction — HTTP responses", () => {
   it("returns an empty courses array when data.courses is missing", async () => {
     mockFetch(200, { status: true, message: "ok", data: { student_type: "Undergraduate" } });
 
-    const result = await getCoursesAction("143");
+    const result = await getCoursesAction(["143"]);
 
     expect(result.error).toBeUndefined();
     expect(result.data?.courses).toEqual([]);
@@ -392,13 +392,13 @@ describe("getCoursesAction — HTTP responses", () => {
   it("returns an error when fetch throws a network error", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
 
-    const result = await getCoursesAction("143");
+    const result = await getCoursesAction(["143"]);
 
     expect(result.error).toMatch(/connect/i);
     expect(result.data).toBeUndefined();
   });
 
-  it("sends the correct URL with the classOptionId and Authorization header", async () => {
+  it("sends a POST request to /api/v1/student/select-course with class_option_ids in the body", async () => {
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -406,11 +406,27 @@ describe("getCoursesAction — HTTP responses", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
 
-    await getCoursesAction("143");
+    await getCoursesAction(["143"]);
 
     const [url, options] = fetchSpy.mock.calls[0];
-    expect(url).toContain("/api/v1/student/select-course/143");
+    expect(url).toContain("/api/v1/student/select-course");
+    expect(options?.method).toBe("POST");
+    expect(JSON.parse(options?.body)).toEqual({ class_option_ids: ["143"] });
     expect(options?.headers?.["Authorization"]).toBe(`Bearer ${MOCK_TOKEN}`);
+  });
+
+  it("sends all selected group IDs in the POST body when multiple groups are provided", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => MOCK_COURSES_RESPONSE,
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await getCoursesAction(["143", "200", "305"]);
+
+    const [, options] = fetchSpy.mock.calls[0];
+    expect(JSON.parse(options?.body)).toEqual({ class_option_ids: ["143", "200", "305"] });
   });
 });
 

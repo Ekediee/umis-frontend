@@ -176,6 +176,7 @@ export default function RegistrationPage() {
               router.push("/dashboard/registration/course-form");
             }
           }}
+          
         />
         <ActionBanner 
           title="Make your payment"

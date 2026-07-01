@@ -4,16 +4,10 @@ import { AcademicProgress } from "@/components/dashboard/academic-progress";
 import { FinanceOverview } from "@/components/dashboard/finance-overview";
 import { RecentUpdates } from "@/components/dashboard/recent-updates";
 import { QuickActions } from "@/components/dashboard/quick-actions";
-import { getUserData } from "@/app/actions/user";
-import { UMISResponse } from "@/lib/session";
-import { useState, useEffect } from "react";
+import { useUserData } from "@/contexts/user-data-context";
 
 export default function DashboardPage() {
-  const [userData, setUserData] = useState<UMISResponse | null>(null);
-  
-    useEffect(() => {
-      getUserData().then(setUserData);
-    }, []);
+  const userData = useUserData();
 
   return (
     <div className="p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto">

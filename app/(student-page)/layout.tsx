@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { MainContent } from "@/components/layout/main-content";
+import { UserDataProvider } from "@/contexts/user-data-context";
 
 export default function DashboardLayout({
   children,
@@ -17,7 +18,7 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col min-w-0 bg-[#F4F5F7] dark:bg-black overflow-hidden relative z-10 transition-colors duration-200">
          <Header />
          <MainContent>
-            {children}
+            <UserDataProvider>{children}</UserDataProvider>
          </MainContent>
          <MobileNav />
       </div>

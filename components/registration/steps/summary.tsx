@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 import { useRegistration } from "@/components/providers/registration-provider";
 import { MOCK_COURSES } from "@/lib/mock-data";
+import { useUserData } from "@/contexts/user-data-context";
 
 interface SummaryProps {
   selectedGroup?: string | null;
@@ -14,8 +15,9 @@ interface SummaryProps {
 
 export function Summary(props: SummaryProps) {
   const context = useRegistration();
+  const userData = useUserData();
 
-  const selectedGroup = props.selectedGroup !== undefined ? props.selectedGroup : context.selectedGroup;
+  const selectedGroup = props.selectedGroup !== undefined ? props.selectedGroup : (context.selectedGroups[0] || null);
   const selectedCourseIds = props.selectedCourseIds !== undefined ? props.selectedCourseIds : context.selectedCourseIds;
   const selectedWorshipCenterId = context.selectedWorshipCenterId;
 
@@ -144,7 +146,7 @@ export function Summary(props: SummaryProps) {
             <span className="text-[14px] text-[#525866] dark:text-gray-400">Classification</span>
             <div className="flex items-center gap-2">
               <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 leading-tight">Normal Load</span>
-              <span className="bg-[#f6f8fa] dark:bg-gray-850 text-[#525866] dark:text-gray-400 text-[11px] font-bold px-2 py-0.5 rounded-md">200L</span>
+              <span className="bg-[#f6f8fa] dark:bg-gray-850 text-[#525866] dark:text-gray-400 text-[11px] font-bold px-2 py-0.5 rounded-md">{userData?.user_data?.academic_information?.study_level}L</span>
             </div>
           </div>
         </div>

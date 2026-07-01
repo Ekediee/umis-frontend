@@ -191,7 +191,7 @@ export function SelectCourses(props: SelectCoursesProps) {
       currentCourses.forEach(c => { if (!isSelected(c)) onToggleCourse(c.id); });
     }
   };
-console.log("selectedCourses", selectedCourses)
+// console.log("selectedCourses", selectedCourses)
   return (
     <div className="flex flex-col w-full max-w-[1200px] md:mx-0">
 

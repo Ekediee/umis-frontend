@@ -5,8 +5,8 @@ import { ClassGroup } from "@/app/actions/registration";
 import { useRegistration } from "@/components/providers/registration-provider";
 
 interface SelectClassGroupProps {
-  selectedGroup?: string | null;
-  onSelectGroup?: (group: string | null) => void;
+  selectedGroups?: string[];
+  onToggleGroup?: (id: string) => void;
   classGroups?: ClassGroup[];
   isLoading?: boolean;
   error?: string | null;
@@ -28,12 +28,13 @@ function GroupSkeleton() {
 
 export function SelectClassGroup(props: SelectClassGroupProps) {
   const context = useRegistration();
-  
-  const selectedGroup = props.selectedGroup !== undefined ? props.selectedGroup : context.selectedGroup;
-  const onSelectGroup = props.onSelectGroup !== undefined ? props.onSelectGroup : context.setSelectedGroup;
+
+  const selectedGroups = props.selectedGroups !== undefined ? props.selectedGroups : context.selectedGroups;
+  const onToggleGroup = props.onToggleGroup !== undefined ? props.onToggleGroup : context.toggleGroup;
   const classGroups = props.classGroups !== undefined ? props.classGroups : context.classGroups;
   const isLoading = props.isLoading !== undefined ? props.isLoading : context.classGroupsLoading;
   const error = props.error !== undefined ? props.error : context.classGroupsError;
+
   return (
     <div className="flex flex-col gap-6 md:gap-8 w-full max-w-[820px] mx-auto md:mx-0">
 
@@ -49,9 +50,14 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
 
       {/* Main Form Area */}
       <div className="bg-white dark:bg-gray-900 rounded-[24px] p-6 md:p-8 md:border border-gray-100 dark:border-gray-800 flex flex-col gap-6">
-        <h3 className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight">
-          Select Class Group
-        </h3>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight">
+            Select Class Group
+          </h3>
+          <p className="text-[13px] text-[#6b7280] dark:text-gray-400">
+            You can select one or more class groups.
+          </p>
+        </div>
 
         {/* Loading State */}
         {isLoading && <GroupSkeleton />}
@@ -72,25 +78,59 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
               </p>
             ) : (
               classGroups.map((group) => {
-                const isSelected = selectedGroup === String(group.id);
+                const isSelected = selectedGroups.includes(String(group.id));
 
                 return (
                   <button
                     key={group.id}
-                    onClick={() => onSelectGroup(String(group.id))}
+                    onClick={() => onToggleGroup(String(group.id))}
                     className={cn(
-                      "px-6 py-3 rounded-[36px] text-[15px] font-medium transition-all",
+                      "flex items-center gap-2 px-5 py-3 rounded-[36px] text-[15px] font-medium transition-all",
                       isSelected
                         ? "bg-[#f8faff] border border-[#003cbb] text-[#003cbb] shadow-[0px_1px_2px_0px_rgba(55,93,251,0.08)]"
                         : "bg-[#f6f8fa] border border-transparent text-[#4e5155] hover:bg-[#e2e4e9]"
                     )}
                   >
+                    {/* Checkmark indicator */}
+                    <span
+                      className={cn(
+                        "flex items-center justify-center w-[18px] h-[18px] rounded-full border transition-all flex-shrink-0",
+                        isSelected
+                          ? "bg-[#003cbb] border-[#003cbb]"
+                          : "bg-transparent border-[#c5c7cd]"
+                      )}
+                    >
+                      {isSelected && (
+                        <svg
+                          width="10"
+                          height="8"
+                          viewBox="0 0 10 8"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M1 4L3.5 6.5L9 1"
+                            stroke="white"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </span>
                     {group.name}
                   </button>
                 );
               })
             )}
           </div>
+        )}
+
+        {/* Selection count badge */}
+        {!isLoading && !error && selectedGroups.length > 0 && (
+          <p className="text-[13px] text-[#003cbb] dark:text-[#4d82ff] font-medium">
+            {selectedGroups.length} group{selectedGroups.length > 1 ? "s" : ""} selected
+          </p>
         )}
       </div>
 

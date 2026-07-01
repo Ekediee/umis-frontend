@@ -42,8 +42,8 @@ function TestConsumer() {
     totalSteps,
     handleNext,
     handlePrevious,
-    selectedGroup,
-    setSelectedGroup,
+    selectedGroups,
+    toggleGroup,
     selectedCourseIds,
     toggleCourse,
     totalUnits,
@@ -54,13 +54,14 @@ function TestConsumer() {
     <div>
       <div data-testid="current-step">{currentStep}</div>
       <div data-testid="total-steps">{totalSteps}</div>
-      <div data-testid="selected-group">{selectedGroup || 'none'}</div>
+      <div data-testid="selected-groups">{selectedGroups.join(',') || 'none'}</div>
       <div data-testid="selected-courses">{selectedCourseIds.join(',')}</div>
       <div data-testid="total-units">{totalUnits}</div>
       <div data-testid="is-next-disabled">{isNextDisabled ? 'yes' : 'no'}</div>
       <button data-testid="next-btn" onClick={handleNext}>Next</button>
       <button data-testid="prev-btn" onClick={handlePrevious}>Previous</button>
-      <button data-testid="select-group-btn" onClick={() => setSelectedGroup('group-1')}>Select Group 1</button>
+      <button data-testid="toggle-group-1-btn" onClick={() => toggleGroup('group-1')}>Toggle Group 1</button>
+      <button data-testid="toggle-group-2-btn" onClick={() => toggleGroup('group-2')}>Toggle Group 2</button>
       <button data-testid="toggle-course-btn" onClick={() => toggleCourse('course-1')}>Toggle Course 1</button>
     </div>
   );
@@ -83,6 +84,7 @@ describe('RegistrationProvider', () => {
           { id: 'course-1', code: 'CS101', title: 'Intro', units: 3, lecturer: 'Dr. A', level: '100L' },
           { id: 'course-2', code: 'CS102', title: 'OOP', units: 4, lecturer: 'Dr. B', level: '100L' },
         ],
+        rawCourses: [],
       },
     });
     vi.mocked(getOfflineDraft).mockResolvedValue(undefined);
@@ -102,7 +104,7 @@ describe('RegistrationProvider', () => {
 
     expect(screen.getByTestId('current-step').textContent).toBe('1');
     expect(screen.getByTestId('total-steps').textContent).toBe('4');
-    expect(screen.getByTestId('selected-group').textContent).toBe('none');
+    expect(screen.getByTestId('selected-groups').textContent).toBe('none');
     expect(screen.getByTestId('is-next-disabled').textContent).toBe('yes');
 
     await waitFor(() => {
@@ -110,37 +112,97 @@ describe('RegistrationProvider', () => {
     });
   });
 
-  it('handles class group selection and fetches courses', async () => {
+  it('toggles a single class group on and off', async () => {
     render(
       <RegistrationProvider>
         <TestConsumer />
       </RegistrationProvider>
     );
 
-    fireEvent.click(screen.getByTestId('select-group-btn'));
+    // Toggle group 1 on
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+    expect(screen.getByTestId('selected-groups').textContent).toBe('group-1');
+    expect(screen.getByTestId('is-next-disabled').textContent).toBe('no');
+
+    // Toggle group 1 off
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+    expect(screen.getByTestId('selected-groups').textContent).toBe('none');
+    expect(screen.getByTestId('is-next-disabled').textContent).toBe('yes');
+  });
+
+  it('allows selecting multiple class groups simultaneously', async () => {
+    render(
+      <RegistrationProvider>
+        <TestConsumer />
+      </RegistrationProvider>
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+    fireEvent.click(screen.getByTestId('toggle-group-2-btn'));
+
+    expect(screen.getByTestId('selected-groups').textContent).toBe('group-1,group-2');
+    expect(screen.getByTestId('is-next-disabled').textContent).toBe('no');
+  });
+
+  it('fetches courses for all selected groups when Next is clicked on step 1', async () => {
+    render(
+      <RegistrationProvider>
+        <TestConsumer />
+      </RegistrationProvider>
+    );
+
+    // Select two groups
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+    fireEvent.click(screen.getByTestId('toggle-group-2-btn'));
+
+    // Click Next — should trigger course fetch with both IDs
+    fireEvent.click(screen.getByTestId('next-btn'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('selected-group').textContent).toBe('group-1');
-      expect(getCoursesAction).toHaveBeenCalledWith('group-1');
+      expect(getCoursesAction).toHaveBeenCalledWith(['group-1', 'group-2']);
+      expect(screen.getByTestId('current-step').textContent).toBe('2');
     });
   });
 
-  it('allows navigation and selection toggle', async () => {
+  it('stays on step 1 if the course fetch fails', async () => {
+    vi.mocked(getCoursesAction).mockResolvedValue({ error: 'Server error' });
+
     render(
       <RegistrationProvider>
         <TestConsumer />
       </RegistrationProvider>
     );
 
-    // Select group first to enable "Next"
-    fireEvent.click(screen.getByTestId('select-group-btn'));
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+    fireEvent.click(screen.getByTestId('next-btn'));
+
+    await waitFor(() => {
+      expect(getCoursesAction).toHaveBeenCalledWith(['group-1']);
+      // Step should NOT have advanced
+      expect(screen.getByTestId('current-step').textContent).toBe('1');
+    });
+  });
+
+  it('allows navigation and course selection toggle', async () => {
+    render(
+      <RegistrationProvider>
+        <TestConsumer />
+      </RegistrationProvider>
+    );
+
+    // Select a group to enable Next
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+
     await waitFor(() => {
       expect(screen.getByTestId('is-next-disabled').textContent).toBe('no');
     });
 
     // Advance to step 2
     fireEvent.click(screen.getByTestId('next-btn'));
-    expect(screen.getByTestId('current-step').textContent).toBe('2');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-step').textContent).toBe('2');
+    });
 
     // Next is disabled initially in step 2 (no courses selected)
     expect(screen.getByTestId('is-next-disabled').textContent).toBe('yes');
@@ -157,9 +219,9 @@ describe('RegistrationProvider', () => {
     expect(screen.getByTestId('current-step').textContent).toBe('1');
   });
 
-  it('restores draft state if found in offline storage', async () => {
+  it('restores draft state (multiple groups) from offline storage', async () => {
     vi.mocked(getOfflineDraft).mockResolvedValue({
-      group: 'group-2',
+      groups: ['group-1', 'group-2'],
       courses: ['course-2'],
     });
 
@@ -170,7 +232,7 @@ describe('RegistrationProvider', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('selected-group').textContent).toBe('group-2');
+      expect(screen.getByTestId('selected-groups').textContent).toBe('group-1,group-2');
       expect(screen.getByTestId('selected-courses').textContent).toBe('course-2');
     });
   });
