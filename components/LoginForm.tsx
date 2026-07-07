@@ -6,10 +6,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { loginAction } from "@/app/actions/auth";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 export function LoginForm() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -20,12 +18,11 @@ export function LoginForm() {
     startTransition(async () => {
       const result = await loginAction(formData);
 
+      // If we get a result back at all it means the server action did NOT
+      // redirect (i.e. an error occurred). A successful login triggers a
+      // server-side redirect() inside loginAction, so result will be undefined.
       if (result?.error) {
         toast.error(result.error);
-      } else if (result?.success) {
-
-        toast.success("Login successful! Redirecting...");
-        router.push("/dashboard");
       }
     });
   };

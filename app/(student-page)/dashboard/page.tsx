@@ -1,4 +1,7 @@
 "use client"
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { AcademicProgress } from "@/components/dashboard/academic-progress";
 import { FinanceOverview } from "@/components/dashboard/finance-overview";
@@ -8,6 +11,19 @@ import { useUserData } from "@/contexts/user-data-context";
 
 export default function DashboardPage() {
   const userData = useUserData();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("login") === "success") {
+      toast.success("Login successful! Welcome back 👋");
+      // Remove the param from the URL without adding a history entry,
+      // so refreshing the page doesn't replay the toast.
+      const url = new URL(window.location.href);
+      url.searchParams.delete("login");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
+
 
   return (
     <div className="p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto">

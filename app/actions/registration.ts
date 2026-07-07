@@ -123,6 +123,8 @@ export interface RawCourse {
   coursename: string | null;
   creditunit: string | null;
   instructorname: string;
+  classoption: string;
+  is_carry_over: boolean;
 }
 
 /** `data` envelope returned by /api/v1/student/select-course/{id} */
@@ -148,6 +150,8 @@ export interface CourseItem {
   title: string;
   /** Credit hours */
   units: number;
+  /** Class Option */
+  classOption: string;
   /** Instructor name */
   lecturer: string;
   /** Derived from yeartaken: 1-4 → "Year N", otherwise "—" */
@@ -188,7 +192,7 @@ export const getCoursesAction = async (classOptionIds: string[]): Promise<Course
   if (!token) {
     return { error: "You are not authenticated. Please log in again." };
   }
-
+  
   try {
     const response = await loggedFetch(
       `${apiUrl}/api/v1/student/select-course`,
@@ -198,7 +202,7 @@ export const getCoursesAction = async (classOptionIds: string[]): Promise<Course
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ class_option_ids: classOptionIds }),
+        body: JSON.stringify({ class_options: classOptionIds }),
         cache: "no-store",
       }
     );
@@ -225,6 +229,7 @@ export const getCoursesAction = async (classOptionIds: string[]): Promise<Course
       code: item.courseid.trim(),
       title: item.coursetitle.trim(),
       units: item.credithours,
+      classOption: item.classoption,
       lecturer: item.instructorname.trim(),
       level: formatLevel(item.yeartaken),
     }));

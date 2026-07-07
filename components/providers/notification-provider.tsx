@@ -103,8 +103,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     eventSource.onmessage = handleNewMessage;
 
     eventSource.onerror = (error) => {
-      console.error('SSE Error:', error);
-      eventSource.close();
+      // EventSource automatically attempts to reconnect on transient network interrupts.
+      // Only log if the connection is permanently closed.
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.error('SSE connection closed:', error);
+      }
     };
 
     return () => {

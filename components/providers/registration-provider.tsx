@@ -247,6 +247,28 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       if (result.message) toast.success(result.message);
       setCoursesLoading(false);
     }
+    // Step 2 → Step 3: check for duplicate course codes before advancing
+    if (currentStep === 2) {
+      const selectedCourses = courses.filter(c => selectedCourseIds.includes(c.id));
+      const codeCounts = new Map<string, number>();
+      const duplicates: string[] = [];
+
+      for (const course of selectedCourses) {
+        const code = course.code.trim().toUpperCase();
+        const count = (codeCounts.get(code) || 0) + 1;
+        codeCounts.set(code, count);
+        if (count === 2) {
+          duplicates.push(course.code.trim());
+        }
+      }
+
+      if (duplicates.length > 0) {
+        toast.error("Cannot select duplicate course codes", {
+          description: `You have selected duplicate options for: ${duplicates.join(", ")}. Please select only one option per course.`,
+        });
+        return; // Don't advance if validation fails
+      }
+    }
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
     }

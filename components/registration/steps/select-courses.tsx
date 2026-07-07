@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, BookOpen, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AICourseAdvisor } from "@/components/registration/ai-course-advisor";
 import { type CourseItem } from "@/app/actions/registration";
 import { useRegistration } from "@/components/providers/registration-provider";
@@ -278,6 +278,29 @@ export function SelectCourses(props: SelectCoursesProps) {
               />
             ) : (
               <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#f2f4f7] dark:bg-gray-950 hover:bg-[#f2f4f7] dark:hover:bg-gray-950 border-none transition-colors">
+                    <TableHead className="w-[80px] pl-6"></TableHead>
+                    <TableHead className="text-[12px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider h-12">
+                      Course Code
+                    </TableHead>
+                    <TableHead className="text-[12px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider h-12">
+                      Title
+                    </TableHead>
+                    <TableHead className="text-[12px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider h-12">
+                      Class Group
+                    </TableHead>
+                    <TableHead className="text-[12px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider h-12">
+                      Lecturer
+                    </TableHead>
+                    <TableHead className="text-[12px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider h-12">
+                      Year
+                    </TableHead>
+                    <TableHead className="text-[12px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider h-12">
+                      Unit
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {pagedCourses.map((course) => {
                     const selected = isSelected(course);
@@ -303,6 +326,9 @@ export function SelectCourses(props: SelectCoursesProps) {
                         </TableCell>
                         <TableCell className="text-[#525866] dark:text-gray-300">
                           {course.title}
+                        </TableCell>
+                        <TableCell className="text-[#525866] dark:text-gray-300">
+                          {course.classOption}
                         </TableCell>
                         <TableCell className="text-[#525866] dark:text-gray-300 whitespace-nowrap">
                           {course.lecturer}

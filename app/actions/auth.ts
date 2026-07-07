@@ -3,6 +3,7 @@
 import { createSession } from "@/lib/session";
 import { UMISResponse } from "@/lib/session";
 import { loggedFetch } from "@/lib/logger";
+import { redirect } from "next/navigation";
 
 export async function loginAction(formData: FormData) {
   const user_name = formData.get("user_name") as string;
@@ -54,7 +55,11 @@ export async function loginAction(formData: FormData) {
     // Store token + user data securely in HTTP-only cookies
     await createSession(token, userData);
 
-    return { success: true, data: data };
+    // Redirect server-side so cookies are committed before the browser navigates.
+    // Using router.push() on the client can race against cookie propagation
+    // through a reverse proxy (Apache), causing the session to be missing on
+    // the very next request and bouncing the user back to login.
+    redirect("/dashboard?login=success");
   } catch (error) {
     console.error("Login API Error:", error);
     return { error: `Failed to connect to the authentication service. Please try again later: ${error}` };

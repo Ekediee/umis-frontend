@@ -63,6 +63,7 @@ function TestConsumer() {
       <button data-testid="toggle-group-1-btn" onClick={() => toggleGroup('group-1')}>Toggle Group 1</button>
       <button data-testid="toggle-group-2-btn" onClick={() => toggleGroup('group-2')}>Toggle Group 2</button>
       <button data-testid="toggle-course-btn" onClick={() => toggleCourse('course-1')}>Toggle Course 1</button>
+      <button data-testid="toggle-course-2-btn" onClick={() => toggleCourse('course-2')}>Toggle Course 2</button>
     </div>
   );
 }
@@ -235,5 +236,44 @@ describe('RegistrationProvider', () => {
       expect(screen.getByTestId('selected-groups').textContent).toBe('group-1,group-2');
       expect(screen.getByTestId('selected-courses').textContent).toBe('course-2');
     });
+  });
+
+  it('prevents advancing to step 3 if duplicate course codes are selected', async () => {
+    vi.mocked(getCoursesAction).mockResolvedValue({
+      data: {
+        studentType: 'Undergraduate',
+        courses: [
+          { id: 'course-1', code: 'CS101', title: 'Intro A', units: 3, lecturer: 'Dr. A', level: '100L' },
+          { id: 'course-2', code: 'CS101', title: 'Intro B', units: 3, lecturer: 'Dr. B', level: '100L' },
+        ],
+        rawCourses: [],
+      },
+    });
+
+    render(
+      <RegistrationProvider>
+        <TestConsumer />
+      </RegistrationProvider>
+    );
+
+    // Select group and advance to step 2
+    fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
+    fireEvent.click(screen.getByTestId('next-btn'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-step').textContent).toBe('2');
+    });
+
+    // Select course 1 and course 2 (both CS101)
+    fireEvent.click(screen.getByTestId('toggle-course-btn'));
+    fireEvent.click(screen.getByTestId('toggle-course-2-btn'));
+
+    expect(screen.getByTestId('selected-courses').textContent).toBe('course-1,course-2');
+
+    // Click next (from step 2 to step 3)
+    fireEvent.click(screen.getByTestId('next-btn'));
+
+    // Step should remain 2 due to duplicate codes validation failure
+    expect(screen.getByTestId('current-step').textContent).toBe('2');
   });
 });
