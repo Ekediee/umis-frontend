@@ -86,10 +86,10 @@ export interface UMISResponse {
   user_data: StudentData;
 }
 
-// Check if we are in production AND if we haven't manually disabled secure cookies
+// Use secure cookies only when the public-facing URL is HTTPS.
+// Switching HTTP → HTTPS is a single .env change (NEXTAUTH_URL); no code changes.
 const useSecureCookies =
-  process.env.NODE_ENV === "production" &&
-  process.env.DISABLE_SECURE_COOKIES !== "true";
+  (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
 
 export async function createSession(token: string, userData?: UMISResponse) {
   const cookieStore = await cookies();
