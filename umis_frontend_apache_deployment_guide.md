@@ -190,11 +190,17 @@ We will now install the project's dependencies and create a production-ready bui
     npm run build
     ```
 
-3.  **Copy Static Assets into the Standalone Bundle:**
-    Next.js standalone mode does not automatically copy the `public/` folder or static chunks. Run these two commands after every build:
+3.  **Copy Static Assets (Handled Automatically):**
+    Static assets are now copied automatically by the `postbuild` script when `npm run build` completes.
+    You should see the following output at the end of the build:
+    ```
+    Copying .next/static to standalone...
+    Copying public to standalone...
+    Postbuild copy completed successfully.
+    ```
+    If for any reason the copy did not run, you can run it manually:
     ```bash
-    cp -r .next/static .next/standalone/.next/static
-    cp -r public .next/standalone/public
+    node scripts/postbuild.js
     ```
 
 ### Step 3.5: Run the Application with PM2
@@ -377,14 +383,12 @@ To update the application after code changes, follow these steps:
 2.  Pull the latest changes: `git pull origin main`
 3.  Install any new dependencies: `npm ci`
 4.  Rebuild the application: `npm run build`
-5.  Copy static assets into the standalone bundle:
-    ```bash
-    cp -r .next/static .next/standalone/.next/static
-    cp -r public .next/standalone/public
-    ```
-6.  Restart the application via PM2: `pm2 restart umis-frontend`
+    *(The postbuild script automatically copies static assets and the public folder — no extra steps needed.)*
+5.  Restart the application via PM2: `pm2 restart umis-frontend`
 
 > **New environment variable?** If the update introduces a new env variable, add it to `.env` on the server **before** running `pm2 restart`, otherwise the app will start without it.
+
+> **Static assets:** The `postbuild` script now copies `.next/static` and `public` to the standalone folder automatically on every `npm run build`. No manual `cp` commands are required.
 
 ---
 
@@ -491,8 +495,6 @@ The standalone bundle may be stale. Force a clean rebuild:
 ```bash
 rm -rf .next
 npm run build
-cp -r .next/static .next/standalone/.next/static
-cp -r public .next/standalone/public
 pm2 restart umis-frontend
 ```
 

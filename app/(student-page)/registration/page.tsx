@@ -137,8 +137,8 @@ export default function RegistrationPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
         <SummaryCard 
           title="Session" 
-          value={semesterInfo?.semester.split(".")[0] ?? "—"}
-          subValue={semesterInfo ? "." + semesterInfo.semester.split(".")[1] : undefined}
+          value={semesterInfo?.semester ? semesterInfo.semester.split(".")[0] : "—"}
+          subValue={semesterInfo?.semester && semesterInfo.semester.includes(".") ? "." + semesterInfo.semester.split(".")[1] : undefined}
           badgeText="Current Semester" 
         />
         <SummaryCard 
@@ -301,7 +301,7 @@ export default function RegistrationPage() {
           {/* Illustration */}
           <div className="absolute right-[-40px] top-[-40px] w-[300px] h-[300px] opacity-45 md:opacity-100 mix-blend-overlay md:mix-blend-normal">
             <Image
-              src="/Users/pfy-210/.gemini/antigravity/brain/ad3981aa-aa22-4fec-aa6b-18fd311d5513/exam_portal_illustration_1777980904014.png"
+              src="/images/student-image.png"
               alt=""
               width={300}
               height={300}

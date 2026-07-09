@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
+    "postbuild": "node scripts/postbuild.js",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
