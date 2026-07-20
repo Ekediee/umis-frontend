@@ -534,6 +534,8 @@ export const submitCourseSelectionAction = async (
     return { error: "You are not authenticated. Please log in again." };
   }
 
+  // console.log("Coures for sumit: ", payload);
+
   try {
     const response = await loggedFetch(
       `${apiUrl}/api/v1/student/submit-course-selection`,

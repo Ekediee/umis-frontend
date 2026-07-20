@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Award } from "lucide-react";
+import { useUserData } from "@/contexts/user-data-context";
 
 // Mock Data
 const data = [
@@ -14,6 +15,7 @@ const data = [
 ];
 
 export function CGPAProgressionChart() {
+  const userData = useUserData();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
@@ -81,7 +83,9 @@ export function CGPAProgressionChart() {
           <div className="flex items-center gap-3">
              <div className="bg-[#effaf6] dark:bg-[#12B76A]/20 border border-[#d1fadf] dark:border-[#12B76A]/30 rounded-[10px] px-3 py-1.5 flex items-center gap-2 transition-colors duration-200">
                 <Award className="w-4 h-4 text-[#12B76A] dark:text-[#34d399]" />
-                <span className="text-[13px] font-bold text-[#027A48] dark:text-[#34d399]">Current: 3.71</span>
+                <span className="text-[13px] font-bold text-[#027A48] dark:text-[#34d399]">
+                  Current: {userData?.user_data?.academic_information?.cummulative_gpa?.toFixed(2)}
+                </span>
              </div>
           </div>
         </div>

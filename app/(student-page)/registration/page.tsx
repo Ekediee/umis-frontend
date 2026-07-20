@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { SummaryCard } from "@/components/registration/summary-card";
 import { ActionBanner } from "@/components/registration/action-banner";
-import { ClearanceRequirement, ClearanceStatus } from "@/components/registration/clearance-requirement";
+import { ClearanceRequirement } from "@/components/registration/clearance-requirement";
 import { 
   FileText, 
   CreditCard, 
@@ -12,8 +12,7 @@ import {
   Building2, 
   AlertTriangle,
   Info,
-  MonitorPlay,
-  ListTodo
+  MonitorPlay
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -21,10 +20,7 @@ import { toast } from "sonner";
 import { getSemesterRegistrationStatusAction, registerSemesterAction, SemesterInfo } from "@/app/actions/registration";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
-
-// Mock data for registration states
-const REGISTRATION_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
-const PAYMENT_STATE = "not_started"; // "not_started" | "in_progress" | "completed"
+import { useRegistrationStore } from "@/hooks/use-registration-store";
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -38,8 +34,17 @@ function formatDate(iso: string | undefined): string {
 
 export default function RegistrationPage() {
   const router = useRouter();
-  const [regState, setRegState] = useState(REGISTRATION_STATE);
-  const [payState, setPayState] = useState(PAYMENT_STATE);
+  const store = useRegistrationStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+  }, []);
+
+  const regState = isMounted ? store.regState : "not_started";
+  const payState = isMounted ? store.payState : "not_started";
 
   /** Holds the active semester info; null means not yet registered / unknown. */
   const [semesterInfo, setSemesterInfo] = useState<SemesterInfo | null>(null);
@@ -205,10 +210,31 @@ export default function RegistrationPage() {
           
           <div className="bg-[#F8F9FB] dark:bg-gray-850 border border-gray-100 dark:border-gray-700 rounded-full px-5 py-2.5 flex items-center gap-4 self-start transition-colors duration-200">
             <div className="flex flex-col">
-              <span className="text-[13px] font-bold text-[#0a0a0a] dark:text-gray-100">1 of 7 Cleared</span>
+              <span className="text-[13px] font-bold text-[#0a0a0a] dark:text-gray-100">{[
+                regState === "completed",
+                payState === "completed",
+                true, // Course Advisor
+                false, // Student Development
+                false, // Registry
+                false, // Overload Request
+                false, // 7th item (mocked)
+              ].filter(Boolean).length} of 7 Cleared</span>
             </div>
             <div className="w-[80px] h-2 bg-gray-200 dark:bg-gray-750 rounded-full overflow-hidden">
-              <div className="w-[14%] h-full bg-[#10b981] rounded-full" />
+              <div 
+                className="h-full bg-[#10b981] rounded-full" 
+                style={{ 
+                  width: `${Math.round(([
+                    regState === "completed",
+                    payState === "completed",
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                  ].filter(Boolean).length / 7) * 100)}%` 
+                }} 
+              />
             </div>
           </div>
         </div>
@@ -218,7 +244,7 @@ export default function RegistrationPage() {
             icon={FileText}
             title="Submitted Registration"
             description="Initial registration form submission online"
-            status="pending"
+            status={regState === "completed" ? "approved" : (regState === "in_progress" ? "pending" : "no_request")}
             actionText="View Course Form"
             onAction={() => router.push("/dashboard/registration/course-form")}
           />
@@ -226,7 +252,7 @@ export default function RegistrationPage() {
             icon={CreditCard}
             title="Finance"
             description="Tuition and fee clearance from Bursary"
-            status="not_approved"
+            status={payState === "completed" ? "approved" : (payState === "in_progress" ? "pending" : "not_approved")}
             actionText="Fund Wallet"
             onAction={() => setIsFundWalletModalOpen(true)}
           />

@@ -5,8 +5,11 @@ import { TrendingUp, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import GPAMetric from "@/components/dashboard/gpa-metric";
+import { useUserData } from "@/contexts/user-data-context";
 
 export function AcademicProgressExtended() {
+
+  const userData = useUserData();
   
   return (
     <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
@@ -16,7 +19,7 @@ export function AcademicProgressExtended() {
           <TrendingUp className="w-5 h-5 text-[#0a0a0a] dark:text-gray-400" strokeWidth={2.5} />
         </div>
 
-        <GPAMetric />
+        <GPAMetric cgpa={userData?.user_data?.academic_information?.cummulative_gpa} current_level={userData?.user_data?.academic_information?.study_level} />
 
         <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>

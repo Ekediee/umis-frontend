@@ -13,6 +13,7 @@ import {
   type RawCourse,
   type WorshipCenter
 } from "@/app/actions/registration";
+import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { 
   saveOfflineDraft, 
   getOfflineDraft, 
@@ -118,6 +119,14 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
 
   // Raw courses — kept for submission payload (includes fields dropped by normalisation)
   const [rawCourses, setRawCourses] = useState<RawCourse[]>([]);
+
+  // Set registration status to in_progress on mount
+  useEffect(() => {
+    const store = useRegistrationStore.getState();
+    if (store.regState === "not_started") {
+      store.setRegState("in_progress");
+    }
+  }, []);
 
   // Fetch Class Groups on mount
   useEffect(() => {
@@ -340,6 +349,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     } else {
       await clearOfflineDraft(OFFLINE_COURSE_CART_KEY);
       toast.success(result.message ?? "Registration submitted successfully");
+      useRegistrationStore.getState().setRegState("completed");
       setIsSuccessModalOpen(true);
     }
   };

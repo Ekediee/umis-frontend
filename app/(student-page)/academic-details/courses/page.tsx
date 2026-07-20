@@ -4,78 +4,76 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getRegisteredCoursesAction } from "@/app/actions/academic-details";
+import { useAcademicDetailsStore } from "@/hooks/use-academic-details-store";
+import type { RegisteredCourse } from "@/app/actions/academic-details";
 
-// Mock Data
-const MOCK_DATA = {
-  current: [
-    { code: "COSC 204", title: "Designing and Development of Object Oriented Software", lecturer: "Maitanmi S.O", level: "200L", units: 2 },
-    { code: "COSC 202", title: "Advanced Database Management Systems", lecturer: "Johnson R.T", level: "200L", units: 3 },
-    { code: "COSC 200", title: "Web Application Development", lecturer: "Adams P.L", level: "200L", units: 3 },
-    { code: "BU-GST 201", title: "Artificial Intelligence Principles", lecturer: "Nguyen A.K", level: "200L", units: 4 },
-    { code: "COSC 268", title: "Mobile Application Development", lecturer: "Peterson J.E", level: "200L", units: 3 },
-    { code: "BU-GST 205", title: "Software Engineering", lecturer: "Williams H.J", level: "200L", units: 4 },
-    { code: "SENG 270", title: "Computer Networks", lecturer: "Rodriguez T.F", level: "200L", units: 3 },
-    { code: "ITGY 271", title: "Human-Computer Interaction", lecturer: "Lee M.N", level: "200L", units: 3 },
-    { code: "COSC 872", title: "Data Structures and Algorithms", lecturer: "Singh R.V", level: "200L", units: 2 },
-  ],
-  "carry-over": [
-    { code: "COSC 204", title: "Designing and Development of Object Oriented Software", lecturer: "Maitanmi S.O", level: "200L", units: 2 },
-    { code: "BU-GST 201", title: "Artificial Intelligence Principles", lecturer: "Nguyen A.K", level: "200L", units: 4 },
-    { code: "COSC 268", title: "Mobile Application Development", lecturer: "Peterson J.E", level: "200L", units: 3 },
-    { code: "ITGY 271", title: "Human-Computer Interaction", lecturer: "Lee M.N", level: "200L", units: 3 },
-    { code: "COSC 872", title: "Data Structures and Algorithms", lecturer: "Singh R.V", level: "200L", units: 2 },
-  ],
-  repeated: [
-    { code: "COSC 204", title: "Designing and Development of Object Oriented Software", lecturer: "Maitanmi S.O", level: "200L", units: 2 },
-    { code: "ITGY 271", title: "Human-Computer Interaction", lecturer: "Lee M.N", level: "200L", units: 3 },
-    { code: "COSC 872", title: "Data Structures and Algorithms", lecturer: "Singh R.V", level: "200L", units: 2 },
-  ]
-};
+// ── Skeleton row ──────────────────────────────────────────────────────────────
 
-function CoursesContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab") || "current";
-  
-  const [activeTab, setActiveTab] = useState(tabParam);
+function SkeletonRow() {
+  return (
+    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900">
+      <CardContent className="p-0">
+        {/* Desktop skeleton */}
+        <div className="hidden md:grid grid-cols-[1.5fr_3fr_1.5fr_1fr] items-center px-6 py-4 gap-4 animate-pulse">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-3/4" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-full" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-2/3" />
+          <div className="flex justify-end">
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16" />
+          </div>
+        </div>
+        {/* Mobile skeleton */}
+        <div className="flex flex-col md:hidden p-5 gap-3 animate-pulse">
+          <div className="flex justify-between items-center">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-1/3" />
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16" />
+          </div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-full" />
+          <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 w-full" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-1/2" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-  useEffect(() => {
-    setActiveTab(tabParam);
-  }, [tabParam]);
+// ── Table renderer ────────────────────────────────────────────────────────────
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    router.push(`/academic-details/courses?tab=${value}`);
-  };
+function renderTable(data: RegisteredCourse[]) {
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500 text-[15px]">
+        No courses found.
+      </div>
+    );
+  }
 
-  const getCourses = (tab: string) => {
-    return MOCK_DATA[tab as keyof typeof MOCK_DATA] || [];
-  };
-
-  // CALCULATE TOTAL UNITS FOR ACTIVE TAB
-  const activeCourses = getCourses(activeTab);
-  const totalUnits = activeCourses.reduce((sum, course) => sum + course.units, 0);
-
-  const renderTable = (data: typeof MOCK_DATA.current) => (
+  return (
     <div className="flex flex-col gap-3">
       {data.map((course, idx) => (
-        <Card key={idx} className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200">
+        <Card
+          key={`${course.courseId}-${idx}`}
+          className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+        >
           <CardContent className="p-0">
             {/* DESKTOP VIEW */}
-            <div className="hidden md:grid grid-cols-[1.5fr_3fr_1.5fr_1fr_1fr] items-center px-6">
+            <div className="hidden md:grid grid-cols-[1.5fr_3fr_1.5fr_1fr] items-center px-6 py-4">
               <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
-                {course.code}
+                {course.courseId}
               </div>
-              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium truncate pr-4">
-                {course.title}
+              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium pr-4">
+                <div className="truncate">{course.title}</div>
+                {course.classOption && (
+                  <span className="mt-1 inline-block text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-full px-2.5 py-0.5">
+                    {course.classOption}
+                  </span>
+                )}
               </div>
               <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium">
-                {course.lecturer}
-              </div>
-              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium">
-                {course.level}
+                {course.instructor}
               </div>
               <div className="flex justify-end pr-2">
                 <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-[#E1E7FC] dark:bg-[#003cbb]/20 rounded-full px-3 py-1">
@@ -86,38 +84,139 @@ function CoursesContent() {
 
             {/* MOBILE VIEW */}
             <div className="flex flex-col md:hidden p-5 gap-3">
-               <div className="flex justify-between items-center">
-                  <div className="font-bold text-[16px] text-gray-900 dark:text-gray-100">{course.code}</div>
-                  <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-[#E1E7FC] dark:bg-[#003cbb]/20 rounded-full px-3 py-1">
-                    {course.units} UNITS
-                  </span>
-               </div>
-               
-               <div className="text-[14px] text-gray-500 dark:text-gray-400 font-medium">
-                  {course.title}
-               </div>
+              <div className="flex justify-between items-center">
+                <div className="font-bold text-[16px] text-gray-900 dark:text-gray-100">
+                  {course.courseId}
+                </div>
+                <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-[#E1E7FC] dark:bg-[#003cbb]/20 rounded-full px-3 py-1">
+                  {course.units} UNITS
+                </span>
+              </div>
 
-               <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 w-full" />
+              <div className="text-[14px] text-gray-500 dark:text-gray-400 font-medium">
+                {course.title}
+              </div>
 
-               <div className="flex justify-between items-center text-[13px] text-gray-500 dark:text-gray-400 font-medium">
-                  <div>{course.lecturer}</div>
-                  <div>{course.level}</div>
-               </div>
+              {course.classOption && (
+                <span className="self-start text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-full px-2.5 py-0.5">
+                  {course.classOption}
+                </span>
+              )}
+
+              <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 w-full" />
+
+              <div className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">
+                {course.instructor}
+              </div>
             </div>
           </CardContent>
         </Card>
       ))}
     </div>
   );
+}
+
+// ── Main content ──────────────────────────────────────────────────────────────
+
+function CoursesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") || "current";
+
+  const [activeTab, setActiveTab] = useState(tabParam);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    registeredCourses,
+    coursesError,
+    setRegisteredCourses,
+    setCoursesError,
+  } = useAcademicDetailsStore();
+
+  // Derive tab lists
+  const currentCourses = (registeredCourses ?? []).filter(
+    (c) => !c.isCarryOver
+  );
+  const carryOverCourses = (registeredCourses ?? []).filter(
+    (c) => c.isCarryOver
+  );
+
+  const getActiveCourses = (tab: string): RegisteredCourse[] => {
+    if (tab === "current") return currentCourses;
+    if (tab === "carry-over") return carryOverCourses;
+    return [];
+  };
+
+  const activeCourses = getActiveCourses(activeTab);
+  const totalUnits = activeCourses.reduce((sum, c) => sum + c.units, 0);
+
+  const fetchCourses = async () => {
+    setIsLoading(true);
+    const result = await getRegisteredCoursesAction();
+    if (result.error) {
+      setCoursesError(result.error);
+    } else if (result.data) {
+      setRegisteredCourses(result.data);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    // Use cached data if available; otherwise fetch
+    if (registeredCourses === null) {
+      fetchCourses();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    setActiveTab(tabParam);
+  }, [tabParam]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    router.push(`/academic-details/courses?tab=${value}`);
+  };
+
+  // ── Render helpers ──
+
+  const renderContent = (courses: RegisteredCourse[]) => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonRow key={i} />
+          ))}
+        </div>
+      );
+    }
+    if (coursesError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <p className="text-red-500 dark:text-red-400 text-[15px] text-center max-w-sm">
+            {coursesError}
+          </p>
+          <Button
+            variant="outline"
+            className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800"
+            onClick={fetchCourses}
+          >
+            Retry
+          </Button>
+        </div>
+      );
+    }
+    return renderTable(courses);
+  };
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 md:mt-0">
       {/* Back button */}
       <div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 hover:text-[#003095] dark:hover:text-[#8ba7ff] bg-white dark:bg-gray-900 shadow-sm transition-colors"
-          onClick={() => router.push('/academic-details')}
+          onClick={() => router.push("/academic-details")}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back
@@ -128,115 +227,71 @@ function CoursesContent() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-200 dark:border-gray-800 mb-6 gap-4 transition-colors">
           <TabsList className="bg-transparent overflow-x-auto flex-nowrap justify-start h-auto p-0 flex gap-6 md:gap-8 min-w-0 w-full md:w-auto border-none no-scrollbar">
-            
-            <TabsTrigger 
-              value="current" 
+            <TabsTrigger
+              value="current"
               style={{
                 backgroundColor: "transparent",
                 boxShadow: "none",
                 borderRadius: 0,
               }}
               className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "current" ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                activeTab === "current"
+                  ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               Current Semester Courses
             </TabsTrigger>
-            
-            <TabsTrigger 
-              value="carry-over" 
-              style={{
-                backgroundColor: "transparent",
-                boxShadow: "none",
-                borderRadius: 0,
-              }}
-              className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "carry-over" ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              }`}
-            >
-              Carry Over courses
-            </TabsTrigger>
-            
-            <TabsTrigger 
-              value="repeated" 
-              style={{
-                backgroundColor: "transparent",
-                boxShadow: "none",
-                borderRadius: 0,
-              }}
-              className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
-                activeTab === "repeated" ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              }`}
-            >
-              Repeated Courses
-            </TabsTrigger>
 
+            <TabsTrigger
+              value="carry-over"
+              style={{
+                backgroundColor: "transparent",
+                boxShadow: "none",
+                borderRadius: 0,
+              }}
+              className={`px-0 py-3 md:pb-4 border-b-2 font-semibold text-[14px] whitespace-nowrap transition-colors ${
+                activeTab === "carry-over"
+                  ? "border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff]"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              }`}
+            >
+              Carry Over Courses
+            </TabsTrigger>
           </TabsList>
 
+          {/* Total Units — desktop */}
           <div className="font-bold text-gray-900 dark:text-gray-100 text-[15px] whitespace-nowrap self-end pb-4 hidden md:block">
-            Total Units: {totalUnits}
+            {!isLoading && !coursesError && `Total Units: ${totalUnits}`}
           </div>
-          {/* Mobile Total Units */}
+          {/* Total Units — mobile */}
           <div className="font-bold text-gray-900 dark:text-gray-100 text-[15px] ml-auto block md:hidden mb-2">
-            Total Units: {totalUnits}
+            {!isLoading && !coursesError && `Total Units: ${totalUnits}`}
           </div>
         </div>
 
         <TabsContent value="current" className="mt-0 outline-none">
-           {renderTable(getCourses("current"))}
+          {renderContent(currentCourses)}
         </TabsContent>
         <TabsContent value="carry-over" className="mt-0 outline-none">
-           {renderTable(getCourses("carry-over"))}
-        </TabsContent>
-        <TabsContent value="repeated" className="mt-0 outline-none">
-           {renderTable(getCourses("repeated"))}
+          {renderContent(carryOverCourses)}
         </TabsContent>
       </Tabs>
-
-      {/* Pagination Footer */}
-      {/* <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6 text-gray-500 text-[13px] md:text-sm">
-        <div>
-          Page 1 of 2
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-400 transition-colors">
-            <ChevronsLeft className="w-4 h-4" />
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-400 transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          
-          <button className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white font-medium text-gray-900 shadow-sm mx-1">
-            1
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-600 font-medium transition-colors">
-            2
-          </button>
-          
-          <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-600 transition-colors mx-1">
-            <ChevronRight className="w-4 h-4" />
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-600 transition-colors">
-            <ChevronsRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div>
-           <button className="flex items-center gap-2 border border-gray-200 rounded-[10px] px-4 py-2 bg-white text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors shadow-sm">
-              10 / page
-              <ChevronDown className="w-4 h-4 text-gray-400 ml-1" />
-           </button>
-        </div>
-      </div> */}
     </div>
   );
 }
 
-// Main page component wrapping the Suspense boundary
+// ── Page export ───────────────────────────────────────────────────────────────
+
 export default function CoursesPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Loading courses...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+          Loading courses...
+        </div>
+      }
+    >
       <CoursesContent />
     </Suspense>
   );
