@@ -1,13 +1,14 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   resolve: {
     alias: {
       // Shim Next.js's "server-only" guard — it's a no-op in tests
-      'server-only': new URL('./test-utils/server-only-shim.ts', import.meta.url).pathname,
+      'server-only': path.resolve(__dirname, './test-utils/server-only-shim.ts'),
     },
   },
   test: {
