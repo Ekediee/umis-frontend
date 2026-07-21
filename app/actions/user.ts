@@ -17,41 +17,40 @@ export async function getUserData(): Promise<UMISResponse | null> {
  * Falls back to the session cookie if the API request fails.
  */
 export async function getStudentProfileAction(): Promise<UMISResponse | null> {
-  const apiUrl = process.env.API_URL;
-  if (!apiUrl) return getSessionUser();
-
-  const token = await getSessionToken();
-  if (!token) return getSessionUser();
-
   try {
-    const response = await loggedFetch(`${apiUrl}/api/v1/student/profile`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
+    const apiUrl = process.env.API_URL;
+    const token = await getSessionToken().catch(() => null);
 
-    if (response.ok) {
-      const json = await response.json();
-      
-      // Handle Laravel api envelope standard: { status: true, message: "...", data: ... }
-      const payload = json.data ?? json;
+    if (apiUrl && token) {
+      const response = await loggedFetch(`${apiUrl}/api/v1/student/profile`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
 
-      // Ensure it aligns with the UMISResponse interface structure
-      if (payload && typeof payload === "object") {
-        if ("user_data" in payload) {
-          return payload as UMISResponse;
-        }
+      if (response.ok) {
+        const json = await response.json();
         
-        // If the payload is the direct student data object, wrap it
-        if ("personal_information" in payload || "student_name" in payload) {
-          return {
-            entity_id: null,
-            entity_name: payload.student_name || null,
-            user_data: payload,
-          } as UMISResponse;
+        // Handle Laravel api envelope standard: { status: true, message: "...", data: ... }
+        const payload = json.data ?? json;
+
+        // Ensure it aligns with the UMISResponse interface structure
+        if (payload && typeof payload === "object") {
+          if ("user_data" in payload) {
+            return payload as UMISResponse;
+          }
+          
+          // If the payload is the direct student data object, wrap it
+          if ("personal_information" in payload || "student_name" in payload) {
+            return {
+              entity_id: null,
+              entity_name: payload.student_name || null,
+              user_data: payload,
+            } as UMISResponse;
+          }
         }
       }
     }
@@ -59,5 +58,9 @@ export async function getStudentProfileAction(): Promise<UMISResponse | null> {
     console.error("getStudentProfileAction error:", error);
   }
 
-  return getSessionUser();
+  try {
+    return await getSessionUser();
+  } catch {
+    return null;
+  }
 }

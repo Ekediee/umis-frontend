@@ -46,7 +46,7 @@ export function UserDataProvider({
 export function useUserData(): UMISResponse | null {
   const ctx = useContext(UserDataContext);
   if (ctx === undefined) {
-    throw new Error("useUserData must be used within a <UserDataProvider>");
+    return null;
   }
   return ctx;
 }

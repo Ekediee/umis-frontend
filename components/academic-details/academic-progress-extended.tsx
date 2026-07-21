@@ -1,16 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { TrendingUp, Eye, EyeOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import GPAMetric from "@/components/dashboard/gpa-metric";
 import { useUserData } from "@/contexts/user-data-context";
+import { getStudentProfileAction } from "@/app/actions/user";
+import type { UMISResponse } from "@/lib/session";
 
 export function AcademicProgressExtended() {
+  const contextUserData = useUserData();
+  const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
 
-  const userData = useUserData();
-  
+  useEffect(() => {
+    getStudentProfileAction().then((res) => {
+      if (res) setProfileData(res);
+    });
+  }, []);
+
+  const userData = profileData ?? contextUserData;
+  const cgpa =
+    userData?.user_data?.cummulative_gpa ??
+    userData?.user_data?.academic_information?.cummulative_gpa ??
+    null;
+  const currentLevel =
+    userData?.user_data?.current_level ??
+    userData?.user_data?.academic_information?.study_level ??
+    null;
+
   return (
     <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
       <CardContent className="p-5 md:p-6">
@@ -19,7 +36,7 @@ export function AcademicProgressExtended() {
           <TrendingUp className="w-5 h-5 text-[#0a0a0a] dark:text-gray-400" strokeWidth={2.5} />
         </div>
 
-        <GPAMetric cgpa={userData?.user_data?.academic_information?.cummulative_gpa} current_level={userData?.user_data?.academic_information?.study_level} />
+        <GPAMetric cgpa={cgpa} current_level={currentLevel} />
 
         <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
