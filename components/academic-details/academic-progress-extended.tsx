@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { TrendingUp, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
-import { TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import GPAMetric from "@/components/dashboard/gpa-metric";
@@ -11,13 +9,11 @@ import { GPAWhatIfSimulator } from "@/components/academic-details/gpa-what-if-si
 import { useUserData } from "@/contexts/user-data-context";
 import { getStudentProfileAction } from "@/app/actions/user";
 import type { UMISResponse } from "@/lib/session";
-import { useUserData } from "@/contexts/user-data-context";
-import { getStudentProfileAction } from "@/app/actions/user";
-import type { UMISResponse } from "@/lib/session";
 
 export function AcademicProgressExtended() {
   const contextUserData = useUserData();
   const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
 
   useEffect(() => {
     getStudentProfileAction().then((res) => {
