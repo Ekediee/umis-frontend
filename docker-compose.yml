@@ -20,6 +20,9 @@ services:
     # Load all runtime secrets and config from .env on the host.
     env_file:
       - .env
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+
 
     # Map Next.js to the host's loopback interface only.
     # This prevents the public internet from reaching Next.js directly,

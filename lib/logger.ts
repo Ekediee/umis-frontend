@@ -2,6 +2,11 @@ import "server-only";
 import * as fs from "fs";
 import * as path from "path";
 
+// ── TLS bypass ────────────────────────────────────────────────────────────────
+// Set NODE_TLS_REJECT_UNAUTHORIZED=0 globally in Node.js process so fetch ignores
+// expired/invalid SSL certificates when connecting to HTTPS backends.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // Ensure the logs directory exists at startup/import time
 const logsDir = path.join(process.cwd(), "logs");
 try {
@@ -192,7 +197,7 @@ export async function loggedFetch(
       }
 
       logger.error(
-         `Outgoing API Response Error: ${method} ${url} - Status: ${response.status} (${response.statusText}) - Duration: ${duration}ms${bodyText ? ` - Body: ${bodyText}` : ""}`
+        `Outgoing API Response Error: ${method} ${url} - Status: ${response.status} (${response.statusText}) - Duration: ${duration}ms${bodyText ? ` - Body: ${bodyText}` : ""}`
       );
     }
 

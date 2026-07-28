@@ -60,7 +60,7 @@ export function StudentProfileBanner({
               <div className="relative">
                 <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
                   <Image
-                    src="/student-image.png"
+                    src="/images/student-image.png"
                     alt={`${displayName}`}
                     fill
                     unoptimized
@@ -120,7 +120,7 @@ export function StudentProfileBanner({
               <div className="relative">
                 <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
                   <Image
-                    src="/student-image.png"
+                    src="/images/student-image.png"
                     alt={`${displayName}`}
                     fill
                     unoptimized
@@ -156,7 +156,7 @@ export function StudentProfileBanner({
                 {mounted && !showMatric ? (
                   <p className="text-[14px] md:text-[16px] font-bold text-gray-900">****</p>
                 ) : (
-                  <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
+                  <p className="text-[14px] md:text-[16px] font-bold dark:text-gray-900">{displayMatric}</p>
                 )}
               </div>
               <div className="flex flex-col ">

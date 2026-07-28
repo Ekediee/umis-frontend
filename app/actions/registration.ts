@@ -570,3 +570,98 @@ export const submitCourseSelectionAction = async (
     };
   }
 };
+
+// ── Registered Courses ────────────────────────────────────────────────────────
+
+// ── Raw API shape ─────────────────────────────────────────────────────────────
+
+/**
+ * Shape of each course entry returned by
+ * GET /api/v1/semester/registered-course
+ */
+interface RawRegisteredCourse {
+  course_id: string;
+  course_title: string;
+  instructor: string;
+  classoption: string;
+  credithours: number;
+}
+
+interface RawRegisteredCoursesResponse {
+  status: boolean;
+  message: string;
+  data: RawRegisteredCourse[];
+}
+
+// ── Normalised shape used by the UI ──────────────────────────────────────────
+
+export interface RegisteredCoursesResult {
+  data?: CourseItem[];
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Fetches the student's registered courses for the current semester.
+ * Endpoint: GET /api/v1/semester/registered-course
+ */
+export const getRegisteredCoursesAction = async (): Promise<RegisteredCoursesResult> => {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    console.error("API_URL is not defined in environment variables");
+    return { error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken();
+  if (!token) {
+    return { error: "You are not authenticated. Please log in again." };
+  }
+
+  try {
+    const response = await loggedFetch(
+      `${apiUrl}/api/v1/semester/registered-course`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to fetch registered courses";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Response body wasn't JSON — keep the fallback message
+      }
+      return { error: errorMessage };
+    }
+
+    const json: RawRegisteredCoursesResponse = await response.json();
+
+    const rawCourses: RawRegisteredCourse[] = Array.isArray(json?.data)
+      ? json.data
+      : [];
+
+    const courses: CourseItem[] = rawCourses.map((item, idx) => ({
+      id: String(idx),
+      code: item.course_id.trim(),
+      title: item.course_title.trim(),
+      units: item.credithours ?? 0,
+      classOption: item.classoption ?? "",
+      lecturer: item.instructor.trim(),
+      level: "—",
+    }));
+
+    return { data: courses, message: json?.message };
+  } catch (error) {
+    console.error("getRegisteredCoursesAction error:", error);
+    return {
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+};

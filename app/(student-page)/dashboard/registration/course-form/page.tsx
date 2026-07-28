@@ -9,7 +9,7 @@ import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { getStudentProfileAction } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
-import { getClassGroupsAction, getCoursesAction, CourseItem, getWorshipCentersAction } from "@/app/actions/registration";
+import { CourseItem, getWorshipCentersAction, getRegisteredCoursesAction } from "@/app/actions/registration";
 import { getOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
 
 const COURSE_LIST = [
@@ -26,6 +26,8 @@ const COURSE_LIST = [
 function CourseFormContent() {
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const [courseFetchError, setCourseFetchError] = useState<string | null>(null);
   const [selectedWorshipCenter, setSelectedWorshipCenter] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -34,16 +36,20 @@ function CourseFormContent() {
     getStudentProfileAction().then(setUserData);
 
     async function loadCourses() {
+      setIsLoadingCourses(true);
+      setCourseFetchError(null);
       try {
-        const groupRes = await getClassGroupsAction();
-        if (groupRes.data && groupRes.data.length > 0) {
-          const coursesRes = await getCoursesAction([groupRes.data[0].id]);
-          if (coursesRes.data?.courses) {
-            setCourses(coursesRes.data.courses);
-          }
+        const res = await getRegisteredCoursesAction();
+        if (res.error) {
+          setCourseFetchError(res.error);
+        } else if (res.data && res.data.length > 0) {
+          setCourses(res.data);
         }
       } catch (error) {
-        console.error("Failed to load courses from API:", error);
+        console.error("Failed to load registered courses from API:", error);
+        setCourseFetchError("Failed to load courses. Please try again.");
+      } finally {
+        setIsLoadingCourses(false);
       }
     }
 
@@ -120,7 +126,9 @@ function CourseFormContent() {
     code: 'code' in course ? (course.code as string) : (course.id as string),
     title: course.title,
     units: typeof course.units === 'number' ? course.units.toFixed(1) : course.units,
-    option: 'option' in course ? (course.option as string) : (student?.department || "Software Engineering"),
+    option: 'classOption' in course ? (course.classOption as string)
+          : 'option' in course ? (course.option as string)
+          : (student?.department || "Software Engineering"),
     lecturer: course.lecturer
   }));
 
@@ -306,10 +314,36 @@ function CourseFormContent() {
                   <div className="w-1.5 h-6 bg-blue-900 rounded-full" />
                   <h2 className="text-[18px] font-bold text-gray-800 uppercase tracking-wide">Selected Course List</h2>
                 </div>
-                <div className="text-[14px] font-bold text-gray-400 uppercase">
-                  Total Units: <span className="text-blue-900 text-[16px]">{totalUnits}</span>
-                </div>
+                {!isLoadingCourses && !courseFetchError && (
+                  <div className="text-[14px] font-bold text-gray-400 uppercase">
+                    Total Units: <span className="text-blue-900 text-[16px]">{totalUnits}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Error banner */}
+              {courseFetchError && (
+                <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+                  <p className="text-[13px] font-medium text-red-700">{courseFetchError}</p>
+                  <button
+                    onClick={() => {
+                      setCourseFetchError(null);
+                      setIsLoadingCourses(true);
+                      getRegisteredCoursesAction().then((res) => {
+                        if (res.error) {
+                          setCourseFetchError(res.error);
+                        } else if (res.data && res.data.length > 0) {
+                          setCourses(res.data);
+                        }
+                        setIsLoadingCourses(false);
+                      });
+                    }}
+                    className="shrink-0 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-700 hover:bg-red-50 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
 
               <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <table className="w-full text-left border-collapse">
@@ -323,15 +357,28 @@ function CourseFormContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {displayCourses.map((course, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-4 py-3.5 text-[14px] font-mono font-bold text-blue-900">{course.code}</td>
-                        <td className="px-4 py-3.5 text-[14px] font-medium text-gray-800">{course.title}</td>
-                        <td className="px-4 py-3.5 text-[14px] text-gray-700 text-center">{course.units}</td>
-                        <td className="px-4 py-3.5 text-[14px] text-gray-500">{course.option}</td>
-                        <td className="px-4 py-3.5 text-[12px] text-gray-800 font-medium uppercase">{course.lecturer}</td>
-                      </tr>
-                    ))}
+                    {isLoadingCourses ? (
+                      /* Loading skeleton */
+                      Array.from({ length: 6 }).map((_, idx) => (
+                        <tr key={idx} className="animate-pulse">
+                          <td className="px-4 py-3.5"><div className="h-3.5 w-20 rounded bg-gray-200" /></td>
+                          <td className="px-4 py-3.5"><div className="h-3.5 w-48 rounded bg-gray-200" /></td>
+                          <td className="px-4 py-3.5 text-center"><div className="h-3.5 w-8 rounded bg-gray-200 mx-auto" /></td>
+                          <td className="px-4 py-3.5"><div className="h-3.5 w-28 rounded bg-gray-200" /></td>
+                          <td className="px-4 py-3.5"><div className="h-3.5 w-36 rounded bg-gray-200" /></td>
+                        </tr>
+                      ))
+                    ) : (
+                      displayCourses.map((course, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-4 py-3.5 text-[14px] font-mono font-bold text-blue-900">{course.code}</td>
+                          <td className="px-4 py-3.5 text-[14px] font-medium text-gray-800">{course.title}</td>
+                          <td className="px-4 py-3.5 text-[14px] text-gray-700 text-center">{course.units}</td>
+                          <td className="px-4 py-3.5 text-[14px] text-gray-500">{course.option}</td>
+                          <td className="px-4 py-3.5 text-[12px] text-gray-800 font-medium uppercase">{course.lecturer}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

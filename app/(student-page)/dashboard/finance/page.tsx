@@ -225,7 +225,7 @@ export default function FinancePage() {
             <div className="absolute right-[-60px] md:absolute right-[0px] bottom-[-60px] w-[250px] h-[250px] pointer-events-none">
               <Image
                 className="w-full h-auto dark:opacity-85"
-                src="/images/handsuccesspay.png"
+                src="/images/HandSuccessPay.png"
                 alt="Next.js logo"
                 width={150}
                 height={150}
@@ -247,7 +247,7 @@ export default function FinancePage() {
             <div className="absolute right-[0px] md:right-8 bottom-[-60px] w-[250px] h-[250px] pointer-events-none">
               <Image
                 className="w-full h-auto dark:opacity-85"
-                src="/images/handpay.png"
+                src="/images/HandPay.png"
                 alt="Next.js logo"
                 width={250}
                 height={250}
