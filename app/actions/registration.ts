@@ -151,7 +151,7 @@ export interface CourseItem {
   /** Credit hours */
   units: number;
   /** Class Option */
-  classOption: string;
+  classOption?: string;
   /** Instructor name */
   lecturer: string;
   /** Derived from yeartaken: 1-4 → "Year N", otherwise "—" */
@@ -500,6 +500,7 @@ export interface RawCourseSubmit {
   lecturehours: number;
   yeartaken: number;
   qcourseid: number;
+  classoption?: string | null;
 }
 
 /** Full request payload for POST /api/v1/student/submit-course-selection */
@@ -508,6 +509,7 @@ export interface SubmitCoursePayload {
   max_credit_unit: number;
   min_credit_unit: number;
   courses: RawCourseSubmit[];
+  class_options?: string[];
 }
 
 export interface SubmitCourseSelectionResult {

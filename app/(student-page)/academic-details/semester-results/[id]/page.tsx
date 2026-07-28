@@ -61,7 +61,7 @@ export default function SemesterResultDetailPage() {
         </div>
 
         <Button 
-          className="bg-[#003CBB] dark:bg-[#4d82ff] hover:bg-[#5585EA] dark:hover:bg-[#7aa4ff] text-white font-semibold rounded-[12px] h-11 px-6 w-full md:w-auto shadow-sm transition-colors"
+          className="bg-[#003CBB] dark:bg-[#4d82ff] hover:bg-[#5585EA] dark:hover:bg-[#7aa4ff] text-white font-semibold rounded-[12px] h-11 px-6 w-full md:w-auto transition-colors"
           onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(semesterId)}/preview`)}
         >
           Export Result

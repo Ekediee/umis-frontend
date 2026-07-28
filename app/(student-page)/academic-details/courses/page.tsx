@@ -213,10 +213,10 @@ function CoursesContent() {
     <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 md:mt-0">
       {/* Back button */}
       <div>
-        <Button
-          variant="outline"
-          className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 hover:text-[#003095] dark:hover:text-[#8ba7ff] bg-white dark:bg-gray-900 shadow-sm transition-colors"
-          onClick={() => router.push("/academic-details")}
+        <Button 
+          variant="outline" 
+          className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 hover:text-[#003095] dark:hover:text-[#8ba7ff] bg-white dark:bg-gray-900 transition-colors"
+          onClick={() => router.push('/academic-details')}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back

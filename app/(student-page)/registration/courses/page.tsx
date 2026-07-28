@@ -37,7 +37,7 @@ function RegistrationCoursesFlowContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-full h-full bg-white dark:bg-black md:bg-transparent relative">
+    <div className="flex flex-col min-h-full h-full bg-white dark:bg-black md:bg-transparent relative overflow-y-auto">
       {/* Web Stepper (Hidden on mobile) */}
       <div className="hidden md:block">
         <WebStepper />

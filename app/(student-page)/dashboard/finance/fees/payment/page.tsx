@@ -17,11 +17,13 @@ import { PaymentProgressSheet } from "@/components/fees/payment-progress-sheet";
 import { PaymentMethodSheet } from "@/components/fees/payment-method-sheet";
 import { ProcessingOverlay } from "@/components/fees/processing-overlay";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
+import { useUserData } from "@/contexts/user-data-context";
 
 function PaymentFlowContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentType = searchParams.get("type"); // "full" or "semester"
+  const userData = useUserData();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
@@ -30,6 +32,13 @@ function PaymentFlowContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [customAmount, setCustomAmount] = useState<number | null>(null);
+
+  // Derive dynamic student details from context
+  const studentName = userData?.user_data?.student_name || userData?.entity_name || "Yakubu Onome Joy";
+  const academicLevel = userData?.user_data?.academic_information?.study_level || "200L";
+  const currentSemester = (userData?.user_data?.academic_information as Record<string, unknown> | undefined)?.current_semester as string || "First Semester";
+  const academicInfo = `Academic Year 2025/2026 - ${currentSemester} ${academicLevel}`;
 
   // Derive labels
   const sessionLabel = "2025/2026";
@@ -84,24 +93,22 @@ function PaymentFlowContent() {
   };
 
   const handleFullPayment = () => {
-    // Navigate to gateway selection step
+    setCustomAmount(null);
     setCurrentStep(4);
   };
 
   const handleCancelPayment = () => {
-    // Go back to summary
+    setCustomAmount(null);
     setCurrentStep(3);
   };
 
   const handlePayNow = () => {
-    // Show processing overlay
     setIsProcessing(true);
+    const total = customAmount ?? computeTotal();
 
     // Simulate payment via wallet (2.5s delay)
     setTimeout(() => {
       setIsProcessing(false);
-      // Deduct from wallet balance
-      const total = computeTotal();
       setWalletBalance(prev => Math.max(0, prev - total));
       
       router.push(
@@ -141,25 +148,27 @@ function PaymentFlowContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-full h-full bg-white md:bg-transparent relative">
+    <div className="flex flex-col w-full h-full pb-20 md:pb-6 px-4 md:px-6 relative select-none">
+      
+      {/* Mobile Flow Header */}
+      <div className="md:hidden">
+        <MobileFlowHeader
+          title={getStepTitle()}
+          onProgressClick={() => setIsMobileSheetOpen(true)}
+        />
+      </div>
+
+      {/* Web Stepper (Hidden on mobile) */}
       <div className="hidden md:block">
-        <PaymentStepper 
-          currentStep={currentStep} 
+        <PaymentStepper
+          currentStep={currentStep}
           sessionLabel={sessionLabel}
           typeLabel={typeLabel}
         />
       </div>
 
-      {/* Mobile Header */}
-      <MobileFlowHeader
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        title={getStepTitle()}
-        onProgressClick={() => setIsMobileSheetOpen(true)}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 w-full px-4 md:px-8 py-4 md:py-2 flex flex-col items-center">
+      {/* Main Content Pane */}
+      <div className="flex-1 flex justify-center items-start pt-6 overflow-y-auto">
         {currentStep === 1 && (
           <SelectResidence
             selectedId={selectedResidence}
@@ -185,7 +194,9 @@ function PaymentFlowContent() {
         {currentStep === 4 && (
           <WalletPayment
             walletBalance={walletBalance}
-            totalAmount={computeTotal()}
+            totalAmount={customAmount ?? computeTotal()}
+            studentName={studentName}
+            academicInfo={academicInfo}
             onCancelPayment={handleCancelPayment}
             onPayNow={handlePayNow}
             onFundWallet={() => setIsFundWalletModalOpen(true)}
@@ -213,7 +224,7 @@ function PaymentFlowContent() {
             <Button
               variant="outline"
               onClick={handlePrevious}
-              className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] dark:bg-gray-850 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+              className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
             >
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline-block">Previous</span>
@@ -230,7 +241,7 @@ function PaymentFlowContent() {
               </Button>
               <Button
                 onClick={handleFullPayment}
-                className="rounded-[10px] h-11 px-4 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm transition-all"
+                className="rounded-[10px] h-11 px-4 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all"
               >
                 Make full Payment Now
               </Button>
@@ -240,7 +251,7 @@ function PaymentFlowContent() {
             <div className="md:hidden flex-1 pl-3">
               <Button
                 onClick={() => setIsMobilePaymentSelectionOpen(true)}
-                className="w-full rounded-[10px] h-11 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm transition-all"
+                className="w-full rounded-[10px] h-11 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all"
               >
                 Make Payment
               </Button>
@@ -249,14 +260,15 @@ function PaymentFlowContent() {
         </div>
       )}
 
-      {/* Step 4 has its own bottom actions embedded in SelectGateway */}
-
       {/* Partial Payment Modal (Desktop and Mobile flow) */}
       <PartialPaymentModal
         isOpen={isPartialPaymentOpen}
         onClose={() => setIsPartialPaymentOpen(false)}
         totalAmount={computeTotal()}
-        onPayNow={() => setCurrentStep(4)}
+        onPayNow={(amount) => {
+          setCustomAmount(amount);
+          setCurrentStep(4);
+        }}
       />
 
       {/* Mobile Payment Selection Sheet */}

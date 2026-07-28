@@ -330,6 +330,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       worship_center_id: selectedWorshipCenterId,
       max_credit_unit: MAX_UNITS,
       min_credit_unit: MIN_UNITS,
+      class_options: selectedGroups,
       courses: coursesToSubmit.map((r) => ({
         courseid: r.courseid,
         coursename: r.coursename,
@@ -338,6 +339,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
         lecturehours: r.lecturehours,
         yeartaken: r.yeartaken,
         qcourseid: r.qcourseid,
+        classoption: r.classoption,
       })),
     });
 

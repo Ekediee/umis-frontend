@@ -20,8 +20,8 @@ export function SummaryCard({ title, value, subValue, badgeText, isWarning }: Su
         <div className="flex items-center justify-between">
           <span className="text-[14px] font-medium text-[#525866] dark:text-gray-400">{title}</span>
           {badgeText && (
-            <div className="bg-[#c2d6ff] dark:bg-[#162664]/30 px-2 py-0.5 rounded-full">
-              <span className="text-[12px] font-bold text-[#162664] dark:text-[#c2d6ff] uppercase tracking-wider">{badgeText}</span>
+            <div className="bg-[#c2d6ff] dark:bg-[#162664]/30 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+              <span className="text-[10px] md:text-[12px] font-bold text-[#162664] dark:text-[#c2d6ff] uppercase tracking-wider whitespace-nowrap">{badgeText}</span>
             </div>
           )}
         </div>

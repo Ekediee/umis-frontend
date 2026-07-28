@@ -50,7 +50,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between mb-6">
         <Link 
           href="/dashboard" 
-          className="inline-flex items-center gap-1 text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:text-[#002470] dark:hover:text-[#8ba7ff] transition-colors"
+          className="inline-flex items-center gap-1.5 text-[#003cbb] dark:text-gray-200 text-[14px] font-medium bg-white dark:bg-gray-900 border border-[#003cbb]/20 dark:border-gray-800 rounded-[10px] px-4 py-2 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
@@ -100,7 +100,7 @@ export default function NotificationsPage() {
                       "border border-gray-100 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-4 md:p-5 flex items-start gap-4 transition-all hover:bg-gray-50/50 dark:hover:bg-gray-800/40 cursor-pointer relative overflow-hidden rounded-[20px]",
                       notification.read 
                         ? "bg-white dark:bg-gray-900" 
-                        : "bg-blue-50/30 dark:bg-[#4d82ff]/[0.03] border-l-4 border-l-[#003cbb] dark:border-l-[#4d82ff]"
+                        : "bg-blue-50/30 dark:bg-[#4d82ff]/[0.03]"
                     )}
                   >
                     {getIcon(notification.type)}
@@ -140,7 +140,7 @@ export default function NotificationsPage() {
                       "border border-gray-100 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-4 md:p-5 flex items-start gap-4 transition-all hover:bg-gray-50/50 dark:hover:bg-gray-800/40 cursor-pointer relative overflow-hidden rounded-[20px]",
                       notification.read 
                         ? "bg-white dark:bg-gray-900" 
-                        : "bg-blue-50/30 dark:bg-[#4d82ff]/[0.03] border-l-4 border-l-[#003cbb] dark:border-l-[#4d82ff]"
+                        : "bg-blue-50/30 dark:bg-[#4d82ff]/[0.03]"
                     )}
                   >
                     {getIcon(notification.type)}

@@ -137,7 +137,8 @@ export default function RegistrationPage() {
   const payProps = getPayBannerProps();
 
   return (
-    <div className="flex flex-col md:mx-8 mx-4 gap-6 md:gap-8 pb-10">
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="flex flex-col gap-6 md:gap-8 pb-10 max-w-7xl mx-auto">
       {/* Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
         <SummaryCard 
@@ -208,7 +209,7 @@ export default function RegistrationPage() {
             <p className="text-[14px] text-[#525866] dark:text-gray-400">Complete all steps below to finalize your registration</p>
           </div>
           
-          <div className="bg-[#F8F9FB] dark:bg-gray-850 border border-gray-100 dark:border-gray-700 rounded-full px-5 py-2.5 flex items-center gap-4 self-start transition-colors duration-200">
+          <div className="bg-[#F8F9FB] dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full px-5 py-2.5 flex items-center gap-4 self-start transition-colors duration-200">
             <div className="flex flex-col">
               <span className="text-[13px] font-bold text-[#0a0a0a] dark:text-gray-100">{[
                 regState === "completed",
@@ -220,21 +221,8 @@ export default function RegistrationPage() {
                 false, // 7th item (mocked)
               ].filter(Boolean).length} of 7 Cleared</span>
             </div>
-            <div className="w-[80px] h-2 bg-gray-200 dark:bg-gray-750 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[#10b981] rounded-full" 
-                style={{ 
-                  width: `${Math.round(([
-                    regState === "completed",
-                    payState === "completed",
-                    true,
-                    false,
-                    false,
-                    false,
-                    false,
-                  ].filter(Boolean).length / 7) * 100)}%` 
-                }} 
-              />
+            <div className="w-[80px] h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="w-[14%] h-full bg-[#10b981] rounded-full" />
             </div>
           </div>
         </div>
@@ -323,17 +311,6 @@ export default function RegistrationPage() {
               Access Portal
             </button>
           </div>
-
-          {/* Illustration */}
-          <div className="absolute right-[-40px] top-[-40px] w-[300px] h-[300px] opacity-45 md:opacity-100 mix-blend-overlay md:mix-blend-normal">
-            <Image
-              src="/images/student-image.png"
-              alt=""
-              width={300}
-              height={300}
-              className="object-contain"
-            />
-          </div>
         </div>
       </div>
 
@@ -365,6 +342,7 @@ export default function RegistrationPage() {
           toast.success(`Successfully funded wallet with ₦${amount.toLocaleString()}`);
         }}
       />
+      </div>
     </div>
   );
 }

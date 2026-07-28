@@ -1,9 +1,13 @@
 "use client";
 
-import { ChevronLeft, Download, Printer } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, Download, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { toPng } from "html-to-image";
+import { jsPDF } from "jspdf";
+import { getStudentProfileAction } from "@/app/actions/user";
 
 // Mock Data
 const STUDENT_INFO = {
@@ -52,6 +56,19 @@ const COURSE_HISTORY = [
 
 export default function TranscriptPage() {
   const router = useRouter();
+  const documentRef = useRef<HTMLDivElement>(null);
+  const [studentName, setStudentName] = useState("YAKUBU ONOME JOY");
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    getStudentProfileAction().then((res) => {
+      if (res?.user_data?.student_name) {
+        setStudentName(res.user_data.student_name.toUpperCase());
+      } else if (res?.entity_name) {
+        setStudentName(res.entity_name.toUpperCase());
+      }
+    });
+  }, []);
 
   // Split history into two columns for desktop
   const midpoint = Math.ceil(COURSE_HISTORY.length / 2);
@@ -62,13 +79,77 @@ export default function TranscriptPage() {
     window.print();
   };
 
-  const handleDownload = () => {
-    // We would use html2pdf.js or @react-pdf/renderer here
-    alert("PDF download initiated.");
+  const handleDownload = async () => {
+    if (!documentRef.current) return;
+    try {
+      setIsDownloading(true);
+
+      const dataUrl = await toPng(documentRef.current, {
+        quality: 1.0,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
+
+      const pdfWidth = documentRef.current.offsetWidth;
+      const pdfHeight = documentRef.current.offsetHeight;
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [pdfWidth, pdfHeight]
+      });
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('unofficial-transcript.pdf');
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col w-full h-full pb-20 md:pb-6 px-4 md:px-6">
+    <div className="flex flex-col w-full h-full pb-20 md:pb-6 px-4 md:px-6 relative">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @media print {
+          @page {
+            margin: 0.5cm;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #printable-transcript, #printable-transcript * {
+            visibility: visible;
+          }
+          #printable-transcript {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}} />
+
+      {/* Loading Modal Overlay */}
+      {isDownloading && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[300] flex items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-[16px] p-6 shadow-xl max-w-[280px] w-full flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
+            <Loader2 className="w-8 h-8 text-[#003cbb] dark:text-[#4d82ff] animate-spin mb-3" />
+            <h4 className="text-[15px] font-bold text-[#0a0d14] dark:text-gray-100 mb-1">Generating PDF</h4>
+            <p className="text-[12px] text-[#525866] dark:text-gray-400">Please wait while we export your transcript.</p>
+          </div>
+        </div>
+      )}
       
       {/* Mobile Header Title */}
       <h2 className="text-[20px] font-semibold text-gray-900 dark:text-gray-100 md:hidden mb-4">Export Unofficial Transcript</h2>
@@ -98,7 +179,7 @@ export default function TranscriptPage() {
           </Button>
           <Button 
             onClick={handlePrint}
-            className="flex-1 md:flex-none rounded-[8px] h-10 bg-[#0a1e6e] dark:bg-[#2563EB] hover:bg-[#00104a] dark:hover:bg-[#1D4ED8] text-white font-medium shadow-sm transition-colors"
+            className="flex-1 md:flex-none rounded-[8px] h-10 bg-[#0a1e6e] dark:bg-[#2563EB] hover:bg-[#00104a] dark:hover:bg-[#1D4ED8] text-white font-medium transition-colors"
           >
             <Printer className="w-4 h-4 mr-2" />
             Print Document
@@ -107,17 +188,18 @@ export default function TranscriptPage() {
       </div>
 
       {/* DOCUMENT PREVIEW WRAPPER */}
-      <div className="w-full bg-white dark:bg-gray-900 rounded-[16px] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden print:shadow-none print:border-none print:p-0 relative transition-colors duration-200">
+      <div id="printable-transcript" ref={documentRef} className="w-full bg-white dark:bg-gray-900 rounded-[16px] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden print:shadow-none print:border-none print:p-0 relative transition-colors duration-200">
         
         {/* Watermark Logo inside document */}
         <div className="absolute inset-0 flex justify-center items-center opacity-[0.03] dark:opacity-[0.02] pointer-events-none overflow-hidden">
           <Image 
-            src="/school-logo.png" 
+            src="/images/BU Torch.png" 
             alt="" 
             width={600} 
             height={600} 
             className="object-contain" 
-            onError={(e) => { e.currentTarget.style.display = 'none' }} // fallback
+            priority
+            loading="eager"
           />
         </div>
 
@@ -144,7 +226,7 @@ export default function TranscriptPage() {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 border-dashed pb-2">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Student Name</span>
-                  <span className="text-[13px] font-bold text-gray-900 dark:text-gray-100">{STUDENT_INFO.name}</span>
+                  <span className="text-[13px] font-bold text-gray-900 dark:text-gray-100">{studentName}</span>
                 </div>
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 border-dashed pb-2">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Student ID</span>

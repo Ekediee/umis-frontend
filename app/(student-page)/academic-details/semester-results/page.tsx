@@ -113,7 +113,7 @@ export default function SemesterResultsPage() {
                     <div className="flex justify-end">
                       <Button
                         variant="outline"
-                        className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-9 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 shadow-sm"
+                        className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-9 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 transition-colors"
                         onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
                       >
                         <Eye className="w-4 h-4 mr-1.5" />
@@ -154,7 +154,7 @@ export default function SemesterResultsPage() {
 
                     <Button
                       variant="outline"
-                      className="w-full rounded-[12px] text-[#003cbb] dark:text-[#4d82ff] font-semibold h-11 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 shadow-sm mt-1"
+                      className="w-full rounded-[12px] text-[#003cbb] dark:text-[#4d82ff] font-semibold h-11 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 mt-1 transition-colors"
                       onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
                     >
                       <Eye className="w-[18px] h-[18px] mr-2" />
