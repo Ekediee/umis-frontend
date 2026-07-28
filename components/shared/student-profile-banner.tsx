@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Camera, Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
@@ -27,15 +28,61 @@ export function StudentProfileBanner({
   showDetailedRow
 }: StudentProfileBannerProps) {
 
+  const [avatarUrl, setAvatarUrl] = useState<string>("/student-image.png");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("student_avatar");
+    if (saved) setAvatarUrl(saved);
+  }, []);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setAvatarUrl(result);
+        localStorage.setItem("student_avatar", result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
-  const [showMatric, toggleMatric, mountedMatric] = usePersistentToggle("showMatric", true);
-  const mounted = mountedCgpa && mountedMatric;
+  const mounted = mountedCgpa;
 
   // Derived display values from session data (with fallbacks)
   const rawName = userData?.entity_name ?? "—";
   const displayName = toTitleCase(rawName);
   const displayMatric = userData?.user_data?.personal_information?.matric_number ?? "—";
-  const displayProgramme = userData?.user_data?.degree_name ?? "—";
+  
+  let displayProgramme = userData?.user_data?.degree_name ?? "";
+  const department = userData?.user_data?.department ?? "";
+  const lowerProg = displayProgramme.toLowerCase();
+  
+  if (lowerProg.includes("bachelor of science")) {
+    displayProgramme = "B.Sc.";
+  } else if (lowerProg.includes("bachelor of arts")) {
+    displayProgramme = "B.A.";
+  } else if (lowerProg.includes("bachelor of engineering")) {
+    displayProgramme = "B.Eng.";
+  } else if (lowerProg.includes("bachelor of medicine")) {
+    displayProgramme = "M.B.";
+  }
+
+  if (department && !displayProgramme.toLowerCase().includes(department.toLowerCase())) {
+    displayProgramme = displayProgramme ? `${displayProgramme} ${department}` : department;
+  }
+
+  if (!displayProgramme) {
+    displayProgramme = "—";
+  }
+
   const displayLevel = userData?.user_data?.academic_information?.study_level ?? "—";
   const displaySchool = userData?.user_data?.school_name ?? "—";
   const displayDepartment = userData?.user_data?.department ?? "—";
@@ -44,6 +91,13 @@ export function StudentProfileBanner({
 
   return (
     <div className="w-full">
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
       {welcomeMessage && (
         <h2 className="text-[18px] md:text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-4 tracking-tight">
           {welcomeMessage}
@@ -60,7 +114,7 @@ export function StudentProfileBanner({
               <div className="relative">
                 <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
                   <Image
-                    src="/images/student-image.png"
+                    src={avatarUrl}
                     alt={`${displayName}`}
                     fill
                     unoptimized
@@ -68,36 +122,25 @@ export function StudentProfileBanner({
                   />
                 </div>
                 {showEditAvatar && (
-                  <button className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-white hover:bg-[#003095] transition-colors shadow-sm">
+                  <button 
+                    onClick={handleAvatarClick}
+                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors shadow-sm cursor-pointer"
+                  >
                     <Camera className="w-[14px] h-[14px]" />
                   </button>
                 )}
               </div>
 
               <div className="text-center">
-                <h2 className="text-[20px] md:text-[24px] font-semibold text-gray-900 dark:text-gray-100 leading-tight">{displayName}</h2>
+                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight">{displayName}</h2>
                 <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400 mt-1">{displayProgramme}</p>
               </div>
             </div>
 
             <div className="w-full flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-5">
               <div>
-                <div className="flex items-center gap-1 text-gray-500">
-                  <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
-                  <button
-                    type="button"
-                    onClick={toggleMatric}
-                    className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
-                    aria-label={showMatric ? "Hide matric" : "Show matric"}
-                  >
-                    {showMatric ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
-                  </button>
-                </div>
-                {mounted && !showMatric ? (
-                  <p className="text-[14px] md:text-[16px] font-bold text-gray-900">****</p>
-                ) : (
-                  <p className="text-[14px] md:text-[16px] font-bold text-gray-900">{displayMatric}</p>
-                )}
+                <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
+                <p className="text-[14px] md:text-[16px] font-bold text-gray-900 dark:text-gray-100">{displayMatric}</p>
               </div>
               <div className="flex flex-col items-end">
                 <p className="text-[11px] md:text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</p>
@@ -114,13 +157,14 @@ export function StudentProfileBanner({
         {/* Profile Picture Card on dashboard*/}
         {showDetailedRow && (
 
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-4 md:p-6 flex flex-row items-center justify-between gap-6 md:gap-8 md:w-[49.5%] w-[100%] shrink-0 transition-colors duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-4 md:p-6 flex flex-col md:flex-row items-stretch justify-between gap-4 md:gap-8 md:w-[49.5%] w-[100%] shrink-0 transition-colors duration-200">
 
-            <div className="flex flex-row items-center gap-4 w-full pt-2">
-              <div className="relative">
-                <div className="w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
+            {/* Avatar + Name */}
+            <div className="flex flex-row items-center gap-4 w-full">
+              <div className="relative shrink-0">
+                <div className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
                   <Image
-                    src="/images/student-image.png"
+                    src={avatarUrl}
                     alt={`${displayName}`}
                     fill
                     unoptimized
@@ -128,38 +172,28 @@ export function StudentProfileBanner({
                   />
                 </div>
                 {showEditAvatar && (
-                  <button className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-white hover:bg-[#003095] transition-colors shadow-sm">
+                  <button 
+                    onClick={handleAvatarClick}
+                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors shadow-sm cursor-pointer"
+                  >
                     <Camera className="w-[14px] h-[14px]" />
                   </button>
                 )}
               </div>
 
               <div className="text-left">
-                <h2 className="text-[20px] md:text-[24px] font-semibold text-gray-900 dark:text-gray-100 leading-tight">{displayName}</h2>
+                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight">{displayName}</h2>
                 <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400 mt-1">{displayProgramme}</p>
               </div>
             </div>
 
-            <div className="w-full flex items-center flex-wrap gap-3 justify-between border-t border-gray-100 dark:border-gray-800 pt-5">
+            {/* Matric + Status — below on mobile, right side on md+ */}
+            <div className="flex flex-row items-center flex-wrap gap-3 justify-between border-t border-gray-100 dark:border-gray-800 pt-4 md:border-t-0 md:pt-0 md:border-l md:border-gray-100 md:dark:border-gray-800 md:pl-8 md:flex-col md:items-start md:justify-center md:gap-4 shrink-0">
               <div>
-                <div className="flex items-center gap-1 text-gray-500">
-                  <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
-                  <button
-                    type="button"
-                    onClick={toggleMatric}
-                    className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 transition-colors rounded-full touch-manipulation shrink-0"
-                    aria-label={showMatric ? "Hide matric" : "Show matric"}
-                  >
-                    {showMatric ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
-                  </button>
-                </div>
-                {mounted && !showMatric ? (
-                  <p className="text-[14px] md:text-[16px] font-bold text-gray-900">****</p>
-                ) : (
-                  <p className="text-[14px] md:text-[16px] font-bold dark:text-gray-900">{displayMatric}</p>
-                )}
+                <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
+                <p className="text-[14px] md:text-[16px] font-bold text-gray-900 dark:text-gray-100">{displayMatric}</p>
               </div>
-              <div className="flex flex-col ">
+              <div className="flex flex-col">
                 <p className="text-[11px] md:text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</p>
                 <span className="bg-[#ECFDF3] dark:bg-[#027A48]/20 text-[#027A48] dark:text-[#12B76A] px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 tracking-wide">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>

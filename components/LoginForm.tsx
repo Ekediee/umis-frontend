@@ -89,7 +89,7 @@ export function LoginForm() {
           <span className="text-[13px] lg:text-[14px] text-gray-700 font-medium group-hover:text-gray-900 transition-colors">Keep me logged in</span>
         </label>
 
-        <Link href="#" className="text-[13px] lg:text-[14px] font-medium text-gray-600 hover:text-[#1D4ED8] underline underline-offset-2 transition-colors">
+        <Link href="/forgot-password" className="text-[13px] lg:text-[14px] font-medium text-gray-600 hover:text-[#1D4ED8] underline underline-offset-2 transition-colors">
           Forgot password?
         </Link>
       </div>
@@ -98,7 +98,7 @@ export function LoginForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium shadow-[0_4px_14px_rgba(24,73,214,0.25)] transition-all flex items-center justify-center h-auto disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>

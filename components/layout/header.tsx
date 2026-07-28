@@ -51,9 +51,6 @@ export function Header() {
         <h2 className="text-[20px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{getTitle()}</h2>
         <div className="flex items-center gap-5 text-gray-400 dark:text-gray-500">
           <ThemeToggle />
-          <button className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1">
-            <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" strokeWidth={2} />
-          </button>
           <Link 
             href="/notifications"
             className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors relative p-1 flex items-center justify-center"

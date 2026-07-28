@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, Download, Printer, CheckCircle, ClipboardList, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef, useState, Suspense } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { useSearchParams } from "next/navigation";
@@ -54,6 +54,15 @@ function ReceiptContent() {
       setIsDownloading(false);
     }
   };
+
+  useEffect(() => {
+    if (searchParams.get("action") === "download") {
+      const timer = setTimeout(() => {
+        handleDownload();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   const handlePrint = () => {
     window.print();

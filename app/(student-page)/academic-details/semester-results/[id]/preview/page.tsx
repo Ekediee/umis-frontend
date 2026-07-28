@@ -95,7 +95,7 @@ export default function DocumentPreviewPage() {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 
             variant="outline" 
-            className="rounded-[10px] flex-1 md:flex-auto font-medium px-4 h-10 border-[#e2e4e9] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2C2C2C] bg-white dark:bg-transparent text-gray-700 dark:text-gray-100 shadow-sm transition-colors"
+            className="rounded-[10px] flex-1 md:flex-auto font-medium px-4 h-10 border-[#e2e4e9] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2C2C2C] bg-white dark:bg-transparent text-gray-700 dark:text-gray-100 transition-colors"
             onClick={handleDownloadPDF}
             disabled={isDownloading}
           >
@@ -107,7 +107,7 @@ export default function DocumentPreviewPage() {
             Download PDF
           </Button>
           <Button 
-            className="rounded-[10px] flex-1 md:flex-auto font-medium px-4 h-10 bg-[#003CBB] dark:bg-[#2563EB] hover:bg-[#5585EA] dark:hover:bg-[#1D4ED8] text-white shadow-sm transition-colors"
+            className="rounded-[10px] flex-1 md:flex-auto font-medium px-4 h-10 bg-[#003CBB] dark:bg-[#2563EB] hover:bg-[#5585EA] dark:hover:bg-[#1D4ED8] text-white transition-colors"
             onClick={handlePrint}
           >
             <Printer className="w-4 h-4 mr-2.5" strokeWidth={2} />

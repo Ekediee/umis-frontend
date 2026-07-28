@@ -9,7 +9,11 @@ import { loggedFetch } from "@/lib/logger";
  * Returns null if no user data is found (e.g. not logged in).
  */
 export async function getUserData(): Promise<UMISResponse | null> {
-  return getSessionUser();
+  try {
+    return await getSessionUser();
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -2,10 +2,65 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useStreamingChat } from "@/hooks/use-streaming-chat";
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
+import { X, Send, Bot, User, Loader2, Sparkles, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from 'react-markdown';
+
+function Premium3DLightbulb(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <defs>
+        {/* Soft yellow radial gradient for the bulb glass */}
+        <radialGradient id="bulbGlow" cx="50%" cy="40%" r="50%">
+          <stop offset="0%" stopColor="#FFFbeb" />
+          <stop offset="60%" stopColor="#FDE047" />
+          <stop offset="100%" stopColor="#EAB308" />
+        </radialGradient>
+        {/* Sleek metallic gray base */}
+        <linearGradient id="metallicBase" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#9CA3AF" />
+          <stop offset="50%" stopColor="#E5E7EB" />
+          <stop offset="100%" stopColor="#9CA3AF" />
+        </linearGradient>
+      </defs>
+
+      {/* Main outer bulb body */}
+      <path
+        d="M12 2A7 7 0 0 0 5 9c0 2.8 1.6 5.1 3.5 6.5.5.3.5.7.5 1.1v1.4h6v-1.4c0-.4 0-.8.5-1.1C17.4 14.1 19 11.8 19 9a7 7 0 0 0-7-7Z"
+        fill="url(#bulbGlow)"
+        stroke="#EAB308"
+        strokeWidth="1.2"
+      />
+
+      {/* Glossy glass reflection curve */}
+      <path
+        d="M8.5 4.5A5.5 5.5 0 0 1 12 3.2c.2 0 .3 0 .5.1C9.6 3.8 7.3 6.2 6.8 9.3c0-.3-.1-.5-.1-.8 0-1.6.7-3.1 1.8-4Z"
+        fill="#FFFFFF"
+        opacity="0.6"
+      />
+
+      {/* Modern filament */}
+      <path
+        d="M10 11.5l2-3.5 2 3.5"
+        stroke="#FFFFFF"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="7.5" r="0.6" fill="#FFFFFF" />
+
+      {/* Base contact segments */}
+      <path d="M9 18h6v2H9v-2Z" fill="url(#metallicBase)" />
+      <path d="M10 20h4v1.5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V20Z" fill="#4B5563" />
+    </svg>
+  );
+}
 
 export function AILiveChat() {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,21 +120,37 @@ export function AILiveChat() {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes very-slow-breath {
+          0%, 100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 1px rgba(245, 158, 11, 0.1));
+          }
+          50% {
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.5));
+          }
+        }
+        .slow-breathing-lamp {
+          animation: very-slow-breath 5s ease-in-out infinite;
+        }
+      `}} />
+
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-24 right-6 md:bottom-8 md:right-8 w-14 h-14 bg-[#003cbb] text-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(0,60,187,0.3)] hover:scale-105 active:scale-95 transition-all z-50",
+          "fixed bottom-28 right-6 md:bottom-24 md:right-8 w-14 h-14 bg-[#003cbb] text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50",
           isOpen && "scale-0 opacity-0 pointer-events-none"
         )}
       >
-        <MessageCircle className="w-6 h-6" />
+        <Premium3DLightbulb className="w-8 h-8 text-white slow-breathing-lamp" />
       </button>
 
       {/* Chat Window */}
       <div
         className={cn(
-          "fixed bottom-0 right-0 md:bottom-8 md:right-8 w-full md:w-[380px] h-[85vh] md:h-[600px] bg-white dark:bg-gray-900 md:rounded-[24px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right border border-gray-100 dark:border-gray-800",
+          "fixed bottom-0 right-0 md:bottom-24 md:right-8 w-full md:w-[380px] h-[85vh] md:h-[600px] bg-white dark:bg-gray-900 md:rounded-[24px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right border border-gray-100 dark:border-gray-800",
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"
         )}
       >
@@ -87,7 +158,7 @@ export function AILiveChat() {
         <div className="bg-gradient-to-r from-[#003cbb] to-[#2563eb] p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Sparkles className="w-5 h-5 text-white" />
+              <Premium3DLightbulb className="w-6 h-6 text-white" />
             </div>
             <div>
               <h3 className="font-bold text-white text-[15px]">AI Support</h3>
@@ -119,21 +190,21 @@ export function AILiveChat() {
                 <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-left pl-1">AI Quick Actions</p>
                 <button
                   onClick={() => handleQuickAction("Can you give me a quick academic advice on course selection and GPA optimization?")}
-                  className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all shadow-sm group active:scale-[0.98]"
+                  className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all group active:scale-[0.98]"
                 >
                   <Sparkles className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff] group-hover:animate-pulse" />
                   <span>🎓 Quick Course Advice</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("My school fees payment failed, what should I do?")}
-                  className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all shadow-sm group active:scale-[0.98]"
+                  className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all group active:scale-[0.98]"
                 >
                   <Sparkles className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff] group-hover:animate-pulse" />
                   <span>💳 Payment Troubleshooting</span>
                 </button>
                 <button
                   onClick={() => handleQuickAction("What are the chapel attendance rules and dress code guidelines on campus?")}
-                  className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all shadow-sm group active:scale-[0.98]"
+                  className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all group active:scale-[0.98]"
                 >
                   <Sparkles className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff] group-hover:animate-pulse" />
                   <span>👗 Dress Code & Curfew Rules</span>

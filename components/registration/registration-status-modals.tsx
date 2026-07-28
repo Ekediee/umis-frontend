@@ -168,7 +168,7 @@ export function FailureModal({ isOpen, onClose, onConfirm }: ModalProps) {
         <p>An error occurred while submitting your course registration. Please try again or log a complaint if the issue persists.</p>
       }
       primaryActionText="Try Again"
-      secondaryActionText="Log a Complaint"
+      secondaryActionText="Cancel"
       onPrimaryAction={onConfirm}
       onSecondaryAction={onClose}
     />

@@ -24,23 +24,21 @@ export function WebStepper(props: WebStepperProps) {
   ];
 
   return (
-    <div className="hidden md:flex items-center justify-between w-full pt-3 pb-2 px-8 bg-transparent">
+    <div className="hidden md:flex items-center gap-3 md:gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
       {/* Back Button */}
       <button 
         onClick={() => router.back()}
-        className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0"
+        className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0 mr-1 md:mr-3"
       >
         <ChevronLeft className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff]" />
         <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff]">Back</span>
       </button>
 
-      {/* Center Content: Session Pill + Stepper */}
-      <div className="flex items-center gap-4">
-        {/* Session Pill */}
-        <div className="bg-[#eaf0ff] dark:bg-[#003cbb]/15 rounded-2xl px-4 py-2.5 flex flex-col justify-center border border-[#ccdaf9] dark:border-[#ccdaf9]/25">
-          <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">2025/2026</span>
-          <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] leading-tight">First Semester</span>
-        </div>
+      {/* Session Pill */}
+      <div className="bg-[#eaf0ff] dark:bg-[#003cbb]/15 rounded-2xl px-4 py-2.5 flex flex-col justify-center border border-[#ccdaf9] dark:border-[#ccdaf9]/25 shrink-0 ml-1 md:ml-3">
+        <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">2025/2026</span>
+        <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] leading-tight">First Semester</span>
+      </div>
 
         {/* Stepper Pill */}
         <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl px-6 py-3.5 border border-gray-100 dark:border-gray-800">
@@ -75,10 +73,6 @@ export function WebStepper(props: WebStepperProps) {
             );
           })}
         </div>
-      </div>
-      
-      {/* Empty div for flex balance to perfectly center the middle content */}
-      <div className="w-[80px] shrink-0" /> 
     </div>
   );
 }

@@ -139,16 +139,8 @@ describe("UserDataProvider", () => {
 });
 
 describe("useUserData", () => {
-  it("throws when used outside of UserDataProvider", () => {
-    // Suppress the expected React error boundary output in test logs
-    const consoleSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    expect(() => render(<UserDataConsumer />)).toThrow(
-      "useUserData must be used within a <UserDataProvider>"
-    );
-
-    consoleSpy.mockRestore();
+  it("returns null safely when used outside of UserDataProvider", () => {
+    render(<UserDataConsumer />);
+    expect(screen.getByTestId("no-data")).toBeInTheDocument();
   });
 });

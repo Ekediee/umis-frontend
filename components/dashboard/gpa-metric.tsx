@@ -1,16 +1,12 @@
 'use client'
 
 import { AcademicProgressProps } from "./academic-progress";
-import { useState } from "react";
-import { Eye, EyeOff, Sparkles } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
-import { Button } from "@/components/ui/button";
-import { GPAWhatIfSimulator } from "@/components/academic-details/gpa-what-if-simulator";
 
 const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps) => {
     const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
     const [showSemesterGpa, toggleSemesterGpa, mountedSemesterGpa] = usePersistentToggle("showSemesterGpa", true);
-    const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
 
     const mounted = mountedCgpa && mountedSemesterGpa;
 
@@ -63,23 +59,6 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
                     <span className="text-[12px] font-normal text-[#4a5565] dark:text-gray-400 mt-1 uppercase">Level</span>
                 </div>
             </div>
-
-            {/* GPA What-If Simulator Action Trigger */}
-            <div className="flex justify-end border-t border-gray-100 dark:border-gray-800/80 pt-4 mt-2">
-                <Button
-                    onClick={() => setIsSimulatorOpen(true)}
-                    className="bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm transition-all hover:shadow-md px-6 font-semibold"
-                >
-                    <Sparkles className="w-4 h-4 text-blue-200" />
-                    <span>💡 Simulate What-If GPA</span>
-                </Button>
-            </div>
-
-            {/* Simulator Modal */}
-            <GPAWhatIfSimulator
-                isOpen={isSimulatorOpen}
-                onClose={() => setIsSimulatorOpen(false)}
-            />
         </div>
     );
 };

@@ -151,7 +151,7 @@ export default function ProfilePage() {
             <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900 dark:text-gray-100">Contact Information</h3>
             <button 
               onClick={() => setIsContactModalOpen(true)}
-              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-8 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95 shadow-sm"
+              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-8 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95"
             >
               Update
             </button>
@@ -172,7 +172,7 @@ export default function ProfilePage() {
             <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900 dark:text-gray-100">Next of Kin</h3>
             <button 
               onClick={() => setIsNokModalOpen(true)}
-              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-8 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95 shadow-sm"
+              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-8 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95"
             >
               Update
             </button>
@@ -265,7 +265,7 @@ function OffCampusApplicationCard({ status = 'unapplied' }: { status?: Applicati
     return (
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-5 flex items-center justify-between flex-1 w-full gap-4 transition-colors duration-200">
         <span className="text-[14px] md:text-[16px] font-semibold text-gray-900 dark:text-gray-100">Off-Campus Residence Application</span>
-        <button className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-6 py-2 text-[12px] md:text-[13px] font-medium transition-colors whitespace-nowrap active:scale-95 shadow-sm">
+        <button className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-6 py-2 text-[12px] md:text-[13px] font-medium transition-colors whitespace-nowrap active:scale-95">
           Apply Now
         </button>
       </div>

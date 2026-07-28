@@ -146,7 +146,7 @@ export function Summary(props: SummaryProps) {
             <span className="text-[14px] text-[#525866] dark:text-gray-400">Classification</span>
             <div className="flex items-center gap-2">
               <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 leading-tight">Normal Load</span>
-              <span className="bg-[#f6f8fa] dark:bg-gray-850 text-[#525866] dark:text-gray-400 text-[11px] font-bold px-2 py-0.5 rounded-md">{userData?.user_data?.academic_information?.study_level}L</span>
+              <span className="bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-400 text-[11px] font-bold px-2 py-0.5 rounded-md">{userData?.user_data?.academic_information?.study_level}L</span>
             </div>
           </div>
         </div>

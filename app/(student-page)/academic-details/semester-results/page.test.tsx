@@ -7,6 +7,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: vi.fn(),
   }),
+  usePathname: () => '/academic-details/semester-results',
 }));
 
 describe('SemesterResultsPage Component', () => {

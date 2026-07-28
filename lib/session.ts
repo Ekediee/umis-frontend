@@ -86,12 +86,14 @@ export interface UMISResponse {
   user_data: StudentData;
 }
 
+export type UserData = Record<string, unknown>;
+
 // Use secure cookies only when the public-facing URL is HTTPS.
 // Switching HTTP → HTTPS is a single .env change (NEXTAUTH_URL); no code changes.
 const useSecureCookies =
   (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
 
-export async function createSession(token: string, userData?: UMISResponse) {
+export async function createSession(token: string, userData?: UMISResponse | UserData) {
   const cookieStore = await cookies();
 
   // Store the JWT token
@@ -127,7 +129,7 @@ export async function getSessionToken() {
   return session;
 }
 
-export async function getSessionUser(): Promise<UMISResponse | null> {
+export async function getSessionUser(): Promise<any> {
   const cookieStore = await cookies();
   const raw = cookieStore.get(USER_DATA_COOKIE_NAME)?.value;
   if (!raw) return null;

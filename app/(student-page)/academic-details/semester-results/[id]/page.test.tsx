@@ -7,6 +7,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: vi.fn(),
   }),
+  usePathname: () => '/academic-details/semester-results/1',
   useParams: () => ({
     id: "2018%2F2019.1",
   })

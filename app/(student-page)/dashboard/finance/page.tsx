@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Info, ChevronDown, ChevronRight, CreditCard, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -10,6 +10,7 @@ import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 const paymentHistoryData = [
   {
@@ -44,9 +45,10 @@ const paymentHistoryData = [
   },
 ];
 
-export default function FinancePage() {
+function FinancePageContent() {
   const [showFullfee, toggleFullfee, mountedFullfee] = usePersistentToggle("showFullfee", true);
   const mounted = mountedFullfee;
+  const searchParams = useSearchParams();
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -56,6 +58,12 @@ export default function FinancePage() {
   useEffect(() => {
     getUserData().then(setUserData);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "fund") {
+      setIsFundWalletModalOpen(true);
+    }
+  }, [searchParams]);
 
   return (
     <div className="max-w-6x px-4 md:px-8 flex flex-col gap-6 pb-12">
@@ -78,7 +86,7 @@ export default function FinancePage() {
                 <span className="text-[18px] font-bold text-gray-900 dark:text-gray-100">Payment Progress 100%</span>
                 <span className="text-[15px] font-bold text-gray-900 dark:text-gray-100">100%</span>
               </div>
-              <div className="h-3 w-full bg-white/60 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
+              <div className="h-3 w-full bg-white/60 dark:bg-white/20 rounded-full overflow-hidden transition-colors">
                 <div className="h-full bg-[#003cbb] dark:bg-[#2563EB] rounded-full w-full"></div>
               </div>
             </div>
@@ -196,7 +204,7 @@ export default function FinancePage() {
               </span>
               <Button
                 onClick={() => setIsFundWalletModalOpen(true)}
-                className="bg-white hover:bg-blue-50 text-[#003cbb] text-[12px] font-semibold h-8 px-4 rounded-[10px] shadow-sm transition-all border-none"
+                className="bg-white hover:bg-blue-50 text-[#003cbb] text-[12px] font-semibold h-8 px-4 rounded-[10px] transition-all border-none"
               >
                 Fund Wallet
               </Button>
@@ -212,12 +220,12 @@ export default function FinancePage() {
               <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-6">Pay for a previous semester</h3>
               <div className="flex flex-col md:flex-row gap-3">
                 <div className="relative w-full max-w-[200px]">
-                  <select className="w-full appearance-none bg-white dark:bg-gray-850 border border-transparent dark:border-gray-700 rounded-xl px-4 py-3 text-[14px] text-gray-700 dark:text-gray-100 font-medium focus:outline-none shadow-sm h-[48px] transition-colors">
+                  <select className="w-full appearance-none bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-xl px-4 py-3 text-[14px] text-gray-700 dark:text-gray-100 font-medium focus:outline-none shadow-sm h-[48px] transition-colors">
                     <option>Select Semester</option>
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 </div>
-                <Button className="w-[150px] bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+                <Button className="w-[150px] bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 transition-all active:scale-95">
                   Make payment <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -239,7 +247,7 @@ export default function FinancePage() {
             <div className="relative z-10 w-4/5 flex flex-col justify-center">
               <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-8">Pay for current semester</h3>
               <Link href="/dashboard/finance/fees">
-                <Button className="w-[180px] bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 backdrop-blur-sm">
+                <Button className="w-[180px] bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 backdrop-blur-sm">
                   Pay School Fees <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -364,5 +372,17 @@ export default function FinancePage() {
         }}
       />
     </div>
+  );
+}
+
+export default function FinancePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003cbb] dark:border-[#4d82ff]"></div>
+      </div>
+    }>
+      <FinancePageContent />
+    </Suspense>
   );
 }

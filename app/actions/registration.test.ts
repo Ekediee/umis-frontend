@@ -411,7 +411,7 @@ describe("getCoursesAction — HTTP responses", () => {
     const [url, options] = fetchSpy.mock.calls[0];
     expect(url).toContain("/api/v1/student/select-course");
     expect(options?.method).toBe("POST");
-    expect(JSON.parse(options?.body)).toEqual({ class_option_ids: ["143"] });
+    expect(JSON.parse(options?.body)).toEqual({ class_options: ["143"] });
     expect(options?.headers?.["Authorization"]).toBe(`Bearer ${MOCK_TOKEN}`);
   });
 
@@ -426,7 +426,7 @@ describe("getCoursesAction — HTTP responses", () => {
     await getCoursesAction(["143", "200", "305"]);
 
     const [, options] = fetchSpy.mock.calls[0];
-    expect(JSON.parse(options?.body)).toEqual({ class_option_ids: ["143", "200", "305"] });
+    expect(JSON.parse(options?.body)).toEqual({ class_options: ["143", "200", "305"] });
   });
 });
 

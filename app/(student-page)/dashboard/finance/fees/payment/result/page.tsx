@@ -43,7 +43,7 @@ function PaymentResultContent() {
   };
 
   const handleDownloadReceipt = () => {
-    router.push(`/dashboard/finance/receipt?status=success&ref=${ref}&amount=${amount}&gateway=${gateway}`);
+    router.push(`/dashboard/finance/receipt?status=success&ref=${ref}&amount=${amount}&gateway=${gateway}&action=download`);
   };
 
   const handleViewRegistrationStatus = () => {

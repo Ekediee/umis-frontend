@@ -67,7 +67,7 @@ export function PaymentStepper({
                       "w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-medium shrink-0",
                       isActive
                         ? "bg-[#375dfb] dark:bg-[#2563EB] text-white"
-                        : "bg-white dark:bg-gray-850 border border-[#e2e4e9] dark:border-gray-750 text-[#525866] dark:text-gray-400"
+                        : "bg-white dark:bg-gray-800 border border-[#e2e4e9] dark:border-gray-700 text-[#525866] dark:text-gray-400"
                     )}>
                       {step.id}
                     </div>
