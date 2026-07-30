@@ -28,7 +28,7 @@ export function StudentProfileBanner({
   showDetailedRow
 }: StudentProfileBannerProps) {
 
-  const [avatarUrl, setAvatarUrl] = useState<string>("/student-image.png");
+  const [avatarUrl, setAvatarUrl] = useState<string>("/images/student-image.png");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
