@@ -1,13 +1,30 @@
 'use client'
 
+import { useEffect, useState } from "react";
 import { AcademicProgressProps } from "./academic-progress";
 import { Eye, EyeOff } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
+import { getAcademicResultsAction } from "@/app/actions/academic-details";
 
 const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps) => {
     const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
     const [showSemesterGpa, toggleSemesterGpa, mountedSemesterGpa] = usePersistentToggle("showSemesterGpa", true);
+    const [fetchedSemGpa, setFetchedSemGpa] = useState<number | null>(null);
 
+    useEffect(() => {
+        if (semester_gpa === undefined) {
+            getAcademicResultsAction().then((res) => {
+                if (res.data) {
+                    const lastGraded = [...res.data].reverse().find((s) => s.semester_gpa !== null);
+                    if (lastGraded?.semester_gpa != null) {
+                        setFetchedSemGpa(lastGraded.semester_gpa);
+                    }
+                }
+            });
+        }
+    }, [semester_gpa]);
+
+    const effectiveSemGpa = semester_gpa ?? fetchedSemGpa;
     const mounted = mountedCgpa && mountedSemesterGpa;
 
     if (!mounted) return null;
@@ -19,7 +36,7 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
                 <div className="bg-[#f6f8fa] dark:bg-gray-800 rounded-[20px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] relative transition-colors duration-200">
                     <div className="flex items-center gap-3 justify-between md:gap-5 w-full">
                         <span className="text-[24px] md:text-[28px] font-black text-[#253ea7] dark:text-[#4d82ff] leading-none">
-                            {showCgpa ? (cgpa != null ? (typeof cgpa === "number" ? cgpa.toFixed(2) : cgpa) : "3.67") : "****"}
+                            {showCgpa ? (cgpa != null ? (typeof cgpa === "number" ? cgpa.toFixed(2) : cgpa) : "—") : "****"}
                         </span>
                         <button
                             type="button"
@@ -37,7 +54,7 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
                 <div className="bg-[#f6f8fa] dark:bg-gray-800 rounded-[20px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] relative transition-colors duration-200">
                     <div className="flex items-center gap-3 justify-between md:gap-5 w-full">
                         <span className="text-[24px] md:text-[28px] font-black text-[#2d9f75] dark:text-[#34d399] leading-none">
-                            {showSemesterGpa ? (semester_gpa != null ? (typeof semester_gpa === "number" ? semester_gpa.toFixed(2) : semester_gpa) : "3.52") : "****"}
+                            {showSemesterGpa ? (effectiveSemGpa != null ? (typeof effectiveSemGpa === "number" ? effectiveSemGpa.toFixed(2) : effectiveSemGpa) : "—") : "****"}
                         </span>
                         <button
                             type="button"
@@ -54,7 +71,7 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
                 {/* CURRENT LEVEL */}
                 <div className="col-span-2 md:col-span-1 bg-[#f6f8fa] dark:bg-gray-800 rounded-[20px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] transition-colors duration-200">
                     <span className="text-[24px] md:text-[28px] font-black text-[#0a0d14] dark:text-gray-100 leading-none">
-                        {current_level ?? "200"}
+                        {current_level ?? "—"}
                     </span>
                     <span className="text-[12px] font-normal text-[#4a5565] dark:text-gray-400 mt-1 uppercase">Level</span>
                 </div>

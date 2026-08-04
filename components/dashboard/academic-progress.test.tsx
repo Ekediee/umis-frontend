@@ -1,16 +1,20 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { AcademicProgress } from './academic-progress';
+
+vi.mock('@/app/actions/academic-details', () => ({
+  getAcademicResultsAction: vi.fn().mockResolvedValue({ data: [] }),
+}));
 
 describe('AcademicProgress Component Visibility', () => {
   it('renders initial GPA values correctly', () => {
-    render(<AcademicProgress />);
+    render(<AcademicProgress cgpa={3.67} semester_gpa={3.52} />);
     expect(screen.getByText('3.67')).toBeDefined();
     expect(screen.getByText('3.52')).toBeDefined();
   });
 
   it('toggles CGPA visibility when the first eye icon is clicked', () => {
-    const { container } = render(<AcademicProgress />);
+    const { container } = render(<AcademicProgress cgpa={3.67} semester_gpa={3.52} />);
     const buttons = container.querySelectorAll('button');
     const cgpaEyeIconBtn = buttons[0]; 
 
@@ -30,7 +34,7 @@ describe('AcademicProgress Component Visibility', () => {
   });
 
   it('toggles Semester GPA visibility when the second eye icon is clicked', () => {
-    const { container } = render(<AcademicProgress />);
+    const { container } = render(<AcademicProgress cgpa={3.67} semester_gpa={3.52} />);
     const buttons = container.querySelectorAll('button');
     const semesterGpaEyeIconBtn = buttons[1];
 

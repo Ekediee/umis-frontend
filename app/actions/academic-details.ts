@@ -268,3 +268,95 @@ export const getAcademicProgressAction =
       };
     }
   };
+
+// ── Raw API shapes — academic results ─────────────────────────────────────────
+
+export interface ResultCourse {
+  course_code: string;
+  course_title: string;
+  unit: number;
+  score: number | null;
+  grade: string;
+  remark: string;
+}
+
+export interface SemesterResult {
+  semester: string;
+  total_credit_unit: number;
+  semester_gpa: number | null;
+  semester_level: number;
+  session: string;
+  courses: ResultCourse[];
+}
+
+interface RawAcademicResultsResponse {
+  status: boolean;
+  message: string;
+  data: SemesterResult[];
+}
+
+export interface AcademicResultsResult {
+  data?: SemesterResult[];
+  error?: string;
+}
+
+// ── Action ────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the student's full academic results across all semesters.
+ * Endpoint: GET /api/v1/academics/results
+ *
+ * Returns the raw semester list as-is (typed). Cumulative computations
+ * (C.Hours, C.GPA) are derived on the client from this data.
+ */
+export const getAcademicResultsAction =
+  async (): Promise<AcademicResultsResult> => {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("API_URL is not defined in environment variables");
+      return { error: "Internal server error: Missing API configuration" };
+    }
+
+    const token = await getSessionToken();
+    if (!token) {
+      return { error: "You are not authenticated. Please log in again." };
+    }
+
+    try {
+      const response = await loggedFetch(
+        `${apiUrl}/api/v1/academics/results`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Failed to fetch academic results";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // Response body wasn't JSON — keep the fallback message
+        }
+        return { error: errorMessage };
+      }
+
+      const json: RawAcademicResultsResponse = await response.json();
+
+      const semesters: SemesterResult[] = Array.isArray(json?.data)
+        ? json.data
+        : [];
+
+      return { data: semesters };
+    } catch (error) {
+      console.error("getAcademicResultsAction error:", error);
+      return {
+        error: "Could not connect to the server. Please try again later.",
+      };
+    }
+  };

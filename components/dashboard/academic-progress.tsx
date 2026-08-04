@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TrendingUp, Eye, EyeOff, Sparkles } from "lucide-react";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { Button } from "@/components/ui/button";
 import { GPAWhatIfSimulator } from "@/components/academic-details/gpa-what-if-simulator";
+import { getAcademicResultsAction } from "@/app/actions/academic-details";
 
 export interface AcademicProgressProps {
   cgpa?: number | null;
@@ -16,12 +17,27 @@ export function AcademicProgress({cgpa, semester_gpa, current_level}: AcademicPr
   const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
   const [showSemesterGpa, toggleSemesterGpa, mountedSemesterGpa] = usePersistentToggle("showSemesterGpa", true);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [fetchedSemGpa, setFetchedSemGpa] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (semester_gpa === undefined) {
+      getAcademicResultsAction().then((res) => {
+        if (res.data) {
+          const lastGraded = [...res.data].reverse().find((s) => s.semester_gpa !== null);
+          if (lastGraded?.semester_gpa != null) {
+            setFetchedSemGpa(lastGraded.semester_gpa);
+          }
+        }
+      });
+    }
+  }, [semester_gpa]);
+
+  const effectiveSemGpa = semester_gpa ?? fetchedSemGpa;
   const mounted = mountedCgpa && mountedSemesterGpa;
 
-  const displayCgpa = cgpa != null ? (typeof cgpa === "number" ? cgpa.toFixed(2) : cgpa) : "3.67";
-  const displaySemGpa = semester_gpa != null ? (typeof semester_gpa === "number" ? semester_gpa.toFixed(2) : semester_gpa) : "3.52";
-  const displayLevel = current_level ?? "200";
+  const displayCgpa = cgpa != null ? (typeof cgpa === "number" ? cgpa.toFixed(2) : cgpa) : "—";
+  const displaySemGpa = effectiveSemGpa != null ? (typeof effectiveSemGpa === "number" ? effectiveSemGpa.toFixed(2) : effectiveSemGpa) : "—";
+  const displayLevel = current_level ?? "—";
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
