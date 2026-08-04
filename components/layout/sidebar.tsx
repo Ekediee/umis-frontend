@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
 import { logoutAction } from "@/app/actions/auth";
+import { useAcademicDetailsStore } from "@/hooks/use-academic-details-store";
 import { getStudentProfileAction } from "@/app/actions/user";
 import { toTitleCase } from "@/lib/utils";
 import type { UMISResponse } from "@/lib/session";
@@ -68,10 +69,16 @@ export function Sidebar() {
     .slice(0, 2)
     .toUpperCase() || "YJ";
 
+  const clearAcademicProgress = useAcademicDetailsStore((s) => s.clearAcademicProgress);
+  const clearCourses = useAcademicDetailsStore((s) => s.clearCourses);
+
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsLoggingOut(true);
+    // Wipe all persisted student data so the next user gets a fresh fetch
+    clearAcademicProgress();
+    clearCourses();
     await logoutAction();
   };
 
