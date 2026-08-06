@@ -106,7 +106,7 @@ export default function ProfilePage() {
       <StudentProfileBanner showEditAvatar showDetailedInfo={true} userData={userData} />
 
       {/* Approvals Section - Stacked on Mobile */}
-      <div className="flex flex-col md:flex-row gap-5 items-stretch md:items-start">
+      <div className="flex flex-col md:flex-row gap-5 items-stretch">
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-5 flex items-center justify-between flex-1 transition-colors duration-200">
           <span className="text-[14px] md:text-[16px] font-semibold text-gray-900 dark:text-gray-100">Financial Approval</span>
           <span className="bg-[#ECFDF3] dark:bg-[#12b76a]/10 text-[#027A48] dark:text-[#34d399] px-3 py-1.5 rounded-full text-[11px] md:text-[12px] font-semibold flex items-center gap-1.5 uppercase tracking-wide transition-colors duration-200">
@@ -147,11 +147,11 @@ export default function ProfilePage() {
 
         {/* Contact Information */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-5 md:p-6 flex flex-col gap-5 md:gap-6 transition-colors duration-200">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900 dark:text-gray-100">Contact Information</h3>
             <button 
               onClick={() => setIsContactModalOpen(true)}
-              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-8 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95"
+              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-6 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95 shrink-0"
             >
               Update
             </button>
@@ -168,11 +168,11 @@ export default function ProfilePage() {
 
         {/* Next of Kin Information */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-5 md:p-6 flex flex-col gap-5 md:gap-6 transition-colors duration-200">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900 dark:text-gray-100">Next of Kin</h3>
             <button 
               onClick={() => setIsNokModalOpen(true)}
-              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-8 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95"
+              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-6 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95 shrink-0"
             >
               Update
             </button>
@@ -456,7 +456,7 @@ function UpdateContactModal({ isOpen, onClose, initialData, onSave }: UpdateCont
           <button 
             disabled={!isFormFilled}
             onClick={() => onSave(formData)}
-            className={`w-full py-3 rounded-[12px] text-[15px] font-semibold transition-all shadow-sm ${
+            className={`w-full py-3 rounded-[12px] text-[15px] font-semibold transition-all ${
               isFormFilled 
                 ? "bg-[#003cbb] dark:bg-[#4d82ff] text-white hover:bg-[#003095] dark:hover:bg-[#3b6ee0] active:scale-[0.98]" 
                 : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
@@ -597,7 +597,7 @@ function UpdateNextOfKinModal({ isOpen, onClose, initialData, onSave }: UpdateNe
           <button 
             disabled={!isFormFilled}
             onClick={() => onSave(formData)}
-            className={`w-full py-3 rounded-[12px] text-[15px] font-semibold transition-all shadow-sm ${
+            className={`w-full py-3 rounded-[12px] text-[15px] font-semibold transition-all ${
               isFormFilled 
                 ? "bg-[#003cbb] dark:bg-[#4d82ff] text-white hover:bg-[#003095] dark:hover:bg-[#3b6ee0] active:scale-[0.98]" 
                 : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"

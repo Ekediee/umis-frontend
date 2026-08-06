@@ -143,14 +143,29 @@ export function SuccessModal({ isOpen, onClose }: ModalProps) {
       icon={CheckCircle}
       iconBgClass="bg-[#EFFAF6] dark:bg-[#38C793]/20"
       iconColorClass="text-[#38C793] dark:text-[#4ade80]"
-      title="Course Registration Submitted Successfully"
+      title="Course Registration Locked In"
       description={
-        <p>You have successfully registered your courses for the semester.</p>
+        <div className="flex flex-col gap-3 text-center">
+          <p className="text-[13px] text-[#525866] dark:text-gray-300">
+            Your course selection has been locked in for the semester. Please proceed to complete your financial registration and fee payment.
+          </p>
+          <div className="bg-[#f8faff] dark:bg-gray-800/80 border border-[#dbe5ff] dark:border-gray-700 rounded-[12px] p-3.5 flex flex-col items-center gap-1 my-1">
+            <span className="text-[11px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider">
+              Total Payment Required
+            </span>
+            <span className="text-[20px] font-bold text-[#003cbb] dark:text-[#4d82ff]">
+              ₦185,000
+            </span>
+            <span className="text-[11px] text-[#868c98] dark:text-gray-400">
+              Includes mandatory tuition, lab & institutional fees
+            </span>
+          </div>
+        </div>
       }
-      primaryActionText="Return to Dashboard"
-      secondaryActionText="View Registered Courses"
-      onPrimaryAction={() => router.push("/registration")}
-      onSecondaryAction={() => router.push("/registration/courses")}
+      primaryActionText="Fund Wallet & Pay"
+      secondaryActionText="Return to Dashboard"
+      onPrimaryAction={() => router.push("/dashboard/finance/fees/payment")}
+      onSecondaryAction={() => router.push("/dashboard")}
     />
   );
 }
@@ -198,3 +213,35 @@ export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, i
   );
 }
 
+export function FinancialSuccessModal({
+  isOpen,
+  onClose,
+  onPrimaryAction,
+  onSecondaryAction,
+}: {
+  isOpen: boolean;
+  onClose?: () => void;
+  onPrimaryAction?: () => void;
+  onSecondaryAction?: () => void;
+}) {
+  const router = useRouter();
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      icon={CheckCircle}
+      iconBgClass="bg-[#EFFAF6] dark:bg-[#38C793]/20"
+      iconColorClass="text-[#38C793] dark:text-[#4ade80]"
+      title="Financial Selections Locked In"
+      description={
+        <p className="text-[13.5px] leading-relaxed text-[#525866] dark:text-gray-300">
+          Your hall residence, worship center, and meal plan selections have been locked in successfully. Please proceed to fund your wallet and pay to complete your registration.
+        </p>
+      }
+      primaryActionText="Fund wallet and pay now"
+      secondaryActionText="Register courses"
+      onPrimaryAction={onPrimaryAction}
+      onSecondaryAction={onSecondaryAction || (() => router.push("/registration/courses"))}
+    />
+  );
+}

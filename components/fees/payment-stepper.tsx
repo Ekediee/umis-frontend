@@ -12,51 +12,48 @@ interface PaymentStepperProps {
 
 const steps = [
   { id: 1, title: "Select Residence" },
-  { id: 2, title: "Select Meal Plan" },
-  { id: 3, title: "Summary" },
-  { id: 4, title: "Payment Gateway" }
+  { id: 2, title: "Select Worship Center" },
+  { id: 3, title: "Select Meal Plan" },
+  { id: 4, title: "Summary" }
 ];
 
 export function PaymentStepper({ 
   currentStep, 
   sessionLabel = "2025/2026", 
-  typeLabel = "Full Session Fees" 
+  typeLabel = "Full Session Registration" 
 }: PaymentStepperProps) {
   const router = useRouter();
 
   return (
-    <div className="hidden md:flex flex-col md:flex-row md:flex-wrap gap-4 w-full pt-2 pb-4 px-8 bg-transparent">
-      <div> 
-        {/* Back Button + Session Pill + Stepper Row */}
-        <div className="flex items-center justify-between w-full">
-        {/* Back Button */}
-          <button
-              onClick={() => router.back()}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-[8px] border border-[#ccdaf9] dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0 shadow-[0px_1px_2px_0px_rgba(55,93,251,0.08)]"
-            >
-              <ChevronLeft className="w-5 h-5 text-[#003cbb] dark:text-gray-200" />
-              <span className="text-[14px] font-medium text-[#003cbb] dark:text-gray-200">Back</span>
-          </button>
-        </div>
+    <div className="hidden md:grid grid-cols-[100px_1fr] items-center gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
+      {/* Left: Back Button */}
+      <div className="flex justify-start">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0"
+        >
+          <ChevronLeft className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff]" />
+          <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff]">Back</span>
+        </button>
       </div>
 
-      <div className="hidden md:flex justify-center md:flex-row  flex-col gap-4 w-full pt-6 md:pt-0 pb-4 bg-transparent">
-
+      {/* Right: Centered Pills Container */}
+      <div className="flex items-center justify-center gap-3 md:gap-4 min-w-0">
         {/* Session Pill */}
-        <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-[22px] px-6 py-3 flex flex-col items-start justify-center border-b border-[#e2e4e9] dark:border-gray-800 shrink-0">
-          <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] leading-tight">{sessionLabel}</span>
-          <span className="text-[14px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight">{typeLabel}</span>
+        <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-4 py-2.5 flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 shrink-0 max-w-[220px]">
+          <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">{sessionLabel}</span>
+          <span className="text-[13px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight truncate w-full">{typeLabel}</span>
         </div>
 
         {/* Stepper Pill */}
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-[22px] px-6 py-4 border-b border-[#e2e4e9] dark:border-gray-800">
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-3.5 border border-[#e2e4e9] dark:border-gray-800">
           {steps.map((step, index) => {
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
 
             return (
               <div key={step.id} className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {/* Step Circle */}
                   {isCompleted ? (
                     <div className="w-5 h-5 rounded-full bg-[#38c793] flex items-center justify-center shrink-0">
@@ -64,7 +61,7 @@ export function PaymentStepper({
                     </div>
                   ) : (
                     <div className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-medium shrink-0",
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0",
                       isActive
                         ? "bg-[#375dfb] dark:bg-[#2563EB] text-white"
                         : "bg-white dark:bg-gray-800 border border-[#e2e4e9] dark:border-gray-700 text-[#525866] dark:text-gray-400"
@@ -75,8 +72,8 @@ export function PaymentStepper({
                   
                   {/* Step Label */}
                   <span className={cn(
-                    "text-[14px] whitespace-nowrap",
-                    isActive ? "font-medium text-[#0a0d14] dark:text-gray-100" : "font-normal text-[#525866] dark:text-gray-400"
+                    "text-[13.5px] whitespace-nowrap",
+                    isActive ? "font-semibold text-[#0a0d14] dark:text-gray-100" : "font-normal text-[#525866] dark:text-gray-400"
                   )}>
                     {step.title}
                   </span>
@@ -84,7 +81,7 @@ export function PaymentStepper({
 
                 {/* Separator */}
                 {index < steps.length - 1 && (
-                  <ChevronRight className="w-5 h-5 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
                 )}
               </div>
             );

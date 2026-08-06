@@ -179,7 +179,7 @@ export default function TranscriptPage() {
           </Button>
           <Button 
             onClick={handlePrint}
-            className="flex-1 md:flex-none rounded-[8px] h-10 bg-[#0a1e6e] dark:bg-[#2563EB] hover:bg-[#00104a] dark:hover:bg-[#1D4ED8] text-white font-medium transition-colors"
+            className="flex-1 md:flex-none rounded-[8px] h-10 bg-[#003cbb] dark:bg-[#4d82ff] hover:bg-[#5585ea] dark:hover:bg-[#6893ff] text-white font-medium transition-colors"
           >
             <Printer className="w-4 h-4 mr-2" />
             Print Document
@@ -188,22 +188,28 @@ export default function TranscriptPage() {
       </div>
 
       {/* DOCUMENT PREVIEW WRAPPER */}
-      <div id="printable-transcript" ref={documentRef} className="w-full bg-white dark:bg-gray-900 rounded-[16px] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden print:shadow-none print:border-none print:p-0 relative transition-colors duration-200">
+      <div className="w-full overflow-x-auto bg-transparent rounded-[16px] print:overflow-visible print:rounded-none">
         
-        {/* Watermark Logo inside document */}
-        <div className="absolute inset-0 flex justify-center items-center opacity-[0.03] dark:opacity-[0.02] pointer-events-none overflow-hidden">
-          <Image 
-            src="/images/BU Torch.png" 
-            alt="" 
-            width={600} 
-            height={600} 
-            className="object-contain" 
-            priority
-            loading="eager"
-          />
-        </div>
+        {/* The Paper Sheet */}
+        <div 
+          id="printable-transcript" 
+          ref={documentRef} 
+          className="min-w-[900px] w-full max-w-[1000px] mx-auto bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 rounded-[24px] relative overflow-hidden print:shadow-none print:border-none print:rounded-none print:p-0 transition-colors duration-200"
+        >
+          {/* Watermark Logo inside document */}
+          <div className="absolute inset-0 flex justify-center items-center opacity-[0.03] dark:opacity-[0.02] pointer-events-none overflow-hidden">
+            <Image 
+              src="/images/BU Torch.png" 
+              alt="" 
+              width={600} 
+              height={600} 
+              className="object-contain" 
+              priority
+              loading="eager"
+            />
+          </div>
 
-        <div className="p-6 md:p-12 relative z-10 w-full max-w-[1000px] mx-auto min-h-[1000px] flex flex-col">
+          <div className="p-6 md:p-12 relative z-10 w-full flex flex-col min-h-[1000px]">
           
           {/* Header */}
           <div className="text-center mb-10 md:mb-14">
@@ -422,6 +428,7 @@ export default function TranscriptPage() {
           </div>
 
         </div>
+      </div>
       </div>
     </div>
   );

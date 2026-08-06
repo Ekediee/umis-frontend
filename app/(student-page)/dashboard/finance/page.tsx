@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { Info, ChevronDown, ChevronRight, CreditCard, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
@@ -10,7 +11,7 @@ import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const paymentHistoryData = [
   {
@@ -46,6 +47,7 @@ const paymentHistoryData = [
 ];
 
 function FinancePageContent() {
+  const router = useRouter();
   const [showFullfee, toggleFullfee, mountedFullfee] = usePersistentToggle("showFullfee", true);
   const mounted = mountedFullfee;
   const searchParams = useSearchParams();
@@ -54,6 +56,14 @@ function FinancePageContent() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [showWalletBalance, setShowWalletBalance] = useState(true);
+
+  const previousSemesters = [
+    { value: "1st-semester-200l", label: "1st Semester 200L", session: "2025/2026" },
+    { value: "2nd-semester-100l", label: "2nd Semester 100L", session: "2025/2026" },
+    { value: "1st-semester-100l", label: "1st Semester 100L", session: "2025/2026" }
+  ];
+  const [selectedSemester, setSelectedSemester] = useState<typeof previousSemesters[number] | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     getUserData().then(setUserData);
@@ -215,30 +225,86 @@ function FinancePageContent() {
         {/* Banner Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
           {/* Card 1 */}
-          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
+          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 rounded-[24px] p-6 flex justify-between relative min-h-[220px] dark:border dark:border-gray-800 transition-colors">
             <div className="relative z-10 w-4/5 flex flex-col justify-center">
               <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-6">Pay for a previous semester</h3>
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="relative w-full max-w-[200px]">
-                  <select className="w-full appearance-none bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-xl px-4 py-3 text-[14px] text-gray-700 dark:text-gray-100 font-medium focus:outline-none shadow-sm h-[48px] transition-colors">
-                    <option>Select Semester</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch relative">
+                <div className="relative w-full max-w-[220px]">
+                  <button 
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    type="button"
+                    className="w-full flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-2.5 text-[14px] text-gray-700 dark:text-gray-100 font-medium focus:outline-none shadow-sm h-[48px] transition-colors text-left"
+                  >
+                    {selectedSemester ? (
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-semibold leading-tight text-gray-900 dark:text-gray-100">{selectedSemester.label}</span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-none mt-0.5">{selectedSemester.session} Session</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500">Select Semester</span>
+                    )}
+                    <ChevronDown className={cn("w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 shrink-0", isDropdownOpen && "transform rotate-180")} />
+                  </button>
+                  
+                  {isDropdownOpen && (
+                    <>
+                      {/* Backdrop for click-away */}
+                      <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                      
+                      <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-150 dark:border-gray-700 rounded-xl shadow-lg z-50 max-h-[160px] overflow-y-auto py-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                        {previousSemesters.map((sem) => (
+                          <button
+                            key={sem.value}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSemester(sem);
+                              setIsDropdownOpen(false);
+                            }}
+                            className={cn(
+                              "w-full text-left px-4 py-2.5 hover:bg-[#f5f8fe] dark:hover:bg-gray-700/50 transition-colors flex flex-col gap-0.5",
+                              selectedSemester?.value === sem.value && "bg-[#EEF3FD] dark:bg-blue-600/15"
+                            )}
+                          >
+                            <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">{sem.label}</span>
+                            <span className="text-[11px] text-gray-400 dark:text-gray-500">{sem.session} Session</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <Button className="w-[150px] bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 transition-all active:scale-95">
+                
+                <Button 
+                  disabled={!selectedSemester}
+                  onClick={() => {
+                    if (selectedSemester) {
+                      router.push(`/dashboard/finance/fees/payment?type=semester&semester=${selectedSemester.value}`);
+                    }
+                  }}
+                  className={cn(
+                    "w-[150px] rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
+                    selectedSemester 
+                      ? "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white" 
+                      : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
+                  )}
+                >
                   Make payment <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-            <div className="absolute right-[-60px] md:absolute right-[0px] bottom-[-60px] w-[250px] h-[250px] pointer-events-none">
-              <Image
-                className="w-full h-auto dark:opacity-85"
-                src="/images/HandSuccessPay.png"
-                alt="Next.js logo"
-                width={150}
-                height={150}
-                priority
-              />
+            
+            {/* Background elements container to clip the hand image while allowing dropdown to overflow */}
+            <div className="absolute inset-0 rounded-[24px] overflow-hidden pointer-events-none">
+              <div className="absolute right-[-60px] md:right-[0px] bottom-[-60px] w-[250px] h-[250px]">
+                <Image
+                  className="w-full h-auto dark:opacity-85"
+                  src="/images/HandSuccessPay.png"
+                  alt="Next.js logo"
+                  width={150}
+                  height={150}
+                  priority
+                />
+              </div>
             </div>
           </div>
 

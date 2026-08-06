@@ -42,7 +42,7 @@ export function OutstandingPayment() {
             </div>
             
             <Link href="/dashboard/finance/fees">
-              <Button className="h-[44px] bg-[#003CBB] dark:bg-[#2563EB] hover:bg-[#003CBB]/90 dark:hover:bg-[#1D4ED8] text-white rounded-[10px] px-6 flex gap-2 w-full sm:w-auto shadow-sm">
+              <Button className="h-[44px] bg-[#003CBB] dark:bg-[#2563EB] hover:bg-[#003CBB]/90 dark:hover:bg-[#1D4ED8] text-white rounded-[10px] px-6 flex gap-2 w-full sm:w-auto">
                 <span className="font-medium text-[14px]">Make payment</span>
                 <ChevronRight className="w-4 h-4" />
               </Button>

@@ -127,7 +127,7 @@ export default function RegistrationPage() {
       };
     }
     return {
-      buttonText: "Pay School Fees",
+      buttonText: "Financial registration",
       buttonVariant: "outline" as const,
       description: "Review your term details and begin the registration process"
     };
@@ -185,7 +185,7 @@ export default function RegistrationPage() {
           
         />
         <ActionBanner 
-          title="Make your payment"
+          title="Financial registration"
           description={payProps.description}
           buttonText={payProps.buttonText}
           buttonVariant={payProps.buttonVariant}
@@ -307,7 +307,7 @@ export default function RegistrationPage() {
           </div>
 
           <div className="relative z-10">
-            <button className="bg-white text-[#313cac] px-8 py-3 rounded-[12px] font-bold hover:bg-[#f8faff] transition-all shadow-lg active:scale-95">
+            <button className="bg-white text-[#313cac] px-8 py-3 rounded-[12px] font-bold hover:bg-[#f8faff] transition-all active:scale-95">
               Access Portal
             </button>
           </div>

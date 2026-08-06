@@ -6,6 +6,7 @@ import { ChevronLeft, Download, Printer } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { SEMESTER_DATA_MAP } from "../../data";
 
 export default function DocumentPreviewPage() {
   const router = useRouter();
@@ -17,18 +18,13 @@ export default function DocumentPreviewPage() {
   const documentRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const courses = [
-    { sn: 1, code: "GEDS 280", title: "Leadership Skills", units: 3, score: 85, grade: "A", gp: 12 },
-    { sn: 2, code: "GEDS 002", title: "Citizenship Orientation", units: 2, score: 40, grade: "D", gp: 9 },
-    { sn: 3, code: "GEDS 312", title: "Introduction to Family Life Education", units: 3, score: 75, grade: "B", gp: 3 },
-    { sn: 4, code: "COSC 302", title: "Algorithms and Data Structures", units: 3, score: 50, grade: "C", gp: 3 },
-    { sn: 5, code: "COSC 105", title: "Students Industrial Work Experience SIWES", units: 3, score: 95, grade: "A", gp: 3 },
-    { sn: 6, code: "COSC 105", title: "Students Industrial Work Experience SIWES", units: 3, score: 82, grade: "A", gp: 3 },
-    { sn: 7, code: "COSC 105", title: "Internet Technologies and Web Application Development", units: 2, score: 65, grade: "B", gp: 2 },
-    { sn: 8, code: "COSC 105", title: "Students Industrial Work Experience SIWES", units: 1, score: 79, grade: "B", gp: 1 },
-    { sn: 9, code: "COSC 105", title: "Internet Technologies and Web Application Development", units: 2, score: 55, grade: "C", gp: 2 },
-    { sn: 10, code: "COSC 105 Group A", title: "Internet Technologies and Web Application Development", units: 2, score: 78, grade: "B", gp: 2 },
-  ];
+  const currentSemesterData = SEMESTER_DATA_MAP[semesterId] ?? SEMESTER_DATA_MAP["2018/2019.1"];
+  const courses = currentSemesterData.courses.map((course: any, idx: number) => ({
+    sn: idx + 1,
+    ...course
+  }));
+
+  const level = semesterId.startsWith("2018") ? 100 : 200;
 
   const handleDownloadPDF = async () => {
     if (!documentRef.current) return;
@@ -163,7 +159,7 @@ export default function DocumentPreviewPage() {
             <h2 className="text-[22px] font-normal text-gray-800 dark:text-gray-200 leading-tight tracking-wide mb-1 uppercase">YAKUBU ONOME JOY</h2>
             <h3 className="text-[26px] font-medium text-gray-900 dark:text-gray-100 leading-tight mb-2 uppercase">{session} {termName}</h3>
             <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase mb-1">B.Sc (Hons.) COMPUTER SCIENCE</p>
-            <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">100 LEVEL COURSES</p>
+            <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">{level} LEVEL COURSES</p>
           </div>
 
           {/* Document Table */}
@@ -179,7 +175,7 @@ export default function DocumentPreviewPage() {
              </div>
 
              <div className="flex flex-col mt-4 gap-2">
-                {courses.map((course, idx) => (
+                {courses.map((course: any, idx: number) => (
                   <div key={idx} className="grid grid-cols-[50px_1.5fr_3.5fr_1fr_1fr_1fr_1.5fr] py-3.5 px-6 items-center text-[14px] text-gray-600 dark:text-gray-300 rounded-[8px] hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                     <div>{course.sn}</div>
                     <div className="text-gray-700 dark:text-gray-200">{course.code}</div>

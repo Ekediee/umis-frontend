@@ -34,12 +34,14 @@ function formatPrice(price: number): string {
 
 interface PaymentSummaryProps {
   selectedResidenceId: string | null;
+  selectedWorshipCenterId?: string | null;
   selectedMealPlanId: string | null;
   onChangeStep: (step: number) => void;
 }
 
 export function PaymentSummary({
   selectedResidenceId,
+  selectedWorshipCenterId,
   selectedMealPlanId,
   onChangeStep,
 }: PaymentSummaryProps) {
@@ -189,7 +191,44 @@ export function PaymentSummary({
           </div>
         </div>
 
-        {/* 3. Selected Meal Plan */}
+        {/* 3. Selected Worship Center */}
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-[10px] bg-[#fef3c7]/60 dark:bg-[#d97706]/10 flex items-center justify-center shrink-0 transition-colors">
+              <Church className="w-5 h-5 text-[#d97706]" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
+                    Selected Worship Center
+                  </span>
+                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                    {selectedWorshipCenterId ? "Pioneer Church / Main Worship Center" : "Pioneer Church"}
+                  </span>
+                  <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
+                    Main Campus Worship Center · Weekly Services
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <span className="text-[14px] font-bold text-[#38c793] dark:text-[#4ade80] transition-colors">
+                    Included
+                  </span>
+                  <button
+                    onClick={() => onChangeStep(2)}
+                    className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Selected Meal Plan */}
         <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-[10px] bg-[#fff7ed] dark:bg-[#f97316]/10 flex items-center justify-center shrink-0 transition-colors">
@@ -217,7 +256,7 @@ export function PaymentSummary({
                     {formatPrice(mealPrice)}
                   </span>
                   <button
-                    onClick={() => onChangeStep(2)}
+                    onClick={() => onChangeStep(3)}
                     className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
                   >
                     Change

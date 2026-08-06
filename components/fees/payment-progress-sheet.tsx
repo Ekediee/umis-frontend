@@ -14,10 +14,9 @@ export function PaymentProgressSheet({ isOpen, onClose, currentStep }: PaymentPr
 
   const steps = [
     { id: 1, title: "Select Residence" },
-    { id: 2, title: "Select Meal Plan" },
-    { id: 3, title: "Select Worship Center" },
-    { id: 4, title: "Summary" },
-    { id: 5, title: "Payment Gateway" }
+    { id: 2, title: "Select Worship Center" },
+    { id: 3, title: "Select Meal Plan" },
+    { id: 4, title: "Summary" }
   ];
 
   return (

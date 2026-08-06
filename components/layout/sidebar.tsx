@@ -43,11 +43,18 @@ export function Sidebar() {
   const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const [avatarUrl, setAvatarUrl] = useState("/images/student-image.png");
+
   useEffect(() => {
     getStudentProfileAction().then((res) => {
       if (res) setProfileData(res);
     });
-  }, []);
+
+    const saved = localStorage.getItem("profile_avatar");
+    if (saved) {
+      setAvatarUrl(saved);
+    }
+  }, [pathname]);
 
   const userData = profileData ?? contextUserData;
   const rawName =
@@ -144,7 +151,7 @@ export function Sidebar() {
                 <AvatarFallback className="bg-[#f5f8fe] dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] font-medium text-xs">
                   {initials}
                 </AvatarFallback>
-                <AvatarImage src="/student-image.png" alt={studentName} />
+                <AvatarImage src={avatarUrl} alt={studentName} />
               </Avatar>
             </div>
             <div className="min-w-0 flex-1">

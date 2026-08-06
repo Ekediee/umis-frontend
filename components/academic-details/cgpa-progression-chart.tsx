@@ -22,7 +22,34 @@ export function CGPAProgressionChart() {
   
   const height = 240;
   const paddingY = 40;
-  const paddingX = 40;
+  
+  // Responsive horizontal padding based on card width
+  const paddingX = width < 500 ? 24 : 36;
+  const isMobile = width < 500;
+
+  // Formats semester labels for mobile viewports to prevent clutter
+  const formatSemesterLabel = (label: string) => {
+    if (!isMobile) return label;
+    
+    const ordinalMap: { [key: string]: string } = {
+      "1st": "1",
+      "2nd": "2",
+      "3rd": "3",
+      "4th": "4",
+    };
+    
+    const parts = label.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      const levelStr = parts[0].replace("L", "");
+      const levelNum = Number(levelStr);
+      const yearNum = !isNaN(levelNum) && levelNum >= 100 ? Math.floor(levelNum / 100) : (levelStr || "1");
+      
+      const termWord = parts[1].toLowerCase();
+      const term = ordinalMap[termWord] || termWord.replace(/\D/g, "") || "1";
+      return `Y${yearNum}.${term}`;
+    }
+    return label;
+  };
 
   // Handle Resize
   useEffect(() => {
@@ -160,7 +187,7 @@ export function CGPAProgressionChart() {
                     textAnchor="middle" 
                     className={`text-[11px] font-semibold transition-colors duration-200 ${hoveredIndex === i ? 'fill-[#003cbb] dark:fill-[#4d82ff]' : 'fill-gray-500 dark:fill-gray-400'}`}
                   >
-                    {p.semester}
+                    {formatSemesterLabel(p.semester)}
                   </text>
                 </g>
               ))}

@@ -37,7 +37,7 @@ export function AICourseAdvisor({ selectedCourses }: AICourseAdvisorProps) {
     <>
       <Button 
         onClick={() => setIsOpen(true)}
-        className="w-full md:w-auto bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm transition-all hover:shadow-md"
+        className="w-full md:w-auto bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 transition-all"
       >
         <Sparkles className="w-4 h-4 text-blue-200" />
         <span className="font-semibold">AI Course Advisor</span>

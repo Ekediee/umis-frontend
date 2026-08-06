@@ -101,25 +101,25 @@ function ReceiptContent() {
       <div className="flex flex-col gap-4 md:flex-row items-left justify-between mb-4 print:hidden">
         <Link
           href="/dashboard/finance"
-          className="w-[25%] md:w-auto items-left inline-flex items-center gap-1.5 text-[#003cbb] dark:text-gray-200 text-[14px] font-medium bg-white dark:bg-gray-900 border border-[#003cbb]/20 dark:border-gray-800 rounded-[10px] px-4 py-2 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 transition-colors"
+          className="w-fit md:w-auto inline-flex items-center gap-1.5 text-[#003cbb] dark:text-gray-200 text-[14px] font-medium bg-white dark:bg-gray-900 border border-[#003cbb]/20 dark:border-gray-800 rounded-[10px] px-4 py-2 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4 shrink-0" />
           Back
         </Link>
 
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={handleDownload}
             disabled={isDownloading}
-            className="border-[#003cbb] dark:border-gray-800 text-[#003cbb] dark:text-gray-200 rounded-[10px] px-8 py-2 h-auto text-[13px] font-medium gap-1.5 hover:bg-[#f5f8fe] dark:hover:bg-gray-800"
+            className="border-[#003cbb] dark:border-gray-800 text-[#003cbb] dark:text-gray-200 rounded-[10px] px-4 sm:px-6 py-2.5 h-auto text-[13px] font-medium gap-1.5 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 flex-1 sm:flex-initial justify-center whitespace-nowrap"
           >
             <Download className="w-4 h-4" />
             {isDownloading ? "Downloading..." : "Download PDF"}
           </Button>
           <Button
             onClick={handlePrint}
-            className="bg-[#003cbb] hover:bg-[#003095] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white rounded-[10px] px-8 py-2 h-auto text-[13px] font-medium gap-1.5"
+            className="bg-[#003cbb] hover:bg-[#003095] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white rounded-[10px] px-4 sm:px-6 py-2.5 h-auto text-[13px] font-medium gap-1.5 flex-1 sm:flex-initial justify-center whitespace-nowrap"
           >
             <Printer className="w-4 h-4" />
             Print Document
@@ -151,7 +151,7 @@ function ReceiptContent() {
             <div className="border border-gray-200 dark:border-gray-800 rounded-[16px] p-5 md:p-6 mb-8 transition-colors">
               <div className="flex items-center justify-between mb-5">
                 <span className="text-[12px] font-bold text-gray-500 dark:text-gray-450 tracking-wider uppercase transition-colors">Transaction Summary</span>
-                <span className="text-[10px] font-medium text-gray-450 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-2 py-1 transition-colors">
+                <span className="text-[10px] font-medium text-gray-450 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-2 py-1 transition-colors whitespace-nowrap">
                   Ref: {ref}
                 </span>
               </div>

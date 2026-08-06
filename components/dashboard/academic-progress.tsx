@@ -79,7 +79,7 @@ export function AcademicProgress({cgpa, semester_gpa, current_level}: AcademicPr
       <div className="mb-6">
         <Button 
           onClick={() => setIsSimulatorOpen(true)}
-          className="w-full bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm transition-all hover:shadow-md font-semibold text-[13px]"
+          className="w-full bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 transition-all font-semibold text-[13px]"
         >
           <Sparkles className="w-4 h-4 text-blue-200" strokeWidth={2.5} />
           <span>💡 Simulate What-If GPA</span>

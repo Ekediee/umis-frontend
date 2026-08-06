@@ -19,29 +19,32 @@ export function WebStepper(props: WebStepperProps) {
   const steps = [
     { id: 1, title: "Select Class Group" },
     { id: 2, title: "Select Courses" },
-    { id: 3, title: "Select Worship Center" },
-    { id: 4, title: "Summary" }
+    { id: 3, title: "Summary" }
   ];
 
   return (
-    <div className="hidden md:flex items-center gap-3 md:gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
-      {/* Back Button */}
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0 mr-1 md:mr-3"
-      >
-        <ChevronLeft className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff]" />
-        <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff]">Back</span>
-      </button>
-
-      {/* Session Pill */}
-      <div className="bg-[#eaf0ff] dark:bg-[#003cbb]/15 rounded-2xl px-4 py-2.5 flex flex-col justify-center border border-[#ccdaf9] dark:border-[#ccdaf9]/25 shrink-0 ml-1 md:ml-3">
-        <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">2025/2026</span>
-        <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] leading-tight">First Semester</span>
+    <div className="hidden md:grid grid-cols-[100px_1fr] items-center gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
+      {/* Left: Back Button */}
+      <div className="flex justify-start">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0"
+        >
+          <ChevronLeft className="w-4 h-4 text-[#003cbb] dark:text-[#4d82ff]" />
+          <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff]">Back</span>
+        </button>
       </div>
 
+      {/* Right: Centered Pills Container */}
+      <div className="flex items-center justify-center gap-3 md:gap-4 min-w-0">
+        {/* Session Pill */}
+        <div className="bg-[#eaf0ff] dark:bg-[#003cbb]/15 rounded-2xl px-4 py-2.5 flex flex-col justify-center border border-[#ccdaf9] dark:border-[#ccdaf9]/25 shrink-0">
+          <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">2025/2026</span>
+          <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] leading-tight">First Semester</span>
+        </div>
+
         {/* Stepper Pill */}
-        <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl px-6 py-3.5 border border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl px-6 py-3.5 border border-gray-100 dark:border-gray-800 shrink-0">
           {steps.map((step, index) => {
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
@@ -73,6 +76,7 @@ export function WebStepper(props: WebStepperProps) {
             );
           })}
         </div>
+      </div>
     </div>
   );
 }

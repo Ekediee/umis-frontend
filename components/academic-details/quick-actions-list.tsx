@@ -60,7 +60,7 @@ export function QuickActionsList() {
             <h3 className="text-[18px] font-bold text-[#0a0a0a] dark:text-gray-100">Quick Actions</h3>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 min-[1440px]:grid-cols-5 gap-4">
             {actions.map((action) => (
               <Link 
                 href={action.href} 

@@ -1,24 +1,48 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+import { SEMESTER_DATA_MAP } from "../data";
 
 export default function SemesterResultDetailPage() {
   const router = useRouter();
   const params = useParams();
   const semesterId = decodeURIComponent(params.id as string || "2018/2019.1");
 
-  const courses = [
-    { code: "CSC 101", units: 3, title: "Introduction to Computer Science", score: 95, grade: "A", gp: 12 },
-    { code: "GEDS001", units: 2, title: "Citizenship Orientation", score: 75, grade: "B", gp: 9 },
-    { code: "CSC 212", units: 4, title: "Andriods", score: 65, grade: "C", gp: 4 },
-    { code: "COSC 326", units: 3, title: "Assembly Language", score: 90, grade: "A", gp: 10 },
-    { code: "BOT 102", units: 3, title: "Introduction to Biology", score: 40, grade: "D", gp: 5 },
-    { code: "CHM 203", units: 3, title: "Chemical Thermodynamics", score: 70, grade: "B", gp: 5 },
-    { code: "CSC 101", units: 3, title: "Introduction to Computer Science", score: 40, grade: "D", gp: 5 },
+  const [isOpen, setIsOpen] = useState(false);
+  const semestersList = [
+    "2018/2019.1",
+    "2018/2019.2",
+    "2018/2019.3",
+    "2019/2020.1",
+    "2019/2020.2",
   ];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClose = () => setIsOpen(false);
+    window.addEventListener("click", handleClose);
+    return () => window.removeEventListener("click", handleClose);
+  }, [isOpen]);
+
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
+  const handleSelect = (sem: string) => {
+    router.push(`/academic-details/semester-results/${encodeURIComponent(sem)}`);
+    setIsOpen(false);
+  };
+
+  const currentSemesterData = SEMESTER_DATA_MAP[semesterId] ?? SEMESTER_DATA_MAP["2018/2019.1"];
+  const courses = currentSemesterData.courses;
+  const semesterGpa = currentSemesterData.gpa;
 
   const getGradeColor = (grade: string) => {
     switch(grade) {
@@ -32,7 +56,7 @@ export default function SemesterResultDetailPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 mt-4 md:mt-0">
+    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 mt-4 md:mt-0">
       {/* Back button */}
       <div>
         <Button 
@@ -46,17 +70,47 @@ export default function SemesterResultDetailPage() {
       </div>
 
       {/* Header Container */}
-      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200">
+      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200 !overflow-visible">
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <h2 className="font-bold text-[18px] text-gray-900 dark:text-gray-100">Semester Result</h2>
           
-          <button className="flex items-center gap-2 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 rounded-[10px] px-3.5 py-2 bg-white dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] text-[14px] font-semibold hover:bg-[#f5f8fe] dark:hover:bg-gray-700 transition-colors">
-            {semesterId}
-            <ChevronDown className="w-4 h-4 text-blue-400" />
-          </button>
+          <div className="relative">
+            <button 
+              onClick={toggleDropdown}
+              className="flex items-center gap-2 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 rounded-[10px] px-3.5 py-2 bg-white dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] text-[14px] font-semibold hover:bg-[#f5f8fe] dark:hover:bg-gray-700 transition-colors select-none"
+            >
+              {semesterId}
+              <ChevronDown className={cn("w-4 h-4 text-blue-500 transition-transform duration-200", isOpen && "rotate-180")} />
+            </button>
+
+            {isOpen && (
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="absolute left-0 mt-1.5 w-[160px] bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-[12px] shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+              >
+                {semestersList.map((sem) => (
+                  <button
+                    key={sem}
+                    onClick={() => handleSelect(sem)}
+                    className={cn(
+                      "w-full text-left px-3.5 py-2 text-[13px] font-medium transition-colors flex items-center justify-between",
+                      sem === semesterId
+                        ? "text-[#003cbb] dark:text-[#4d82ff] bg-[#f5f8fe] dark:bg-gray-800/80 font-semibold"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white"
+                    )}
+                  >
+                    <span>{sem}</span>
+                    {sem === semesterId && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#003cbb] dark:bg-[#4d82ff]" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           
           <div className="bg-[#D1F4E0] dark:bg-[#1E8B4A]/20 text-[13px] font-semibold text-[#1E8B4A] dark:text-[#34d399] px-3.5 py-2 rounded-[10px] flex items-center transition-colors">
-            Semester GPA: 3.52
+            Semester GPA: {semesterGpa.toFixed(2)}
           </div>
         </div>
 
@@ -164,7 +218,7 @@ export default function SemesterResultDetailPage() {
             <ChevronLeft className="w-4 h-4" />
           </button>
           
-          <button className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white font-medium text-gray-900 shadow-sm mx-1">
+          <button className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white font-medium text-gray-900 mx-1">
             1
           </button>
           <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-600 font-medium transition-colors">
@@ -180,7 +234,7 @@ export default function SemesterResultDetailPage() {
         </div>
 
         <div>
-           <button className="flex items-center gap-2 border border-gray-200 rounded-[10px] px-4 py-2 bg-white text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors shadow-sm">
+           <button className="flex items-center gap-2 border border-gray-200 rounded-[10px] px-4 py-2 bg-white text-gray-700 text-[13px] font-medium hover:bg-gray-50 transition-colors">
               10 / page
               <ChevronDown className="w-4 h-4 text-gray-400 ml-1" />
            </button>
