@@ -2,30 +2,109 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Eye } from "lucide-react";
+import { ChevronLeft, Eye, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import GPAMetric from "@/components/dashboard/gpa-metric";
 import { MobilePageMenuSheet } from "@/components/layout/mobile-page-menu-sheet";
 import { useEffect, useState } from "react";
-import { UMISResponse } from "@/lib/session";
-import { getUserData } from "@/app/actions/user";
+import { useUserData } from "@/contexts/user-data-context";
+import {
+  getAcademicResultsAction,
+  type SemesterResult,
+} from "@/app/actions/academic-details";
+
+/** Per-row data enriched with computed running cumulative values */
+interface EnrichedSemester extends SemesterResult {
+  cumulativeCreditHours: number;
+  cumulativeGpa: number | null;
+}
+
+/** Compute running C.Hours and C.GPA for each semester in order */
+function computeCumulatives(semesters: SemesterResult[]): EnrichedSemester[] {
+  let totalQualityPoints = 0;
+  let totalCreditHours = 0;
+
+  return semesters.map((sem) => {
+    if (sem.semester_gpa !== null && sem.total_credit_unit > 0) {
+      totalQualityPoints += sem.semester_gpa * sem.total_credit_unit;
+      totalCreditHours += sem.total_credit_unit;
+    }
+
+    const cumulativeGpa =
+      totalCreditHours > 0
+        ? Math.round((totalQualityPoints / totalCreditHours) * 100) / 100
+        : null;
+
+    return {
+      ...sem,
+      cumulativeCreditHours: totalCreditHours,
+      cumulativeGpa,
+    };
+  });
+}
+
+function SkeletonRow() {
+  return (
+    <div className="rounded-[16px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-6 py-4 animate-pulse">
+      <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-10 mx-auto" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-10 mx-auto" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto" />
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-[10px] w-20 ml-auto" />
+      </div>
+      <div className="md:hidden flex flex-col gap-3">
+        <div className="flex justify-between">
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-28" />
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+        </div>
+        <div className="h-11 bg-gray-200 dark:bg-gray-700 rounded-[12px]" />
+      </div>
+    </div>
+  );
+}
 
 export default function SemesterResultsPage() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [semesters, setSemesters] = useState<EnrichedSemester[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const semesters = [
-    { name: "2018/2019.1", level: 100, hours: 22, gpa: 3.45, chours: 22, cgpa: 3.45 },
-    { name: "2018/2019.2", level: 100, hours: 22, gpa: 3.77, chours: 22, cgpa: 3.61 },
-    { name: "2018/2019.3", level: 100, hours: 8, gpa: 4.38, chours: 52, cgpa: 3.73 },
-    { name: "2019/2020.1", level: 200, hours: 20, gpa: 3.35, chours: 72, cgpa: 3.62 },
-    { name: "2019/2020.2", level: 200, hours: 21, gpa: 4, chours: 93, cgpa: 3.71 },
-  ];
+  const userData = useUserData();
+  const cgpa =
+    userData?.user_data?.cummulative_gpa ??
+    userData?.user_data?.academic_information?.cummulative_gpa ??
+    null;
+  const currentLevel =
+    userData?.user_data?.current_level ??
+    userData?.user_data?.academic_information?.study_level ??
+    null;
 
-  const [userData, setUserData] = useState<UMISResponse | null>(null);
+  const [latestSemesterGpa, setLatestSemesterGpa] = useState<number | null>(null);
 
   useEffect(() => {
-    getUserData().then(setUserData);
+    setLoading(true);
+    getAcademicResultsAction().then((result) => {
+      if (result.error) {
+        setError(result.error);
+      } else if (result.data) {
+        setSemesters(computeCumulatives(result.data));
+        // Latest semester GPA = last semester with a non-null GPA
+        const lastGraded = [...result.data]
+          .reverse()
+          .find((s) => s.semester_gpa !== null);
+        setLatestSemesterGpa(lastGraded?.semester_gpa ?? null);
+      }
+      setLoading(false);
+    });
   }, []);
 
   return (
@@ -43,11 +122,11 @@ export default function SemesterResultsPage() {
       </div>
 
       {/* Top Cards Wrapper */}
-
       <Card className="rounded-[24px] md:mx-auto w-full bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:mb-0 transition-colors duration-200">
         <GPAMetric
-          cgpa={userData?.user_data?.academic_information?.cummulative_gpa}
-          current_level={userData?.user_data?.academic_information?.study_level}
+          cgpa={cgpa}
+          semester_gpa={latestSemesterGpa}
+          current_level={currentLevel}
         />
       </Card>
 
@@ -75,96 +154,142 @@ export default function SemesterResultsPage() {
           <div></div>
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-[16px] px-6 py-4 text-red-700 dark:text-red-400">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="text-[14px] font-medium">{error}</span>
+          </div>
+        )}
+
         {/* Rows */}
         <div className="flex flex-col gap-3">
-          {semesters.map((sem, idx) => {
-            const [session, term] = sem.name.split('.');
-            const termName = term === '1' ? '1st Semester' : term === '2' ? '2nd Semester' : term === '3' ? '3rd Semester' : `${term}th Semester`;
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+            : semesters.map((sem, idx) => {
+                const termPart = sem.semester.split(".")[1] ?? "1";
+                const termNum = parseInt(termPart, 10);
+                const ordinals = ["1st", "2nd", "3rd"];
+                const termName = ordinals[termNum - 1] ?? `${termNum}th`;
+                const termLabel = `${termName} Semester`;
 
-            return (
-              <Card key={idx} className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200">
-                <CardContent className="p-0">
-                  {/* DESKTOP VIEW */}
-                  <div className="hidden md:grid md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_100px] md:items-center gap-4 px-6 py-2">
-                    <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
-                      {sem.name}
-                    </div>
+                return (
+                  <Card
+                    key={idx}
+                    className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+                  >
+                    <CardContent className="p-0">
+                      {/* DESKTOP VIEW */}
+                      <div className="hidden md:grid md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_100px] md:items-center gap-4 px-6 py-2">
+                        <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
+                          {sem.semester}
+                        </div>
 
-                    <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
-                      {sem.level}
-                    </div>
+                        <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
+                          {sem.semester_level}
+                        </div>
 
-                    <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
-                      {sem.hours}
-                    </div>
+                        <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
+                          {sem.total_credit_unit}
+                        </div>
 
-                    <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
-                      {sem.gpa}
-                    </div>
+                        <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
+                          {sem.semester_gpa !== null
+                            ? sem.semester_gpa.toFixed(2)
+                            : "—"}
+                        </div>
 
-                    <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
-                      {sem.chours}
-                    </div>
+                        <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
+                          {sem.cumulativeCreditHours}
+                        </div>
 
-                    <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
-                      {sem.cgpa}
-                    </div>
+                        <div className="text-[15px] text-gray-600 dark:text-gray-300 text-center">
+                          {sem.cumulativeGpa !== null
+                            ? sem.cumulativeGpa.toFixed(2)
+                            : "—"}
+                        </div>
 
-                    <div className="flex justify-end">
-                      <Button
-                        variant="outline"
-                        className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-9 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 transition-colors"
-                        onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
-                      >
-                        <Eye className="w-4 h-4 mr-1.5" />
-                        View
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* MOBILE VIEW */}
-                  <div className="flex flex-col md:hidden p-5 gap-5">
-                    <div className="flex justify-between items-start">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold text-[16px] text-gray-900 dark:text-gray-100 leading-tight">{sem.level}L - {termName}</span>
-                        <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">{session}</span>
+                        <div className="flex justify-end">
+                          <Button
+                            variant="outline"
+                            className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-9 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 transition-colors"
+                            onClick={() =>
+                              router.push(
+                                `/academic-details/semester-results/${encodeURIComponent(sem.semester)}`
+                              )
+                            }
+                          >
+                            <Eye className="w-4 h-4 mr-1.5" />
+                            View
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-1 text-right">
-                        <span className="font-bold text-[16px] text-gray-900 dark:text-gray-100 leading-tight">{sem.gpa}</span>
-                        <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">Semester GPA</span>
-                      </div>
-                    </div>
 
-                    <div className="h-px bg-gray-100 dark:bg-gray-800 w-full" />
+                      {/* MOBILE VIEW */}
+                      <div className="flex flex-col md:hidden p-5 gap-5">
+                        <div className="flex justify-between items-start">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-[16px] text-gray-900 dark:text-gray-100 leading-tight">
+                              {sem.semester_level}L - {termLabel}
+                            </span>
+                            <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">
+                              {sem.session}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1 text-right">
+                            <span className="font-bold text-[16px] text-gray-900 dark:text-gray-100 leading-tight">
+                              {sem.semester_gpa !== null
+                                ? sem.semester_gpa.toFixed(2)
+                                : "—"}
+                            </span>
+                            <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium">
+                              Semester GPA
+                            </span>
+                          </div>
+                        </div>
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">Hours</span>
-                        <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.hours}</span>
-                      </div>
-                      <div className="flex flex-col gap-1 text-center">
-                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C. Hours</span>
-                        <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.chours}</span>
-                      </div>
-                      <div className="flex flex-col gap-1 text-right">
-                        <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C.GPA</span>
-                        <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{sem.cgpa}</span>
-                      </div>
-                    </div>
+                        <div className="h-px bg-gray-100 dark:bg-gray-800 w-full" />
 
-                    <Button
-                      variant="outline"
-                      className="w-full rounded-[12px] text-[#003cbb] dark:text-[#4d82ff] font-semibold h-11 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 mt-1 transition-colors"
-                      onClick={() => router.push(`/academic-details/semester-results/${encodeURIComponent(sem.name)}`)}
-                    >
-                      <Eye className="w-[18px] h-[18px] mr-2" />
-                      View
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">Hours</span>
+                            <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">
+                              {sem.total_credit_unit}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1 text-center">
+                            <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C. Hours</span>
+                            <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">
+                              {sem.cumulativeCreditHours}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1 text-right">
+                            <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400">C.GPA</span>
+                            <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">
+                              {sem.cumulativeGpa !== null
+                                ? sem.cumulativeGpa.toFixed(2)
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          className="w-full rounded-[12px] text-[#003cbb] dark:text-[#4d82ff] font-semibold h-11 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 mt-1 transition-colors"
+                          onClick={() =>
+                            router.push(
+                              `/academic-details/semester-results/${encodeURIComponent(sem.semester)}`
+                            )
+                          }
+                        >
+                          <Eye className="w-[18px] h-[18px] mr-2" />
+                          View
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
         </div>
 
         <MobilePageMenuSheet

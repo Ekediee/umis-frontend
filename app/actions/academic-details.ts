@@ -116,3 +116,247 @@ export const getRegisteredCoursesAction =
       };
     }
   };
+
+// ── Raw API shapes — academic progress ────────────────────────────────────────
+
+interface RawSemesterProgression {
+  semester: string;
+  semester_gpa: number | null;
+  level: number;
+}
+
+interface RawAcademicProgressResponse {
+  status: boolean;
+  message: string;
+  data: {
+    total_expected_semesters: number;
+    registered_semesters: number;
+    remaining_semesters: number;
+    semester_progression: RawSemesterProgression[];
+  };
+}
+
+// ── Normalised shape used by the UI ──────────────────────────────────────────
+
+export interface SemesterProgressPoint {
+  /** Raw semester key, e.g. "2023/2024.1C" */
+  semester: string;
+  /** Friendly label, e.g. "100L 1st" */
+  label: string;
+  semesterGpa: number;
+  level: number;
+}
+
+export interface AcademicProgressData {
+  totalExpectedSemesters: number;
+  registeredSemesters: number;
+  remainingSemesters: number;
+  /** 0–100, derived from registeredSemesters / totalExpectedSemesters */
+  progressPercent: number;
+  /** Only entries with a non-null semester_gpa, sorted as returned */
+  semesterProgression: SemesterProgressPoint[];
+}
+
+export interface AcademicProgressResult {
+  data?: AcademicProgressData;
+  error?: string;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Converts a raw semester code + level into a short display label.
+ * "2023/2024.1C" + 100 → "100L 1st"
+ * "2024/2025.2"  + 200 → "200L 2nd"
+ */
+function formatSemesterLabel(semesterCode: string, level: number): string {
+  const match = semesterCode.match(/\.(\d+)/);
+  const semNum = match ? parseInt(match[1], 10) : 1;
+  const ordinals = ["1st", "2nd", "3rd"];
+  const ordinal = ordinals[semNum - 1] ?? `${semNum}th`;
+  return `${level}L ${ordinal}`;
+}
+
+// ── Action ────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the student's academic progress summary.
+ * Endpoint: GET /api/v1/student/academic-progress
+ *
+ * Returns semester-by-semester GPA data and overall semester completion stats.
+ * Entries with a null semester_gpa (ongoing semester) are excluded from
+ * semesterProgression so the chart never plots undefined points.
+ */
+export const getAcademicProgressAction =
+  async (): Promise<AcademicProgressResult> => {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("API_URL is not defined in environment variables");
+      return { error: "Internal server error: Missing API configuration" };
+    }
+
+    const token = await getSessionToken();
+    if (!token) {
+      return { error: "You are not authenticated. Please log in again." };
+    }
+
+    try {
+      const response = await loggedFetch(
+        `${apiUrl}/api/v1/student/academic-progress`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Failed to fetch academic progress";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // Response body wasn't JSON — keep the fallback message
+        }
+        return { error: errorMessage };
+      }
+
+      const json: RawAcademicProgressResponse = await response.json();
+      const raw = json?.data;
+
+      if (!raw) {
+        return { error: "No data returned from academic progress endpoint" };
+      }
+
+      const totalExpectedSemesters = raw.total_expected_semesters ?? 8;
+      const registeredSemesters = raw.registered_semesters ?? 0;
+      const remainingSemesters = raw.remaining_semesters ?? 0;
+      const progressPercent = Math.min(
+        Math.round((registeredSemesters / totalExpectedSemesters) * 100),
+        100
+      );
+
+      const semesterProgression: SemesterProgressPoint[] = (
+        raw.semester_progression ?? []
+      )
+        .filter(
+          (s) => s.semester_gpa !== null && s.semester_gpa !== undefined
+        )
+        .map((s) => ({
+          semester: s.semester,
+          label: formatSemesterLabel(s.semester, s.level),
+          semesterGpa: s.semester_gpa as number,
+          level: s.level,
+        }));
+
+      return {
+        data: {
+          totalExpectedSemesters,
+          registeredSemesters,
+          remainingSemesters,
+          progressPercent,
+          semesterProgression,
+        },
+      };
+    } catch (error) {
+      console.error("getAcademicProgressAction error:", error);
+      return {
+        error: "Could not connect to the server. Please try again later.",
+      };
+    }
+  };
+
+// ── Raw API shapes — academic results ─────────────────────────────────────────
+
+export interface ResultCourse {
+  course_code: string;
+  course_title: string;
+  unit: number;
+  score: number | null;
+  grade: string;
+  remark: string;
+}
+
+export interface SemesterResult {
+  semester: string;
+  total_credit_unit: number;
+  semester_gpa: number | null;
+  semester_level: number;
+  session: string;
+  courses: ResultCourse[];
+}
+
+interface RawAcademicResultsResponse {
+  status: boolean;
+  message: string;
+  data: SemesterResult[];
+}
+
+export interface AcademicResultsResult {
+  data?: SemesterResult[];
+  error?: string;
+}
+
+// ── Action ────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the student's full academic results across all semesters.
+ * Endpoint: GET /api/v1/academics/results
+ *
+ * Returns the raw semester list as-is (typed). Cumulative computations
+ * (C.Hours, C.GPA) are derived on the client from this data.
+ */
+export const getAcademicResultsAction =
+  async (): Promise<AcademicResultsResult> => {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("API_URL is not defined in environment variables");
+      return { error: "Internal server error: Missing API configuration" };
+    }
+
+    const token = await getSessionToken();
+    if (!token) {
+      return { error: "You are not authenticated. Please log in again." };
+    }
+
+    try {
+      const response = await loggedFetch(
+        `${apiUrl}/api/v1/academics/results`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Failed to fetch academic results";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // Response body wasn't JSON — keep the fallback message
+        }
+        return { error: errorMessage };
+      }
+
+      const json: RawAcademicResultsResponse = await response.json();
+
+      const semesters: SemesterResult[] = Array.isArray(json?.data)
+        ? json.data
+        : [];
+
+      return { data: semesters };
+    } catch (error) {
+      console.error("getAcademicResultsAction error:", error);
+      return {
+        error: "Could not connect to the server. Please try again later.",
+      };
+    }
+  };
