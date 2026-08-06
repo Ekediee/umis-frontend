@@ -23,6 +23,24 @@ export function QuickInfo() {
   const matricNo = userData?.user_data?.matric_number ?? userData?.user_data?.personal_information?.matric_number ?? "N/A";
   const school = userData?.user_data?.school_name ?? "School of Computing";
 
+  // Dynamic calculations & Connected API checks
+  const currentLevelNum = Number(userData?.user_data?.current_level ?? userData?.user_data?.academic_information?.study_level ?? 200);
+  const yearsRemaining = Math.max(0, Math.ceil((400 - currentLevelNum) / 100));
+  const currentYear = new Date().getFullYear();
+  const expectedGradYear = currentYear + yearsRemaining;
+
+  const schoolOfficer = userData?.user_data?.school_officer ?? 
+                        userData?.user_data?.academic_information?.school_officer ?? 
+                        "Mrs. Grace Adebayo";
+  const courseAdviser = userData?.user_data?.course_advisor ?? 
+                        userData?.user_data?.course_adviser ?? 
+                        userData?.user_data?.academic_information?.course_advisor ?? 
+                        userData?.user_data?.academic_information?.course_adviser ?? 
+                        "Dr. Adeyemi Olumide";
+  const expectedGraduation = userData?.user_data?.expected_graduation ?? 
+                             userData?.user_data?.academic_information?.expected_graduation ?? 
+                             `June ${expectedGradYear}`;
+
   return (
     <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
       <CardContent className="p-5 md:p-6">
@@ -47,6 +65,18 @@ export function QuickInfo() {
           <div className="flex items-center justify-between">
             <span className="text-[14px] font-medium text-[#4a5565] dark:text-gray-400">School / Faculty:</span>
             <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100 text-right">{school}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-medium text-[#4a5565] dark:text-gray-400">School Officer:</span>
+            <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100 text-right">{schoolOfficer}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-medium text-[#4a5565] dark:text-gray-400">Course Adviser:</span>
+            <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100 text-right">{courseAdviser}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-medium text-[#4a5565] dark:text-gray-400">Expected Graduation:</span>
+            <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100 text-right">{expectedGraduation}</span>
           </div>
         </div>
       </CardContent>

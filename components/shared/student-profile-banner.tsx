@@ -28,7 +28,8 @@ export function StudentProfileBanner({
   showDetailedRow
 }: StudentProfileBannerProps) {
 
-  const [avatarUrl, setAvatarUrl] = useState<string>("/images/student-image.png");
+  const DEFAULT_AVATAR = "/images/student-image.png";
+  const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,11 +61,12 @@ export function StudentProfileBanner({
   const rawName = userData?.entity_name ?? "—";
   const displayName = toTitleCase(rawName);
   const displayMatric = userData?.user_data?.personal_information?.matric_number ?? "—";
-  
+  const displayEmail = userData?.user_data?.contact_information?.email ?? "—";
+
   let displayProgramme = userData?.user_data?.degree_name ?? "";
   const department = userData?.user_data?.department ?? "";
   const lowerProg = displayProgramme.toLowerCase();
-  
+
   if (lowerProg.includes("bachelor of science")) {
     displayProgramme = "B.Sc.";
   } else if (lowerProg.includes("bachelor of arts")) {
@@ -119,21 +121,27 @@ export function StudentProfileBanner({
                     fill
                     unoptimized
                     className="object-cover"
+                    onError={() => {
+                      if (avatarUrl !== DEFAULT_AVATAR) {
+                        setAvatarUrl(DEFAULT_AVATAR);
+                      }
+                    }}
                   />
                 </div>
                 {showEditAvatar && (
-                  <button 
+                  <button
                     onClick={handleAvatarClick}
-                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors shadow-sm cursor-pointer"
+                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors cursor-pointer"
                   >
                     <Camera className="w-[14px] h-[14px]" />
                   </button>
                 )}
               </div>
 
-              <div className="text-center">
-                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight">{displayName}</h2>
+              <div className="text-center select-text">
+                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight select-all">{displayName}</h2>
                 <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400 mt-1">{displayProgramme}</p>
+                <p className="text-[12px] font-normal text-gray-400 dark:text-gray-500 mt-1 break-all select-all">{displayEmail}</p>
               </div>
             </div>
 
@@ -156,7 +164,6 @@ export function StudentProfileBanner({
 
         {/* Profile Picture Card on dashboard*/}
         {showDetailedRow && (
-
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-4 md:p-6 flex flex-col md:flex-row items-stretch justify-between gap-4 md:gap-8 md:w-[49.5%] w-[100%] shrink-0 transition-colors duration-200">
 
             {/* Avatar + Name */}
@@ -169,21 +176,27 @@ export function StudentProfileBanner({
                     fill
                     unoptimized
                     className="object-cover"
+                    onError={() => {
+                      if (avatarUrl !== DEFAULT_AVATAR) {
+                        setAvatarUrl(DEFAULT_AVATAR);
+                      }
+                    }}
                   />
                 </div>
                 {showEditAvatar && (
-                  <button 
+                  <button
                     onClick={handleAvatarClick}
-                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors shadow-sm cursor-pointer"
+                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors cursor-pointer"
                   >
                     <Camera className="w-[14px] h-[14px]" />
                   </button>
                 )}
               </div>
 
-              <div className="text-left">
-                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight">{displayName}</h2>
+              <div className="text-left select-text">
+                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight select-all">{displayName}</h2>
                 <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400 mt-1">{displayProgramme}</p>
+                <p className="text-[12px] font-normal text-gray-400 dark:text-gray-500 mt-1 break-all select-all">{displayEmail}</p>
               </div>
             </div>
 
@@ -201,7 +214,6 @@ export function StudentProfileBanner({
                 </span>
               </div>
             </div>
-
           </div>
         )}
 
@@ -255,7 +267,7 @@ export function StudentProfileBanner({
           <div className="bg-[#e5ecfc] dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-800 rounded-[20px] h-[100%] p-5 md:p-6 flex flex-col justify-center gap-4 w-full transition-colors duration-200">
             <div className="flex items-center justify-between">
               <p className="text-[12px] md:text-[14px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Academic Standing</p>
-              <span className="bg-[#c2d6ff] dark:bg-[#162664]/30 text-[#162664] dark:text-[#c2d6ff] px-2.5 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 uppercase tracking-wide">
+              <span className="bg-[#c2d6ff] dark:bg-[#162664]/30 text-[#162664] dark:text-[#c2d6ff] px-2.5 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 uppercase tracking-wide whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#162664] dark:bg-[#4d82ff]"></span>
                 Good standing
               </span>

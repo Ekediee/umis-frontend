@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronDown, AlertCircle, Download } from "lucide-react";
@@ -224,7 +223,7 @@ export default function SemesterResultDetailPage() {
   const currentSemester = allSemesters.find((s) => s.semester === semesterId);
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-0 mt-4 md:mt-0">
+    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 mt-4 md:mt-0">
       {/* Back button */}
       <div>
         <Button

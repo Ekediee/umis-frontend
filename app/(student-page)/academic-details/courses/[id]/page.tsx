@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getRegisteredCoursesAction } from "@/app/actions/academic-details";
 import { useAcademicDetailsStore } from "@/hooks/use-academic-details-store";
 import type { RegisteredCourse } from "@/app/actions/academic-details";
 import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // ── Skeleton row ──────────────────────────────────────────────────────────────
 
@@ -62,59 +63,58 @@ function renderTable(data: RegisteredCourse[], showInstructorAndGroup = true) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Desktop Header - Hidden on mobile */}
-      <div className={cn(
-        "hidden md:grid gap-4 px-6 py-4 bg-[#E5E7EB] dark:bg-gray-800 rounded-[16px] transition-colors duration-200 mb-1",
-        showInstructorAndGroup
-          ? "grid-cols-[1.5fr_3fr_1.5fr_1fr]"
-          : "grid-cols-[1.5fr_4.5fr_1fr]"
-      )}>
-        <div className="text-[13px] font-bold text-gray-500 dark:text-gray-400">Course Code</div>
-        <div className="text-[13px] font-bold text-gray-500 dark:text-gray-400">Course Title</div>
-        {showInstructorAndGroup && <div className="text-[13px] font-bold text-gray-500 dark:text-gray-400">Instructor</div>}
-        <div className="text-[13px] font-bold text-gray-500 dark:text-gray-400 text-right pr-6">Units</div>
+    <>
+      {/* DESKTOP VIEW */}
+      <div className="hidden md:block rounded-[16px] border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        <Table>
+          <TableHeader className="bg-[#f2f4f7] dark:bg-gray-800">
+            <TableRow className="hover:bg-[#f2f4f7] dark:hover:bg-gray-800 border-0">
+              <TableHead className="font-bold text-[#525866] dark:text-gray-400 text-[12px] tracking-wider pl-6 w-[150px]">COURSE CODE</TableHead>
+              <TableHead className="font-bold text-[#525866] dark:text-gray-400 text-[12px] tracking-wider">COURSE TITLE</TableHead>
+              {showInstructorAndGroup && <TableHead className="font-bold text-[#525866] dark:text-gray-400 text-[12px] tracking-wider w-[220px]">INSTRUCTOR</TableHead>}
+              <TableHead className="font-bold text-[#525866] dark:text-gray-400 text-[12px] tracking-wider text-right pr-6 w-[140px]">UNITS</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((course, idx) => (
+              <TableRow key={`${course.courseId}-${idx}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 border-gray-200 dark:border-gray-800">
+                <TableCell className="font-bold text-[#0a0d14] dark:text-gray-100 pl-6 whitespace-nowrap">
+                  {course.courseId}
+                </TableCell>
+                <TableCell className="text-[#525866] dark:text-gray-300">
+                  <div className="flex flex-col gap-1 items-start">
+                    <span className="font-medium">{course.title}</span>
+                    {showInstructorAndGroup && course.classOption && (
+                      <span className="inline-block text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-full px-2.5 py-0.5">
+                        {course.classOption}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                {showInstructorAndGroup && (
+                  <TableCell className="text-[#525866] dark:text-gray-300">
+                    {course.instructor}
+                  </TableCell>
+                )}
+                <TableCell className="text-right pr-6">
+                  <span className="inline-flex bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] font-bold text-[12px] px-3 py-1 rounded-[8px] uppercase tracking-wider">
+                    {course.units} UNITS
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
-      {/* Rows */}
-      {data.map((course, idx) => (
-        <Card
-          key={`${course.courseId}-${idx}`}
-          className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
-        >
-          <CardContent className="p-0">
-            {/* DESKTOP VIEW */}
-            <div className={cn(
-              "hidden md:grid items-center gap-4 px-6 py-2.5",
-              showInstructorAndGroup
-                ? "grid-cols-[1.5fr_3fr_1.5fr_1fr]"
-                : "grid-cols-[1.5fr_4.5fr_1fr]"
-            )}>
-              <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
-                {course.courseId}
-              </div>
-              <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium pr-4">
-                <div className="truncate">{course.title}</div>
-                {showInstructorAndGroup && course.classOption && (
-                  <span className="mt-1 inline-block text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-full px-2.5 py-0.5">
-                    {course.classOption}
-                  </span>
-                )}
-              </div>
-              {showInstructorAndGroup && (
-                <div className="text-[15px] text-gray-500 dark:text-gray-400 font-medium">
-                  {course.instructor}
-                </div>
-              )}
-              <div className="flex justify-end">
-                <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-[#E1E7FC] dark:bg-[#003cbb]/20 rounded-full px-3 py-1 uppercase tracking-wider">
-                  {course.units} UNITS
-                </span>
-              </div>
-            </div>
-
-            {/* MOBILE VIEW */}
-            <div className="flex flex-col md:hidden p-5 gap-3">
+      {/* MOBILE VIEW */}
+      <div className="flex flex-col md:hidden gap-3">
+        {data.map((course, idx) => (
+          <Card
+            key={`${course.courseId}-${idx}-mobile`}
+            className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+          >
+            <CardContent className="p-5 flex flex-col gap-3">
               <div className="flex justify-between items-center">
                 <div className="font-bold text-[16px] text-gray-900 dark:text-gray-100">
                   {course.courseId}
@@ -142,11 +142,11 @@ function renderTable(data: RegisteredCourse[], showInstructorAndGroup = true) {
                   </div>
                 </>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -154,11 +154,30 @@ function renderTable(data: RegisteredCourse[], showInstructorAndGroup = true) {
 
 function CoursesContent() {
   const router = useRouter();
+  const params = useParams();
   const searchParams = useSearchParams();
+  
+  const semesterId = decodeURIComponent(params.id as string || "2018/2019.1");
   const tabParam = searchParams.get("tab") || "current";
 
   const [activeTab, setActiveTab] = useState(tabParam);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const semestersList = [
+    "2018/2019.1",
+    "2018/2019.2",
+    "2018/2019.3",
+    "2019/2020.1",
+    "2019/2020.2",
+  ];
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handleClose = () => setIsDropdownOpen(false);
+    window.addEventListener("click", handleClose);
+    return () => window.removeEventListener("click", handleClose);
+  }, [isDropdownOpen]);
 
   const {
     registeredCourses,
@@ -231,7 +250,7 @@ function CoursesContent() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    router.push(`/academic-details/courses?tab=${value}`);
+    router.push(`/academic-details/courses/${encodeURIComponent(semesterId)}?tab=${value}`);
   };
 
   // ── Render helpers ──
@@ -266,18 +285,59 @@ function CoursesContent() {
   };
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:px-6 md:mt-0">
+    <div className="flex flex-col gap-4 md:gap-6 w-full max-w-7xl mx-auto pb-10 px-4 md:mt-0">
       {/* Back button */}
       <div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-10 border-gray-200 dark:border-gray-700 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 hover:text-[#003095] dark:hover:text-[#8ba7ff] bg-white dark:bg-gray-900 transition-colors"
-          onClick={() => router.push('/academic-details')}
+          onClick={() => router.push('/academic-details/courses')}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back
         </Button>
       </div>
+
+      {/* Header Container */}
+      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200 relative">
+        <div className="flex flex-wrap items-center gap-3 md:gap-4">
+          <h2 className="font-bold text-[18px] text-gray-900 dark:text-gray-100">Registered Courses</h2>
+          
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDropdownOpen(!isDropdownOpen);
+              }}
+              className="flex items-center gap-2 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 rounded-[10px] px-3.5 py-2 bg-white dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] text-[14px] font-semibold hover:bg-[#f5f8fe] dark:hover:bg-gray-700 transition-colors"
+            >
+              {semesterId}
+              <ChevronDown className="w-4 h-4 text-blue-400" />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute left-0 mt-2 w-[180px] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[12px] shadow-lg py-1.5 z-50">
+                {semestersList.map((sem) => (
+                  <button
+                    key={sem}
+                    onClick={() => {
+                      router.push(`/academic-details/courses/${encodeURIComponent(sem)}`);
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-[14px] hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                      sem === semesterId
+                        ? "text-[#003cbb] dark:text-[#4d82ff] font-bold"
+                        : "text-gray-700 dark:text-gray-300 font-medium"
+                    }`}
+                  >
+                    {sem}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
 
       {/* Tabs & Content */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -358,7 +418,7 @@ function CoursesContent() {
 
 // ── Page export ───────────────────────────────────────────────────────────────
 
-export default function CoursesPage() {
+export default function CoursesDetailPage() {
   return (
     <Suspense
       fallback={

@@ -41,7 +41,7 @@ export default function FeesPage() {
         <div className="bg-white dark:bg-gray-900 md:border md:border-[#E2E4E9] dark:md:border-gray-800 rounded-[24px] p-6 md:p-8 flex flex-col gap-8 w-full max-w-[560px] shadow-sm md:shadow-none transition-colors">
           
           <h2 className="text-[24px] font-bold text-[#0A0D14] dark:text-gray-100 tracking-tight text-center md:text-left">
-            What are you looking to make payment for?
+            How would you like to register?
           </h2>
 
           <div className="flex flex-col gap-3 w-full">
@@ -56,7 +56,7 @@ export default function FeesPage() {
               )}
             >
               <div className="flex flex-col gap-1">
-                <span className="text-[18px] font-semibold text-[#0A0D14] dark:text-gray-100">Full Session Fees</span>
+                <span className="text-[18px] font-semibold text-[#0A0D14] dark:text-gray-100">Full Session Registration</span>
                 <span className="text-[16px] text-[#525866] dark:text-gray-400">2025/2026 Session</span>
               </div>
               <div className={cn(
@@ -80,7 +80,7 @@ export default function FeesPage() {
               )}
             >
               <div className="flex flex-col gap-1">
-                <span className="text-[18px] font-semibold text-[#0A0D14] dark:text-gray-100">1st Semester Fees</span>
+                <span className="text-[18px] font-semibold text-[#0A0D14] dark:text-gray-100">1st Semester Registration</span>
                 <span className="text-[16px] text-[#525866] dark:text-gray-400">2025/2026 Session</span>
               </div>
               <div className={cn(

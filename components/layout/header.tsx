@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon } from "lucide-react";
+import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OnboardingGuideSheet } from "@/components/dashboard/onboarding-guide-sheet";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
@@ -16,11 +17,20 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("/images/student-image.png");
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("profile_avatar");
+    if (saved) {
+      setAvatarUrl(saved);
+    }
+  }, [pathname]);
 
   
   const getTitle = () => {
     if (pathname?.includes('/finance/receipt')) return "Payment";
-    if (pathname?.includes('/finance/fees')) return "Make Payment";
+    if (pathname?.includes('/finance/fees')) return "Financial Registration";
     if (pathname?.includes('/finance')) return "Finance";
     if (pathname?.includes('/academic-details')) return "Academic Details";
     if (pathname?.includes('/registration')) return "Registration";
@@ -71,10 +81,10 @@ export function Header() {
         <header className="md:hidden h-[64px] border-b dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4 shrink-0 relative z-50 transition-colors duration-200">
         {/* Left: Avatar with Badge */}
         <div className="relative z-10">
-          <button type="button" className="p-1 touch-manipulation">
+          <button type="button" className="p-1 touch-manipulation" onClick={() => router.push('/profile')}>
             <Avatar className="w-9 h-9 border border-gray-100 dark:border-gray-700">
               <AvatarFallback className="bg-[#f5f8fe] dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] font-medium text-xs">YJ</AvatarFallback>
-              <AvatarImage src="/student-image.png" alt="Yakubu Onome Joy" />
+              <AvatarImage src={avatarUrl} alt="Yakubu Onome Joy" />
             </Avatar>
           </button>
           <span className="absolute bottom-[4px] right-[0px] w-[14px] h-[14px] bg-[#003cbb] border-[2px] border-white rounded-full flex items-center justify-center pointer-events-none">
@@ -175,6 +185,19 @@ export function Header() {
                 </>
               ) : (
                 <>
+                  <button 
+                    onClick={() => {
+                      setIsBottomSheetOpen(false);
+                      setIsGuideOpen(true);
+                    }}
+                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1 w-full text-left"
+                  >
+                    <Sparkles className="w-5 h-5 text-[#003cbb] dark:text-[#4d82ff]" />
+                    Get Started Guide
+                  </button>
+
+                  <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
+
                   <Link 
                     href="#" 
                     onClick={() => setIsBottomSheetOpen(false)}
@@ -198,6 +221,11 @@ export function Header() {
           </div>
         </div>
       )}
+
+      <OnboardingGuideSheet
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
     </>
   );
 }

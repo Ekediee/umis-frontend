@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useContext, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useRegistration } from "@/components/providers/registration-provider";
+import { RegistrationContext } from "@/components/providers/registration-provider";
+import { getWorshipCentersAction } from "@/app/actions/registration";
 
 // Re-export the canonical WorshipCenter type (used by summary.tsx)
 export type { WorshipCenter } from "@/app/actions/registration";
@@ -64,19 +65,44 @@ function CardSkeleton() {
 }
 
 export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
-  const context = useRegistration();
+  const context = useContext(RegistrationContext);
+
+  const [localWorshipCenters, setLocalWorshipCenters] = useState<any[]>([]);
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!context && !props.worshipCenters) {
+      setLocalLoading(true);
+      setLocalError(null);
+      getWorshipCentersAction().then((result) => {
+        if (result.error) {
+          setLocalError(result.error);
+        } else {
+          setLocalWorshipCenters(result.data ?? []);
+        }
+        setLocalLoading(false);
+      });
+    }
+  }, [context, props.worshipCenters]);
 
   // Prefer explicit props, fall back to context values
   const selectedId =
-    props.selectedId !== undefined ? props.selectedId : context.selectedWorshipCenterId;
+    props.selectedId !== undefined ? props.selectedId : (context?.selectedWorshipCenterId ?? null);
   const onSelect =
-    props.onSelect !== undefined ? props.onSelect : context.setSelectedWorshipCenterId;
+    props.onSelect !== undefined ? props.onSelect : (context?.setSelectedWorshipCenterId ?? (() => {}));
   const worshipCenters =
-    props.worshipCenters !== undefined ? props.worshipCenters : context.worshipCenters;
+    props.worshipCenters !== undefined 
+      ? props.worshipCenters 
+      : (context ? context.worshipCenters : localWorshipCenters);
   const isLoading =
-    props.isLoading !== undefined ? props.isLoading : context.worshipCentersLoading;
+    props.isLoading !== undefined 
+      ? props.isLoading 
+      : (context ? context.worshipCentersLoading : localLoading);
   const error =
-    props.error !== undefined ? props.error : context.worshipCentersError;
+    props.error !== undefined 
+      ? props.error 
+      : (context ? context.worshipCentersError : localError);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -112,7 +138,7 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
           Select your preferred worship center
         </h2>
         {/* Search (desktop) */}
-        <div className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-900 rounded-[8px] px-3 py-2 w-[320px] border border-gray-200 dark:border-gray-800 transition-colors">
+        <div className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-900 rounded-[10px] px-3 py-2 w-[320px] border border-gray-200 dark:border-gray-800 transition-colors">
           <Search className="w-5 h-5 text-[#868c98] dark:text-gray-500 shrink-0" />
           <input
             type="text"

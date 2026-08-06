@@ -71,7 +71,7 @@ export function AcademicProgressExtended() {
           <div className="flex justify-end border-t border-gray-100 dark:border-gray-800/80 pt-5 mt-6">
             <Button
               onClick={() => setIsSimulatorOpen(true)}
-              className="bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm transition-all hover:shadow-md px-6 font-semibold"
+              className="bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-11 flex items-center justify-center gap-2 transition-all px-6 font-semibold"
             >
               <Sparkles className="w-4 h-4 text-blue-200" />
               <span>💡 Simulate What-If GPA</span>

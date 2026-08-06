@@ -87,7 +87,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   // Stepper state
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
-  const totalSteps = 4;
+  const totalSteps = 3;
 
   // Modals state
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -311,13 +311,6 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!selectedWorshipCenterId) {
-      toast.error("No worship center selected", {
-        description: "Please go back and select a worship center.",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     setIsConfirmModalOpen(false);
 
@@ -327,7 +320,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     );
 
     const result = await submitCourseSelectionAction({
-      worship_center_id: selectedWorshipCenterId,
+      worship_center_id: selectedWorshipCenterId || "1",
       max_credit_unit: MAX_UNITS,
       min_credit_unit: MIN_UNITS,
       class_options: selectedGroups,
@@ -360,8 +353,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     switch (currentStep) {
       case 1: return "Select Class Group";
       case 2: return "Select Courses";
-      case 3: return "Select Worship Center";
-      case 4: return "Summary";
+      case 3: return "Summary";
       default: return "Registration";
     }
   };
@@ -372,14 +364,12 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
 
   const isNextDisabled = 
     (currentStep === 1 && (selectedGroups.length === 0 || coursesLoading)) ||
-    (currentStep === 2 && selectedCourseIds.length === 0) ||
-    (currentStep === 3 && !selectedWorshipCenterId);
+    (currentStep === 2 && selectedCourseIds.length === 0);
 
   const nextLabel = 
     currentStep === 1 ? "Select Courses" : 
-    currentStep === 2 ? "Select Worship Center" : 
-    currentStep === 3 ? "Summary" : 
-    "Submit Registration";
+    currentStep === 2 ? "Summary" : 
+    "Submit Course Registration";
 
   return (
     <RegistrationContext.Provider

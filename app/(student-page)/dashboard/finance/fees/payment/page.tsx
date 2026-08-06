@@ -9,6 +9,7 @@ import { PaymentStepper } from "@/components/fees/payment-stepper";
 import { MobileFlowHeader } from "@/components/registration/mobile-flow-header";
 import { BottomActionBar } from "@/components/registration/bottom-action-bar";
 import { SelectResidence } from "@/components/fees/steps/select-residence";
+import { SelectWorshipCenter } from "@/components/registration/steps/select-worship-center";
 import { SelectMealPlan } from "@/components/fees/steps/select-meal-plan";
 import { PaymentSummary } from "@/components/fees/steps/payment-summary";
 import { WalletPayment } from "@/components/fees/steps/wallet-payment";
@@ -17,6 +18,8 @@ import { PaymentProgressSheet } from "@/components/fees/payment-progress-sheet";
 import { PaymentMethodSheet } from "@/components/fees/payment-method-sheet";
 import { ProcessingOverlay } from "@/components/fees/processing-overlay";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
+import { FinancialConfirmationModal } from "@/components/fees/financial-confirmation-modal";
+import { FinancialSuccessModal } from "@/components/registration/registration-status-modals";
 import { useUserData } from "@/contexts/user-data-context";
 
 function PaymentFlowContent() {
@@ -42,17 +45,22 @@ function PaymentFlowContent() {
 
   // Derive labels
   const sessionLabel = "2025/2026";
-  const typeLabel = paymentType === "semester" ? "1st Semester Fees" : "Full Session Fees";
+  const typeLabel = paymentType === "semester" ? "1st Semester Registration" : "Full Session Registration";
 
   // Selection State
   const [selectedResidence, setSelectedResidence] = useState<string | null>(null);
+  const [selectedWorshipCenterId, setSelectedWorshipCenterId] = useState<string | null>(null);
   const [selectedMealPlan, setSelectedMealPlan] = useState<string | null>(null);
+  const [isFinancialConfirmOpen, setIsFinancialConfirmOpen] = useState(false);
+  const [isFinancialSuccessOpen, setIsFinancialSuccessOpen] = useState(false);
 
   const totalSteps = 4;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
+    } else if (currentStep === 4) {
+      setIsFinancialConfirmOpen(true);
     }
   };
 
@@ -69,9 +77,10 @@ function PaymentFlowContent() {
   const getStepTitle = () => {
     switch (currentStep) {
       case 1: return "Select Residence";
-      case 2: return "Select Meal Plan";
-      case 3: return "Summary";
-      case 4: return "Payment";
+      case 2: return "Select Worship Center";
+      case 3: return "Select Meal Plan";
+      case 4: return "Summary";
+      case 5: return "Payment";
       default: return "Make Payment";
     }
   };
@@ -79,7 +88,9 @@ function PaymentFlowContent() {
   const getNextLabel = () => {
     switch (currentStep) {
       case 1: return "Proceed";
-      case 2: return "Proceed to Summary";
+      case 2: return "Proceed";
+      case 3: return "Proceed to Summary";
+      case 4: return "Submit";
       default: return "Proceed";
     }
   };
@@ -87,14 +98,25 @@ function PaymentFlowContent() {
   const isNextDisabled = () => {
     switch (currentStep) {
       case 1: return !selectedResidence;
-      case 2: return !selectedMealPlan;
+      case 2: return !selectedWorshipCenterId;
+      case 3: return !selectedMealPlan;
       default: return false;
     }
   };
 
   const handleFullPayment = () => {
+    setIsFinancialConfirmOpen(true);
+  };
+
+  const handleConfirmFinancialSubmit = () => {
+    setIsFinancialConfirmOpen(false);
+    setIsFinancialSuccessOpen(true);
+  };
+
+  const handleProceedToPayment = () => {
+    setIsFinancialSuccessOpen(false);
     setCustomAmount(null);
-    setCurrentStep(4);
+    setCurrentStep(5);
   };
 
   const handleCancelPayment = () => {
@@ -148,27 +170,37 @@ function PaymentFlowContent() {
   };
 
   return (
-    <div className="flex flex-col w-full h-full pb-20 md:pb-6 px-4 md:px-6 relative select-none">
+    <div className={cn(
+      "flex flex-col w-full h-full px-4 md:px-6 relative select-none",
+      currentStep === 5 ? "-mt-4 md:-mt-6 pb-0 md:pb-0" : "pb-20 md:pb-6"
+    )}>
       
       {/* Mobile Flow Header */}
-      <div className="md:hidden">
-        <MobileFlowHeader
-          title={getStepTitle()}
-          onProgressClick={() => setIsMobileSheetOpen(true)}
-        />
-      </div>
+      {currentStep < 5 && (
+        <div className="md:hidden">
+          <MobileFlowHeader
+            title={getStepTitle()}
+            onProgressClick={() => setIsMobileSheetOpen(true)}
+          />
+        </div>
+      )}
 
-      {/* Web Stepper (Hidden on mobile) */}
-      <div className="hidden md:block">
-        <PaymentStepper
-          currentStep={currentStep}
-          sessionLabel={sessionLabel}
-          typeLabel={typeLabel}
-        />
-      </div>
+      {/* Web Stepper (Hidden on mobile and on step 5) */}
+      {currentStep < 5 && (
+        <div className="hidden md:block">
+          <PaymentStepper
+            currentStep={currentStep}
+            sessionLabel={sessionLabel}
+            typeLabel={typeLabel}
+          />
+        </div>
+      )}
 
       {/* Main Content Pane */}
-      <div className="flex-1 flex justify-center items-start pt-6 overflow-y-auto">
+      <div className={cn(
+        "flex-1 flex justify-center items-start overflow-y-auto",
+        currentStep === 5 ? "pt-3 md:pt-4" : "pt-6"
+      )}>
         {currentStep === 1 && (
           <SelectResidence
             selectedId={selectedResidence}
@@ -177,21 +209,29 @@ function PaymentFlowContent() {
         )}
 
         {currentStep === 2 && (
+          <SelectWorshipCenter
+            selectedId={selectedWorshipCenterId}
+            onSelect={setSelectedWorshipCenterId}
+          />
+        )}
+
+        {currentStep === 3 && (
           <SelectMealPlan
             selectedId={selectedMealPlan}
             onSelect={setSelectedMealPlan}
           />
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 4 && (
           <PaymentSummary
             selectedResidenceId={selectedResidence}
+            selectedWorshipCenterId={selectedWorshipCenterId}
             selectedMealPlanId={selectedMealPlan}
             onChangeStep={handleChangeStep}
           />
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 5 && (
           <WalletPayment
             walletBalance={walletBalance}
             totalAmount={customAmount ?? computeTotal()}
@@ -204,8 +244,8 @@ function PaymentFlowContent() {
         )}
       </div>
 
-      {/* Bottom Action Bar — Steps 1-2 use standard bar */}
-      {currentStep < 3 && (
+      {/* Bottom Action Bar — Steps 1-3 use standard bar */}
+      {currentStep < 4 && (
         <BottomActionBar
           currentStep={currentStep}
           totalSteps={totalSteps}
@@ -216,8 +256,8 @@ function PaymentFlowContent() {
         />
       )}
 
-      {/* Step 3: Custom Payment Bottom Bar */}
-      {currentStep === 3 && (
+      {/* Step 4: Custom Payment Bottom Bar */}
+      {currentStep === 4 && (
         <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 md:px-8 md:py-6 z-40 transition-colors">
           <div className="flex items-center justify-between max-w-[1200px] mx-auto">
             {/* Previous */}
@@ -230,30 +270,13 @@ function PaymentFlowContent() {
               <span className="hidden sm:inline-block">Previous</span>
             </Button>
 
-            {/* Desktop Payment Buttons (Hidden on mobile) */}
-            <div className="hidden md:flex items-center gap-3">
-              <Button
-                onClick={() => setIsPartialPaymentOpen(true)}
-                variant="outline"
-                className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-all"
-              >
-                Make Partial Payment
-              </Button>
+            {/* Submit Selection Button */}
+            <div className="flex-1 md:flex-none flex items-center justify-end pl-3 md:pl-0">
               <Button
                 onClick={handleFullPayment}
-                className="rounded-[10px] h-11 px-4 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all"
+                className="w-full md:w-auto rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all"
               >
-                Make full Payment Now
-              </Button>
-            </div>
-
-            {/* Mobile Payment Button (Hidden on desktop) */}
-            <div className="md:hidden flex-1 pl-3">
-              <Button
-                onClick={() => setIsMobilePaymentSelectionOpen(true)}
-                className="w-full rounded-[10px] h-11 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all"
-              >
-                Make Payment
+                Submit selection
               </Button>
             </div>
           </div>
@@ -290,6 +313,19 @@ function PaymentFlowContent() {
         isOpen={isFundWalletModalOpen}
         onClose={() => setIsFundWalletModalOpen(false)}
         onSuccess={(amount) => setWalletBalance(prev => prev + amount)}
+      />
+
+      <FinancialConfirmationModal
+        isOpen={isFinancialConfirmOpen}
+        onClose={() => setIsFinancialConfirmOpen(false)}
+        onConfirm={handleConfirmFinancialSubmit}
+        studentName={studentName}
+      />
+
+      <FinancialSuccessModal
+        isOpen={isFinancialSuccessOpen}
+        onClose={() => setIsFinancialSuccessOpen(false)}
+        onPrimaryAction={handleProceedToPayment}
       />
 
       {/* Processing Overlay */}

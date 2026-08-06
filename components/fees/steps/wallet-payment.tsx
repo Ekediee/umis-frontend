@@ -140,7 +140,7 @@ export function WalletPayment({
           className={cn(
             "flex items-center gap-2 px-6 py-3 rounded-[10px] text-[14px] font-medium transition-all",
             isSufficient
-              ? "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm"
+              ? "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white"
               : "bg-[#e2e4e9] dark:bg-gray-800 text-[#868c98] dark:text-gray-600 cursor-not-allowed"
           )}
         >

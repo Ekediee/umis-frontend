@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { X, Plus, Trash2, Sparkles, TrendingUp, AlertCircle, CheckCircle, Target, ArrowRight, Settings2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useUserData } from "@/contexts/user-data-context";
+import { getStudentProfileAction } from "@/app/actions/user";
+import type { UMISResponse } from "@/lib/session";
 
 interface MockCourse {
   id: string;
@@ -36,6 +39,9 @@ const GRADE_LABELS: Record<string, string> = {
 };
 
 export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps) {
+  const contextUserData = useUserData();
+  const [profileData, setProfileData] = useState<UMISResponse | null>(null);
+
   // Baseline student stats
   const [baselineHours, setBaselineHours] = useState<number>(93);
   const [baselineCGPA, setBaselineCGPA] = useState<number>(3.67);
@@ -52,6 +58,26 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
     { id: "4", code: "COSC 317", units: 2, grade: "B" },
     { id: "5", code: "GEDS 301", units: 2, grade: "A" },
   ]);
+
+  // Fetch student profile dynamically when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      getStudentProfileAction().then((res) => {
+        if (res) setProfileData(res);
+      });
+    }
+  }, [isOpen]);
+
+  const userData = profileData ?? contextUserData;
+  const currentCGPA = userData?.user_data?.cummulative_gpa ?? 
+                      userData?.user_data?.academic_information?.cummulative_gpa;
+
+  // Set default baseline CGPA when currentCGPA is fetched
+  useEffect(() => {
+    if (currentCGPA !== undefined && currentCGPA !== null) {
+      setBaselineCGPA(Number(currentCGPA));
+    }
+  }, [currentCGPA]);
 
   // Derived Baseline Points
   const baselineGP = useMemo(() => baselineHours * baselineCGPA, [baselineHours, baselineCGPA]);
@@ -365,7 +391,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
 
             <Button
               onClick={applyTargetGrades}
-              className="bg-[#003cbb] hover:bg-[#003095] dark:bg-[#4d82ff] dark:hover:bg-[#3b71eb] text-white rounded-xl h-10 px-4 text-[13px] font-semibold flex items-center gap-2 shrink-0 shadow-sm transition-all active:scale-95"
+              className="bg-[#003cbb] hover:bg-[#003095] dark:bg-[#4d82ff] dark:hover:bg-[#3b71eb] text-white rounded-xl h-10 px-4 text-[13px] font-semibold flex items-center gap-2 shrink-0 transition-all active:scale-95"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Apply Target Grades to Simulator</span>
@@ -441,7 +467,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
                               className={cn(
                                 "py-2 text-[13px] font-bold rounded-lg border transition-all flex flex-col items-center justify-center relative",
                                 isSelected 
-                                  ? "bg-[#003cbb] border-[#003cbb] text-white shadow-sm scale-[1.02]" 
+                                  ? "bg-[#003cbb] border-[#003cbb] text-white scale-[1.02]" 
                                   : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                               )}
                             >

@@ -46,7 +46,7 @@ export function ActionBanner({
             "rounded-[12px] px-6 h-11 text-[15px] font-semibold transition-all flex items-center gap-2",
             buttonVariant === "primary" && "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white",
             buttonVariant === "dark" && "bg-[#0a0d14] dark:bg-white hover:bg-[#1a1d24] dark:hover:bg-gray-100 text-white dark:text-gray-900",
-            buttonVariant === "outline" && "bg-[#eef3fd] dark:bg-gray-800 border border-[#ccdcfd] dark:border-gray-700 hover:bg-[#e4ebfa] dark:hover:bg-gray-750 text-[#003cbb] dark:text-gray-100 shadow-sm active:scale-95 transition-all"
+            buttonVariant === "outline" && "bg-[#eef3fd] dark:bg-gray-800 border border-[#ccdcfd] dark:border-gray-700 hover:bg-[#e4ebfa] dark:hover:bg-gray-750 text-[#003cbb] dark:text-gray-100 active:scale-95 transition-all"
           )}
         >
           {buttonText}

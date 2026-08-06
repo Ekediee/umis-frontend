@@ -56,6 +56,10 @@ export interface AcademicInformation {
   is_off_campus: boolean | null;
   off_campus_apprpval: string | null;
   residency_status: string | null;
+  school_officer?: string | null;
+  course_advisor?: string | null;
+  course_adviser?: string | null;
+  expected_graduation?: string | null;
 }
 
 // 2. Define the user_data object that holds the nested interfaces
@@ -77,6 +81,10 @@ export interface StudentData {
   status: string | null;
   student_name: string | null;
   academic_information: AcademicInformation;
+  school_officer?: string | null;
+  course_advisor?: string | null;
+  course_adviser?: string | null;
+  expected_graduation?: string | null;
 }
 
 // 3. Define the main/root response object

@@ -48,7 +48,7 @@ export function BottomActionBar(props: BottomActionBarProps) {
         <Button
           onClick={onNext}
           disabled={isNextDisabled}
-          className="rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white shadow-sm gap-2 transition-all"
+          className="rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white gap-2 transition-all"
         >
           {nextLabel}
           <ChevronRight className="w-4 h-4" />

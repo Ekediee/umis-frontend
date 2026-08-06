@@ -72,7 +72,7 @@ export function FinanceOverview() {
           href="/dashboard/finance?action=fund"
           className="bg-[#003cbb] hover:bg-[#002470] dark:bg-[#4d82ff] dark:hover:bg-[#3b6ee0] text-white dark:text-gray-900 rounded-[10px] px-4 md:px-5 py-2.5 text-[13px] md:text-[14px] font-bold flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto transition-colors active:scale-[0.98]"
         >
-          Make payment
+          Fund your wallet
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>

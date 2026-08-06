@@ -25,7 +25,7 @@ export function WelcomeBanner({ userData, onOpenGuide, showGuideButton }: Welcom
         {showGuideButton && onOpenGuide && (
           <Button
             onClick={onOpenGuide}
-            className="bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-10 px-4 text-xs font-semibold flex items-center gap-2 shadow-sm transition-all shrink-0 self-start sm:self-auto"
+            className="hidden sm:flex bg-gradient-to-r from-[#003cbb] to-[#2563eb] hover:from-[#003095] hover:to-[#1d4ed8] text-white rounded-xl h-10 px-4 text-xs font-semibold items-center gap-2 transition-all shrink-0 self-start sm:self-auto"
           >
             <Sparkles className="w-3.5 h-3.5 text-blue-200" />
             <span>💡 Get Started Guide</span>

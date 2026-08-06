@@ -47,19 +47,12 @@ function RegistrationCoursesFlowContent() {
       <MobileFlowHeader />
 
       {/* Main Content Area */}
-      <div className="flex-1 w-full px-4 md:px-8 py-6 md:py-4 flex flex-col items-center">
+      <div className="flex-1 w-full px-4 md:px-8 pt-6 pb-28 md:pt-4 md:pb-32 flex flex-col items-center">
         {currentStep === 1 && <SelectClassGroup />}
         
         {currentStep === 2 && <SelectCourses />}
 
-        {currentStep === 3 && (
-          <SelectWorshipCenter
-            selectedId={selectedWorshipCenterId}
-            onSelect={setSelectedWorshipCenterId}
-          />
-        )}
-
-        {currentStep === 4 && <Summary />}
+        {currentStep === 3 && <Summary />}
       </div>
 
       {/* Bottom Action Bar */}

@@ -22,10 +22,9 @@ export function MobileProgressSheet(props: MobileProgressSheetProps) {
   if (!isOpen) return null;
 
   const steps = [
-    { id: 1, title: "Commence Registration" },
+    { id: 1, title: "Select Class Group" },
     { id: 2, title: "Select Courses" },
-    { id: 3, title: "Select Worship Center" },
-    { id: 4, title: "Summary" }
+    { id: 3, title: "Summary" }
   ];
 
   return (
