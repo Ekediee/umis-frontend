@@ -48,14 +48,33 @@ export function Sidebar() {
 
   useEffect(() => {
     getStudentProfileAction().then((res) => {
-      if (res) setProfileData(res);
+      if (res) {
+        setProfileData(res);
+        const pic = res.user_data?.personal_information?.profile_picture_url;
+        if (pic) {
+          setAvatarUrl(pic);
+          localStorage.setItem("profile_avatar", pic);
+          localStorage.setItem("student_avatar", pic);
+        }
+      }
     });
 
-    const saved = localStorage.getItem("profile_avatar");
-    if (saved) {
-      setAvatarUrl(saved);
-    }
+    const updateAvatar = () => {
+      const saved = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
+      if (saved) {
+        setAvatarUrl(saved);
+      }
+    };
+    updateAvatar();
+
+    window.addEventListener("profile_avatar_updated", updateAvatar);
+    window.addEventListener("storage", updateAvatar);
+    return () => {
+      window.removeEventListener("profile_avatar_updated", updateAvatar);
+      window.removeEventListener("storage", updateAvatar);
+    };
   }, [pathname]);
+
 
   const userData = profileData ?? contextUserData;
   const rawName =

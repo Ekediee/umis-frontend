@@ -1,26 +1,16 @@
 "use client";
 
-import { Building2, UtensilsCrossed, Church, GraduationCap, MapPin, User, Users } from "lucide-react";
+import { Building2, UtensilsCrossed, Church, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RESIDENCE_HALLS, type ResidenceHall } from "./select-residence";
-import { type MealOption } from "./select-meal-plan";
 import Image from "next/image";
-
-// Mandatory fees — mock data, API will feed later
-const MANDATORY_FEES = {
-  tuition: 150000,
-  lab: 25000,
-  dev: 10000,
-};
-const MANDATORY_TOTAL = MANDATORY_FEES.tuition + MANDATORY_FEES.lab + MANDATORY_FEES.dev;
-
-// Meal options data for lookup
-const MEAL_OPTIONS_DATA = [
-  { id: "breakfast-lunch", name: "Breakfast and Lunch", price: 40000, mealsPerDay: 2, schedule: "Sunday - Saturday" },
-  { id: "breakfast-supper", name: "Breakfast and Supper", price: 45000, mealsPerDay: 2, schedule: "Sunday - Saturday" },
-  { id: "lunch-supper", name: "Lunch and Supper", price: 42000, mealsPerDay: 2, schedule: "Sunday - Saturday" },
-  { id: "breakfast-lunch-supper", name: "Breakfast, Lunch and Supper", price: 60000, mealsPerDay: 3, schedule: "Sunday - Saturday" },
-];
+import type {
+  FinanceResidence,
+  FinanceGeneralCharges,
+  FinanceMealType,
+  FinanceWorshipCenter,
+} from "@/app/actions/registration";
+import { deriveHallType, getResidenceImages } from "./select-residence";
+import { getMealPlanPrice } from "./select-meal-plan";
 
 const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
   CLASSIC: { bg: "bg-[#cac2ff] dark:bg-[#cac2ff]/10", text: "text-[#2b1664] dark:text-[#b4aefc]" },
@@ -29,28 +19,54 @@ const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 function formatPrice(price: number): string {
-  return `₦${price.toLocaleString()}`;
+  return `₦${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 interface PaymentSummaryProps {
-  selectedResidenceId: string | null;
-  selectedWorshipCenterId?: string | null;
-  selectedMealPlanId: string | null;
+  selectedResidence?: FinanceResidence | null;
+  isOffCampus?: boolean;
+  selectedWorshipCenter?: FinanceWorshipCenter | null;
+  selectedMealType?: FinanceMealType | null;
+  generalCharges?: FinanceGeneralCharges | null;
   onChangeStep: (step: number) => void;
 }
 
 export function PaymentSummary({
-  selectedResidenceId,
-  selectedWorshipCenterId,
-  selectedMealPlanId,
+  selectedResidence,
+  isOffCampus = false,
+  selectedWorshipCenter,
+  selectedMealType,
+  generalCharges,
   onChangeStep,
 }: PaymentSummaryProps) {
-  const residence = RESIDENCE_HALLS.find((h) => h.id === selectedResidenceId);
-  const meal = MEAL_OPTIONS_DATA.find((m) => m.id === selectedMealPlanId);
+  // Mandatory basic fees directly from API
+  const mandatoryTotal = generalCharges?.fees || 0;
 
-  const residencePrice = residence?.price || 0;
-  const mealPrice = meal?.price || 0;
-  const totalCost = MANDATORY_TOTAL + residencePrice + mealPrice;
+  // Residence cost
+  const residencePrice = isOffCampus ? 0 : selectedResidence?.charges || 0;
+  const residenceName = isOffCampus
+    ? "Off Campus Residence"
+    : selectedResidence?.residencename || "Not selected";
+  const residenceType = isOffCampus
+    ? null
+    : selectedResidence
+    ? deriveHallType(selectedResidence.majors)
+    : null;
+  const residenceImages = isOffCampus
+    ? ["/off-campus-image.png"]
+    : selectedResidence
+    ? getResidenceImages(selectedResidence.residenceid)
+    : [];
+
+  // Meal plan cost
+  const mealPrice = selectedMealType
+    ? getMealPlanPrice(selectedMealType.mealtype, generalCharges)
+    : 0;
+
+  // Total cost calculation: sum of all displayed fee cards
+  const totalCost = mandatoryTotal + residencePrice + mealPrice;
+
+
 
   return (
     <div className="w-full max-w-[1200px] pb-32 flex flex-col gap-5">
@@ -74,12 +90,10 @@ export function PaymentSummary({
         {/* 1. Mandatory Basic Fees */}
         <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
           <div className="flex items-start gap-4">
-            {/* Icon */}
             <div className="w-10 h-10 rounded-[10px] bg-[#f0fdfa] dark:bg-[#0d9488]/10 flex items-center justify-center shrink-0 transition-colors">
               <GraduationCap className="w-5 h-5 text-[#0d9488]" />
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
@@ -90,21 +104,14 @@ export function PaymentSummary({
                     Tuition & Institutional Fees
                   </span>
                   <div className="flex items-center gap-1.5 text-[13px] text-[#525866] dark:text-gray-400 flex-wrap transition-colors">
-                    <span>Tuition: {formatPrice(MANDATORY_FEES.tuition)}</span>
-                    <span className="text-[#cdd0d5] dark:text-gray-700">·</span>
-                    <span>Lab: {formatPrice(MANDATORY_FEES.lab)}</span>
-                    <span className="text-[#cdd0d5] dark:text-gray-700">·</span>
-                    <span>Dev: {formatPrice(MANDATORY_FEES.dev)}</span>
+                    <span>Base Fees: {formatPrice(mandatoryTotal)}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
                   <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {formatPrice(MANDATORY_TOTAL)}
+                    {formatPrice(mandatoryTotal)}
                   </span>
-                  <button className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors">
-                    Details
-                  </button>
                 </div>
               </div>
             </div>
@@ -125,22 +132,24 @@ export function PaymentSummary({
                     <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
                       Selected Residence
                     </span>
-                    {residence && residence.type !== "OFF_CAMPUS" && (
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider",
-                        BADGE_STYLES[residence.type]?.bg,
-                        BADGE_STYLES[residence.type]?.text
-                      )}>
-                        {residence.type}
+                    {residenceType && (
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider",
+                          BADGE_STYLES[residenceType]?.bg,
+                          BADGE_STYLES[residenceType]?.text
+                        )}
+                      >
+                        {residenceType}
                       </span>
                     )}
                   </div>
                   <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {residence?.name || "Not selected"}
+                    {residenceName}
                   </span>
-                  {residence && residence.type !== "OFF_CAMPUS" && (
+                  {selectedResidence && !isOffCampus && (
                     <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
-                      {residence.occupants} occupants per room · Room: Pending assignment
+                      Level Range: {selectedResidence.min_level}L – {selectedResidence.max_level}L · Room: Pending assignment
                     </span>
                   )}
                 </div>
@@ -158,13 +167,13 @@ export function PaymentSummary({
                 </div>
               </div>
 
-              {/* Residence Thumbnail (desktop inline, mobile below) */}
-              {residence && residence.images?.[0] && (
+              {/* Residence Thumbnail (mobile below) */}
+              {residenceImages[0] && (
                 <div className="mt-3 md:hidden">
                   <div className="relative w-full h-[120px] rounded-[8px] overflow-hidden">
                     <Image
-                      src={residence.images[0]}
-                      alt={residence.name}
+                      src={residenceImages[0]}
+                      alt={residenceName}
                       fill
                       unoptimized
                       className="object-cover"
@@ -176,11 +185,11 @@ export function PaymentSummary({
             </div>
 
             {/* Desktop thumbnail */}
-            {residence && residence.images?.[0] && (
+            {residenceImages[0] && (
               <div className="hidden md:block relative w-[100px] h-[70px] rounded-[8px] overflow-hidden shrink-0">
                 <Image
-                  src={residence.images[0]}
-                  alt={residence.name}
+                  src={residenceImages[0]}
+                  alt={residenceName}
                   fill
                   unoptimized
                   className="object-cover"
@@ -205,11 +214,13 @@ export function PaymentSummary({
                     Selected Worship Center
                   </span>
                   <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {selectedWorshipCenterId ? "Pioneer Church / Main Worship Center" : "Pioneer Church"}
+                    {selectedWorshipCenter?.sabbath_class_name || "Not selected"}
                   </span>
-                  <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
-                    Main Campus Worship Center · Weekly Services
-                  </span>
+                  {selectedWorshipCenter && (
+                    <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
+                      {selectedWorshipCenter.location_on_campus} · Pastor: {selectedWorshipCenter.pastor_in_charge}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
@@ -242,13 +253,8 @@ export function PaymentSummary({
                     Selected Meal Plan
                   </span>
                   <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {meal?.name || "Not selected"}
+                    {selectedMealType?.selection || "Not selected"}
                   </span>
-                  {meal && (
-                    <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
-                      {meal.schedule} · {meal.mealsPerDay} meals per day
-                    </span>
-                  )}
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
@@ -265,15 +271,15 @@ export function PaymentSummary({
               </div>
 
               {/* Meal icons */}
-              {meal && (
+              {selectedMealType && (
                 <div className="flex items-center gap-1.5 mt-2">
-                  {meal.id.includes("breakfast") && (
+                  {selectedMealType.mealtype.includes("B") && (
                     <span className="text-[18px]">☀️</span>
                   )}
-                  {meal.id.includes("lunch") && (
+                  {selectedMealType.mealtype.includes("L") && (
                     <span className="text-[18px]">🍽️</span>
                   )}
-                  {meal.id.includes("supper") && (
+                  {selectedMealType.mealtype.includes("S") && (
                     <span className="text-[18px]">🌙</span>
                   )}
                 </div>
@@ -281,8 +287,6 @@ export function PaymentSummary({
             </div>
           </div>
         </div>
-
-
       </div>
 
       {/* Desktop: Total Cost Banner at bottom */}

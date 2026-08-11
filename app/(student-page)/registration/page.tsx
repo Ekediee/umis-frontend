@@ -17,7 +17,7 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { getSemesterRegistrationStatusAction, registerSemesterAction, SemesterInfo } from "@/app/actions/registration";
+import { getSemesterRegistrationStatusAction, registerSemesterAction } from "@/app/actions/registration";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
@@ -46,9 +46,16 @@ export default function RegistrationPage() {
   const regState = isMounted ? store.regState : "not_started";
   const payState = isMounted ? store.payState : "not_started";
 
-  /** Holds the active semester info; null means not yet registered / unknown. */
-  const [semesterInfo, setSemesterInfo] = useState<SemesterInfo | null>(null);
-  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
+  // ── Semester info from store ───────────────────────────────────────────────
+  const {
+    semesterInfo,
+    isFetchingSemesterInfo,
+    setSemesterInfo,
+    setSemesterInfoError,
+    setIsFetchingSemesterInfo,
+  } = store;
+
+  const isLoadingStatus = isFetchingSemesterInfo;
   const [isRegistering, setIsRegistering] = useState(false);
   const [isSemesterConfirmOpen, setIsSemesterConfirmOpen] = useState(false);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
@@ -57,22 +64,25 @@ export default function RegistrationPage() {
   // Derived convenience boolean — truthy when semester info has been fetched
   const isRegisteredForSemester = semesterInfo !== null;
 
-  useEffect(() => {
-    async function fetchRegistrationStatus() {
-      setIsLoadingStatus(true);
-      const result = await getSemesterRegistrationStatusAction();
-      if (result.error) {
-        toast.error(result.error);
-        setSemesterInfo(null); // fallback — treat as not registered
-      } else {
-        setSemesterInfo(result.data ?? null);
-        if (result.message) {
-          toast.success(result.message);
-        }
-      }
-      setIsLoadingStatus(false);
+  const fetchRegistrationStatus = async () => {
+    if (isFetchingSemesterInfo) return;
+    setIsFetchingSemesterInfo(true);
+    const result = await getSemesterRegistrationStatusAction();
+    if (result.error) {
+      toast.error(result.error);
+      setSemesterInfoError(result.error);
+    } else if (result.data) {
+      setSemesterInfo(result.data);
     }
-    fetchRegistrationStatus();
+    // isFetchingSemesterInfo is reset inside the setters above
+  };
+
+  // Cache-first: only fetch if the store doesn't already have semester data
+  useEffect(() => {
+    if (semesterInfo === null && !isFetchingSemesterInfo) {
+      fetchRegistrationStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getRegBannerProps = () => {
@@ -324,9 +334,9 @@ export default function RegistrationPage() {
           if (result.error) {
             toast.error(result.error);
           } else if (result.success) {
-            // Re-fetch semester info so semesterInfo state is populated with real data
+            // Re-fetch semester info and update the store so all pages stay in sync
             const statusResult = await getSemesterRegistrationStatusAction();
-            setSemesterInfo(statusResult.data ?? null);
+            if (statusResult.data) setSemesterInfo(statusResult.data);
             setIsSemesterConfirmOpen(false);
             toast.success(result.message || "Successfully registered for the semester!");
           }

@@ -47,6 +47,7 @@ export interface PersonalInformation {
   marital_status: string | null;
   nationality: string | null;
   religion: string | null;
+  profile_picture_url?: string | null;
 }
 export interface AcademicInformation {
   status: string | null;
@@ -147,3 +148,16 @@ export async function getSessionUser(): Promise<any> {
     return null;
   }
 }
+
+export async function updateSessionUser(userData: UMISResponse) {
+  const cookieStore = await cookies();
+  cookieStore.set(USER_DATA_COOKIE_NAME, JSON.stringify(userData), {
+    httpOnly: true,
+    secure: useSecureCookies,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+

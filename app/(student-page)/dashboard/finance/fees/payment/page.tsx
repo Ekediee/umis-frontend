@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { MobileFlowHeader } from "@/components/registration/mobile-flow-header";
 import { BottomActionBar } from "@/components/registration/bottom-action-bar";
 import { SelectResidence } from "@/components/fees/steps/select-residence";
 import { SelectWorshipCenter } from "@/components/registration/steps/select-worship-center";
-import { SelectMealPlan } from "@/components/fees/steps/select-meal-plan";
+import { SelectMealPlan, getMealPlanPrice } from "@/components/fees/steps/select-meal-plan";
 import { PaymentSummary } from "@/components/fees/steps/payment-summary";
 import { WalletPayment } from "@/components/fees/steps/wallet-payment";
 import { PartialPaymentModal } from "@/components/fees/partial-payment-modal";
@@ -21,12 +21,16 @@ import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { FinancialConfirmationModal } from "@/components/fees/financial-confirmation-modal";
 import { FinancialSuccessModal } from "@/components/registration/registration-status-modals";
 import { useUserData } from "@/contexts/user-data-context";
+import { useFinanceRegistration } from "@/hooks/use-finance-registration";
 
 function PaymentFlowContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentType = searchParams.get("type"); // "full" or "semester"
   const userData = useUserData();
+
+  // Fetch all finance registration data from single endpoint /api/v1/student/finance-registration
+  const { data: financeData, isLoading, error } = useFinanceRegistration();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
@@ -53,6 +57,45 @@ function PaymentFlowContent() {
   const [selectedMealPlan, setSelectedMealPlan] = useState<string | null>(null);
   const [isFinancialConfirmOpen, setIsFinancialConfirmOpen] = useState(false);
   const [isFinancialSuccessOpen, setIsFinancialSuccessOpen] = useState(false);
+
+  // Map worship centers to component shape
+  const mappedWorshipCenters = useMemo(() => {
+    if (!financeData?.worship_centers) return [];
+    return financeData.worship_centers.map((wc) => ({
+      id: String(wc.sabbath_class_id),
+      name: wc.sabbath_class_name,
+      location: wc.location_on_campus,
+      pastor: wc.pastor_in_charge,
+      declaredCapacity: wc.declared_capacity,
+      spacesLeft: wc.space_left,
+    }));
+  }, [financeData?.worship_centers]);
+
+  // Derived selected objects
+  const selectedResidenceObj = useMemo(() => {
+    if (!selectedResidence || selectedResidence === "OFF_CAMPUS" || !financeData?.residence) {
+      return null;
+    }
+    return financeData.residence.find((r) => String(r.qresidenceid) === selectedResidence) || null;
+  }, [selectedResidence, financeData?.residence]);
+
+  const selectedWorshipCenterObj = useMemo(() => {
+    if (!selectedWorshipCenterId || !financeData?.worship_centers) return null;
+    return (
+      financeData.worship_centers.find(
+        (wc) => String(wc.sabbath_class_id) === selectedWorshipCenterId
+      ) || null
+    );
+  }, [selectedWorshipCenterId, financeData?.worship_centers]);
+
+  const selectedMealTypeObj = useMemo(() => {
+    if (!selectedMealPlan || !financeData?.meal_types) return null;
+    return (
+      financeData.meal_types.find(
+        (m) => String(m.qselectionid) === selectedMealPlan || m.mealtype === selectedMealPlan
+      ) || null
+    );
+  }, [selectedMealPlan, financeData?.meal_types]);
 
   const totalSteps = 4;
 
@@ -124,6 +167,19 @@ function PaymentFlowContent() {
     setCurrentStep(3);
   };
 
+  // Compute total based on real charges from API
+  const computeTotal = () => {
+    const mandatory = financeData?.general_charges?.fees || 0;
+    const residenceCost =
+      selectedResidence === "OFF_CAMPUS" ? 0 : selectedResidenceObj?.charges || 0;
+    const mealCost = selectedMealTypeObj
+      ? getMealPlanPrice(selectedMealTypeObj.mealtype, financeData?.general_charges)
+      : 0;
+    return mandatory + residenceCost + mealCost;
+  };
+
+
+
   const handlePayNow = () => {
     setIsProcessing(true);
     const total = customAmount ?? computeTotal();
@@ -131,42 +187,12 @@ function PaymentFlowContent() {
     // Simulate payment via wallet (2.5s delay)
     setTimeout(() => {
       setIsProcessing(false);
-      setWalletBalance(prev => Math.max(0, prev - total));
+      setWalletBalance((prev) => Math.max(0, prev - total));
       
       router.push(
         `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=Wallet`
       );
     }, 2500);
-  };
-
-  // Compute total for partial payment modal and gateway screen
-  const computeTotal = () => {
-    const MANDATORY_TOTAL = 185000;
-    const MEAL_PRICES: Record<string, number> = {
-      "breakfast-lunch": 40000,
-      "breakfast-supper": 45000,
-      "lunch-supper": 42000,
-      "breakfast-lunch-supper": 60000,
-    };
-    const RESIDENCE_PRICES: Record<string, number> = {
-      "off-campus": 0,
-      "neal-wilson-classic": 102000,
-      "neal-wilson-premium": 750000,
-      "winslow-premium": 100000,
-      "winslow-classic": 152000,
-      "gideon-troopers": 500000,
-      "bethel-splendor": 500000,
-      "samuel-akande": 500000,
-      "nelson-mandela": 500000,
-      "welch-hall": 400000,
-      "topaz-hall": 600000,
-      "emerald-classic": 1000000,
-      "emerald-classic-plus": 1000000,
-      "gamaliel": 450000,
-    };
-    const residencePrice = selectedResidence ? (RESIDENCE_PRICES[selectedResidence] || 0) : 0;
-    const mealPrice = selectedMealPlan ? (MEAL_PRICES[selectedMealPlan] || 0) : 0;
-    return MANDATORY_TOTAL + residencePrice + mealPrice;
   };
 
   return (
@@ -205,6 +231,9 @@ function PaymentFlowContent() {
           <SelectResidence
             selectedId={selectedResidence}
             onSelect={setSelectedResidence}
+            residences={financeData?.residence || []}
+            isLoading={isLoading}
+            error={error}
           />
         )}
 
@@ -212,6 +241,9 @@ function PaymentFlowContent() {
           <SelectWorshipCenter
             selectedId={selectedWorshipCenterId}
             onSelect={setSelectedWorshipCenterId}
+            worshipCenters={mappedWorshipCenters}
+            isLoading={isLoading}
+            error={error}
           />
         )}
 
@@ -219,14 +251,20 @@ function PaymentFlowContent() {
           <SelectMealPlan
             selectedId={selectedMealPlan}
             onSelect={setSelectedMealPlan}
+            mealTypes={financeData?.meal_types || []}
+            generalCharges={financeData?.general_charges || null}
+            isLoading={isLoading}
+            error={error}
           />
         )}
 
         {currentStep === 4 && (
           <PaymentSummary
-            selectedResidenceId={selectedResidence}
-            selectedWorshipCenterId={selectedWorshipCenterId}
-            selectedMealPlanId={selectedMealPlan}
+            selectedResidence={selectedResidenceObj}
+            isOffCampus={selectedResidence === "OFF_CAMPUS"}
+            selectedWorshipCenter={selectedWorshipCenterObj}
+            selectedMealType={selectedMealTypeObj}
+            generalCharges={financeData?.general_charges || null}
             onChangeStep={handleChangeStep}
           />
         )}
@@ -312,7 +350,7 @@ function PaymentFlowContent() {
       <FundWalletModal
         isOpen={isFundWalletModalOpen}
         onClose={() => setIsFundWalletModalOpen(false)}
-        onSuccess={(amount) => setWalletBalance(prev => prev + amount)}
+        onSuccess={(amount) => setWalletBalance((prev) => prev + amount)}
       />
 
       <FinancialConfirmationModal

@@ -1,6 +1,6 @@
 "use server";
 
-import { getSessionUser, getSessionToken, UMISResponse } from "@/lib/session";
+import { getSessionUser, getSessionToken, updateSessionUser, UMISResponse } from "@/lib/session";
 import { loggedFetch } from "@/lib/logger";
 
 /**
@@ -68,3 +68,118 @@ export async function getStudentProfileAction(): Promise<UMISResponse | null> {
     return null;
   }
 }
+
+export interface UpdateProfilePictureResult {
+  success: boolean;
+  message?: string;
+  profile_picture_url?: string;
+  error?: string;
+}
+
+/**
+ * Uploads a new profile picture to /api/v1/student/update_profile_picture.
+ * Validates file type (jpeg, png, jpg) and size (<= 1MB).
+ */
+export async function updateProfilePictureAction(
+  formData: FormData
+): Promise<UpdateProfilePictureResult> {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    return { success: false, error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken().catch(() => null);
+  if (!token) {
+    return { success: false, error: "You are not authenticated. Please log in again." };
+  }
+
+  const file = formData.get("profile_picture") as File | null;
+  if (!file || typeof file === "string") {
+    return { success: false, error: "Please select a profile picture to upload." };
+  }
+
+  // Validate file format (jpeg, png, jpg)
+  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png"];
+  const allowedExtensions = [".jpg", ".jpeg", ".png"];
+  const fileName = file.name.toLowerCase();
+  const isValidMime = allowedMimeTypes.includes(file.type.toLowerCase());
+  const isValidExt = allowedExtensions.some((ext) => fileName.endsWith(ext));
+
+  if (!isValidMime && !isValidExt) {
+    return {
+      success: false,
+      error: "Invalid file type. Only JPEG, JPG, and PNG files are supported.",
+    };
+  }
+
+  // Validate max file size (1MB = 1024 * 1024 bytes)
+  const MAX_SIZE = 1 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    return {
+      success: false,
+      error: "File size exceeds the 1MB limit. Please choose a smaller file.",
+    };
+  }
+
+  try {
+    const response = await loggedFetch(
+      `${apiUrl}/api/v1/student/update_profile_picture`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to upload profile picture";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // use fallback
+      }
+      return { success: false, error: errorMessage };
+    }
+
+    const json = await response.json();
+    const message = json.message || "Profile picture updated successfully!";
+    const newPictureUrl =
+      json.data?.profile_picture_url ||
+      json.profile_picture_url ||
+      json.data?.url ||
+      null;
+
+    // Update session user cookie if new picture URL is returned or payload exists
+    const currentUser = await getSessionUser();
+    if (currentUser && currentUser.user_data) {
+      const updatedUser: UMISResponse = {
+        ...currentUser,
+        user_data: {
+          ...currentUser.user_data,
+          personal_information: {
+            ...currentUser.user_data.personal_information,
+            profile_picture_url: newPictureUrl || currentUser.user_data.personal_information?.profile_picture_url,
+          },
+        },
+      };
+      await updateSessionUser(updatedUser);
+    }
+
+    return {
+      success: true,
+      message,
+      profile_picture_url: newPictureUrl || undefined,
+    };
+  } catch (error) {
+    console.error("updateProfilePictureAction error:", error);
+    return {
+      success: false,
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+}
+

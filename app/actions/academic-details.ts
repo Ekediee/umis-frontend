@@ -360,3 +360,151 @@ export const getAcademicResultsAction =
       };
     }
   };
+
+// ── Raw API shapes — carry-over / repeated courses ────────────────────────────
+
+interface RawCarryOverCourse {
+  courseid: string;
+  coursetitle: string;
+  credithours: number;
+  lecturehours: number;
+  yeartaken: number;
+}
+
+interface RawCarryoverRepeatedResponse {
+  status: boolean;
+  message: string;
+  data: {
+    carry_courses: RawCarryOverCourse[];
+    /**
+     * The API returns `[[]]` (an array containing an empty array) when there
+     * are no repeated courses.  We normalise this to an empty flat array.
+     */
+    repeated_courses: Array<RawCarryOverCourse | []>;
+  };
+}
+
+// ── Normalised shape used by the UI ──────────────────────────────────────────
+
+export interface CarryOverCourse {
+  /** Short course code, e.g. "BU-GST 031" */
+  courseId: string;
+  /** Full course title */
+  title: string;
+  /** Credit hours */
+  creditHours: number;
+  /** Lecture hours */
+  lectureHours: number;
+  /**
+   * Academic year the course was taken / is being repeated.
+   * 0 = Foundation / pre-year-1; 1 = Year 1; 2 = Year 2; etc.
+   */
+  yearTaken: number;
+}
+
+export interface CarryoverRepeatedData {
+  carryCourses: CarryOverCourse[];
+  repeatedCourses: CarryOverCourse[];
+}
+
+export interface CarryoverRepeatedResult {
+  data?: CarryoverRepeatedData;
+  error?: string;
+}
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+/**
+ * Normalises a raw carry-over / repeated course object into the UI shape.
+ * Returns `null` for malformed entries so they can be filtered out.
+ */
+function normaliseCarryOverCourse(
+  raw: RawCarryOverCourse | []
+): CarryOverCourse | null {
+  // Guard against the `[[]]` quirk — the nested empty array is not a course object
+  if (Array.isArray(raw)) return null;
+  return {
+    courseId: raw.courseid?.trim() ?? "",
+    title: raw.coursetitle?.trim() ?? "",
+    creditHours: raw.credithours ?? 0,
+    lectureHours: raw.lecturehours ?? 0,
+    yearTaken: raw.yeartaken ?? 0,
+  };
+}
+
+// ── Action ────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the student's carry-over and repeated courses.
+ * Endpoint: GET /api/v1/academics/carryover_repeated
+ *
+ * Both arrays are normalised and returned; callers can use either or both.
+ */
+export const getCarryoverRepeatedAction =
+  async (): Promise<CarryoverRepeatedResult> => {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("API_URL is not defined in environment variables");
+      return { error: "Internal server error: Missing API configuration" };
+    }
+
+    const token = await getSessionToken();
+    if (!token) {
+      return { error: "You are not authenticated. Please log in again." };
+    }
+
+    try {
+      const response = await loggedFetch(
+        `${apiUrl}/api/v1/academics/carryover_repeated`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Failed to fetch carry-over / repeated courses";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // Response body wasn't JSON — keep the fallback message
+        }
+        return { error: errorMessage };
+      }
+
+      const json: RawCarryoverRepeatedResponse = await response.json();
+      const raw = json?.data;
+
+      const rawCarry: Array<RawCarryOverCourse | []> = Array.isArray(
+        raw?.carry_courses
+      )
+        ? raw.carry_courses
+        : [];
+
+      const rawRepeated: Array<RawCarryOverCourse | []> = Array.isArray(
+        raw?.repeated_courses
+      )
+        ? raw.repeated_courses
+        : [];
+
+      const carryCourses: CarryOverCourse[] = rawCarry
+        .map(normaliseCarryOverCourse)
+        .filter((c): c is CarryOverCourse => c !== null);
+
+      const repeatedCourses: CarryOverCourse[] = rawRepeated
+        .map(normaliseCarryOverCourse)
+        .filter((c): c is CarryOverCourse => c !== null);
+
+      return { data: { carryCourses, repeatedCourses } };
+    } catch (error) {
+      console.error("getCarryoverRepeatedAction error:", error);
+      return {
+        error: "Could not connect to the server. Please try again later.",
+      };
+    }
+  };

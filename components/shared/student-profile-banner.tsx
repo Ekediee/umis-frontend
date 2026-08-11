@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Camera, Eye, EyeOff } from "lucide-react";
+import { Camera, Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { UMISResponse } from "@/lib/session";
 import { toTitleCase } from "@/lib/utils";
+import { updateProfilePictureAction } from "@/app/actions/user";
 
 interface StudentProfileBannerProps {
   /** Show the camera edit button on the avatar (only on profile page) */
@@ -18,6 +20,8 @@ interface StudentProfileBannerProps {
   showDetailedInfo?: boolean;
   /** Whether to show detailed row (used on dashboard) */
   showDetailedRow?: boolean;
+  /** Optional callback after profile picture update */
+  onAvatarUpdated?: (newUrl: string) => void;
 }
 
 export function StudentProfileBanner({
@@ -25,34 +29,107 @@ export function StudentProfileBanner({
   welcomeMessage,
   userData,
   showDetailedInfo,
-  showDetailedRow
+  showDetailedRow,
+  onAvatarUpdated,
 }: StudentProfileBannerProps) {
 
   const DEFAULT_AVATAR = "/images/student-image.png";
   const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync avatar URL from props / localStorage / events
   useEffect(() => {
-    const saved = localStorage.getItem("student_avatar");
-    if (saved) setAvatarUrl(saved);
-  }, []);
+    const apiPic = userData?.user_data?.personal_information?.profile_picture_url;
+    if (apiPic) {
+      setAvatarUrl(apiPic);
+      localStorage.setItem("profile_avatar", apiPic);
+      localStorage.setItem("student_avatar", apiPic);
+      return;
+    }
+
+    const saved = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
+    if (saved) {
+      setAvatarUrl(saved);
+    }
+
+    const handleAvatarUpdate = () => {
+      const updated = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
+      if (updated) setAvatarUrl(updated);
+    };
+
+    window.addEventListener("profile_avatar_updated", handleAvatarUpdate);
+    return () => {
+      window.removeEventListener("profile_avatar_updated", handleAvatarUpdate);
+    };
+  }, [userData]);
 
   const handleAvatarClick = () => {
+    if (isUploading) return;
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setAvatarUrl(result);
-        localStorage.setItem("student_avatar", result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Reset input value so same file can be picked again if needed
+    e.target.value = "";
+
+    // 1. File type validation: jpeg, jpg, png
+    const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png"];
+    const allowedExtensions = [".jpg", ".jpeg", ".png"];
+    const fileName = file.name.toLowerCase();
+    const isValidMime = allowedMimeTypes.includes(file.type.toLowerCase());
+    const isValidExt = allowedExtensions.some((ext) => fileName.endsWith(ext));
+
+    if (!isValidMime && !isValidExt) {
+      toast.error("Invalid file type. Only JPEG, JPG, and PNG files are supported.");
+      return;
+    }
+
+    // 2. File size validation: Maximum 1MB (1,048,576 bytes)
+    const MAX_SIZE = 1 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error("File size exceeds 1MB limit. Please choose a smaller file.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    // Immediate preview locally via FileReader
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setAvatarUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Build FormData and trigger server action
+    const formData = new FormData();
+    formData.append("profile_picture", file);
+
+    const result = await updateProfilePictureAction(formData);
+
+    setIsUploading(false);
+
+    if (result.success) {
+      const newPicUrl = result.profile_picture_url || (reader.result as string) || avatarUrl;
+      setAvatarUrl(newPicUrl);
+      localStorage.setItem("profile_avatar", newPicUrl);
+      localStorage.setItem("student_avatar", newPicUrl);
+      window.dispatchEvent(new Event("profile_avatar_updated"));
+
+      toast.success(result.message || "Profile picture updated successfully!");
+      if (onAvatarUpdated) {
+        onAvatarUpdated(newPicUrl);
+      }
+    } else {
+      toast.error(result.error || "Failed to update profile picture.");
     }
   };
+
 
   const [showCgpa, toggleCgpa, mountedCgpa] = usePersistentToggle("showCgpa", true);
   const mounted = mountedCgpa;
@@ -96,7 +173,7 @@ export function StudentProfileBanner({
       <input
         type="file"
         ref={fileInputRef}
-        accept="image/*"
+        accept="image/jpeg,image/png,image/jpg"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -127,16 +204,23 @@ export function StudentProfileBanner({
                       }
                     }}
                   />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full z-10">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
                 </div>
                 {showEditAvatar && (
                   <button
                     onClick={handleAvatarClick}
-                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors cursor-pointer"
+                    disabled={isUploading}
+                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    <Camera className="w-[14px] h-[14px]" />
+                    {isUploading ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Camera className="w-[14px] h-[14px]" />}
                   </button>
                 )}
               </div>
+
 
               <div className="text-center select-text">
                 <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight select-all">{displayName}</h2>
@@ -182,13 +266,19 @@ export function StudentProfileBanner({
                       }
                     }}
                   />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full z-10">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
                 </div>
                 {showEditAvatar && (
                   <button
                     onClick={handleAvatarClick}
-                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] transition-colors cursor-pointer"
+                    disabled={isUploading}
+                    className="absolute bottom-0 right-0 md:bottom-1 md:right-1 w-[28px] h-[28px] md:w-[32px] md:h-[32px] bg-[#003cbb] border-[2.5px] border-white rounded-full flex items-center justify-center text-[#ffffff] hover:bg-[#003095] disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    <Camera className="w-[14px] h-[14px]" />
+                    {isUploading ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Camera className="w-[14px] h-[14px]" />}
                   </button>
                 )}
               </div>

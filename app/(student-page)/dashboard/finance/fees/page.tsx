@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useRegistrationStore } from "@/hooks/use-registration-store";
 
 export default function FeesPage() {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<"full" | "semester" | null>(null);
+
+  // Read semester info from the shared store — populated by the registration page.
+  // No fetch is triggered here; the store is the single source of truth.
+  const { semesterInfo } = useRegistrationStore();
 
   const handleBack = () => {
     router.back();
@@ -57,7 +62,7 @@ export default function FeesPage() {
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[18px] font-semibold text-[#0A0D14] dark:text-gray-100">Full Session Registration</span>
-                <span className="text-[16px] text-[#525866] dark:text-gray-400">2025/2026 Session</span>
+                <span className="text-[16px] text-[#525866] dark:text-gray-400">{semesterInfo?.semester ? semesterInfo.semester.split(".")[0] : "—"} Session</span>
               </div>
               <div className={cn(
                 "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
@@ -81,7 +86,7 @@ export default function FeesPage() {
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[18px] font-semibold text-[#0A0D14] dark:text-gray-100">1st Semester Registration</span>
-                <span className="text-[16px] text-[#525866] dark:text-gray-400">2025/2026 Session</span>
+                <span className="text-[16px] text-[#525866] dark:text-gray-400">{semesterInfo?.semester ? semesterInfo.semester.split(".")[0] : "—"} Session</span>
               </div>
               <div className={cn(
                 "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",

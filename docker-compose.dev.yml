@@ -36,6 +36,12 @@ services:
       - /app/node_modules
       - /app/.next
 
+    dns:
+      - 196.11.231.82
+
+    extra_hosts:
+      - "umis-sb.babcock.edu.ng:196.11.231.82"
+
     # Keep container's stdin open and allocate a pseudo-TTY.
     # Useful for debugging with console.log output clearly visible.
     stdin_open: true

@@ -21,11 +21,22 @@ export function Header() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("profile_avatar");
-    if (saved) {
-      setAvatarUrl(saved);
-    }
+    const updateAvatar = () => {
+      const saved = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
+      if (saved) {
+        setAvatarUrl(saved);
+      }
+    };
+    updateAvatar();
+
+    window.addEventListener("profile_avatar_updated", updateAvatar);
+    window.addEventListener("storage", updateAvatar);
+    return () => {
+      window.removeEventListener("profile_avatar_updated", updateAvatar);
+      window.removeEventListener("storage", updateAvatar);
+    };
   }, [pathname]);
+
 
   
   const getTitle = () => {

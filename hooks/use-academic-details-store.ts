@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { RegisteredCourse } from "@/app/actions/academic-details";
 import type { AcademicProgressData } from "@/app/actions/academic-details";
+import type { CarryoverRepeatedData } from "@/app/actions/academic-details";
 
 interface AcademicDetailsState {
   /** All registered courses for the current semester, or null if not yet fetched. */
@@ -32,6 +33,22 @@ interface AcademicDetailsState {
   setIsFetchingAcademicProgress: (loading: boolean) => void;
   /** Clear on logout so stale data is not shown to the next user. */
   clearAcademicProgress: () => void;
+
+  // ── Carry-over / Repeated Courses ─────────────────────────────────────────
+  /** Fetched carryover/repeated data, or null if not yet loaded. */
+  carryoverRepeated: CarryoverRepeatedData | null;
+  /** Last error message from the carryover/repeated fetch, if any. */
+  carryoverRepeatedError: string | null;
+  /**
+   * True while a fetch is in-flight. Prevents duplicate network calls
+   * when both carry-over and repeated tabs are visited in the same session.
+   */
+  isFetchingCarryoverRepeated: boolean;
+  setCarryoverRepeated: (data: CarryoverRepeatedData) => void;
+  setCarryoverRepeatedError: (error: string | null) => void;
+  setIsFetchingCarryoverRepeated: (loading: boolean) => void;
+  /** Clear on logout so stale data is not shown to the next user. */
+  clearCarryoverRepeated: () => void;
 }
 
 export const useAcademicDetailsStore = create<AcademicDetailsState>()(
@@ -64,6 +81,27 @@ export const useAcademicDetailsStore = create<AcademicDetailsState>()(
           academicProgress: null,
           academicProgressError: null,
           isFetchingAcademicProgress: false,
+        }),
+
+      // ── Carry-over / Repeated Courses ──────────────────────────────────────
+      carryoverRepeated: null,
+      carryoverRepeatedError: null,
+      isFetchingCarryoverRepeated: false,
+      setCarryoverRepeated: (data) =>
+        set({
+          carryoverRepeated: data,
+          carryoverRepeatedError: null,
+          isFetchingCarryoverRepeated: false,
+        }),
+      setCarryoverRepeatedError: (error) =>
+        set({ carryoverRepeatedError: error, isFetchingCarryoverRepeated: false }),
+      setIsFetchingCarryoverRepeated: (loading) =>
+        set({ isFetchingCarryoverRepeated: loading }),
+      clearCarryoverRepeated: () =>
+        set({
+          carryoverRepeated: null,
+          carryoverRepeatedError: null,
+          isFetchingCarryoverRepeated: false,
         }),
     }),
     {
