@@ -15,7 +15,8 @@ import {
   Activity,
   LogOut
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
 import { logoutAction } from "@/app/actions/auth";
@@ -44,28 +45,80 @@ export function Sidebar() {
   const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const [avatarUrl, setAvatarUrl] = useState("/images/student-image.png");
+  const DEFAULT_AVATAR = "/images/student-image.png";
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
+
+  /** Routes backend images through the local proxy to avoid TLS/CORS issues. */
+  const proxyImageUrl = (url: string): string => {
+    if (!url || url.startsWith("/") || url.startsWith("data:")) return url;
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  };
+
+  const extractPicUrl = (data: any): string | null => {
+    if (!data) return null;
+    return (
+      data?.user_data?.personal_information?.profile_picture_url ||
+      data?.user_data?.profile_picture_url ||
+      data?.personal_information?.profile_picture_url ||
+      data?.profile_picture_url ||
+      null
+    );
+  };
+
+  const userData = profileData ?? contextUserData;
+  const matricNumber =
+    userData?.user_data?.personal_information?.matric_number ??
+    userData?.user_data?.matric_number ??
+    null;
+  const avatarKey = matricNumber ? `profile_avatar:${matricNumber}` : null;
+
+  // Sync avatar whenever profileData, contextUserData, or route changes
+  useEffect(() => {
+    // Clear legacy (non-namespaced) keys
+    localStorage.removeItem("profile_avatar");
+    localStorage.removeItem("student_avatar");
+
+    // 1. Check live userData
+    const livePic = extractPicUrl(profileData) || extractPicUrl(contextUserData);
+    if (livePic) {
+      setAvatarUrl(proxyImageUrl(livePic));
+      if (avatarKey) localStorage.setItem(avatarKey, livePic);
+      return;
+    }
+
+    // 2. Check per-user cache
+    if (avatarKey) {
+      const cached = localStorage.getItem(avatarKey);
+      if (cached) {
+        setAvatarUrl(proxyImageUrl(cached));
+        return;
+      }
+    }
+
+    // 3. Fallback
+    setAvatarUrl(DEFAULT_AVATAR);
+  }, [profileData, contextUserData, avatarKey]);
 
   useEffect(() => {
     getStudentProfileAction().then((res) => {
       if (res) {
         setProfileData(res);
-        const pic = res.user_data?.personal_information?.profile_picture_url;
+        const pic = extractPicUrl(res);
+        const matric = res.user_data?.personal_information?.matric_number;
+        const key = matric ? `profile_avatar:${matric}` : null;
         if (pic) {
-          setAvatarUrl(pic);
-          localStorage.setItem("profile_avatar", pic);
-          localStorage.setItem("student_avatar", pic);
+          setAvatarUrl(proxyImageUrl(pic));
+          if (key) localStorage.setItem(key, pic);
         }
       }
     });
 
-    const updateAvatar = () => {
-      const saved = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
-      if (saved) {
-        setAvatarUrl(saved);
+    const updateAvatar = (e: Event) => {
+      const customEvt = e as CustomEvent<{ url?: string }>;
+      if (customEvt.detail?.url) {
+        setAvatarUrl(customEvt.detail.url);
       }
     };
-    updateAvatar();
 
     window.addEventListener("profile_avatar_updated", updateAvatar);
     window.addEventListener("storage", updateAvatar);
@@ -74,9 +127,6 @@ export function Sidebar() {
       window.removeEventListener("storage", updateAvatar);
     };
   }, [pathname]);
-
-
-  const userData = profileData ?? contextUserData;
   const rawName =
     userData?.entity_name ??
     userData?.user_data?.personal_information?.student_name ??
@@ -105,6 +155,21 @@ export function Sidebar() {
     // Wipe all persisted student data so the next user gets a fresh fetch
     clearAcademicProgress();
     clearCourses();
+
+    // Clear client-side avatar and student caches to prevent cross-user leakage
+    if (typeof window !== "undefined") {
+      Object.keys(localStorage).forEach((key) => {
+        if (
+          key.startsWith("profile_avatar") ||
+          key.startsWith("student_") ||
+          key.includes("academic") ||
+          key.includes("course")
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+
     await logoutAction();
   };
 
@@ -173,12 +238,20 @@ export function Sidebar() {
         <div className="flex items-center justify-between border-t dark:border-gray-800 pt-4 px-1">
           <Link href="/profile" className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80 transition-opacity">
             <div className="relative shrink-0">
-              <Avatar className="w-10 h-10 border border-gray-100 dark:border-gray-700">
-                <AvatarFallback className="bg-[#f5f8fe] dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] font-medium text-xs">
-                  {initials}
-                </AvatarFallback>
-                <AvatarImage src={avatarUrl} alt={studentName} />
-              </Avatar>
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 overflow-hidden relative">
+                <Image
+                  src={avatarUrl}
+                  alt={studentName}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                  onError={() => {
+                    if (avatarUrl !== DEFAULT_AVATAR) {
+                      setAvatarUrl(DEFAULT_AVATAR);
+                    }
+                  }}
+                />
+              </div>
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">

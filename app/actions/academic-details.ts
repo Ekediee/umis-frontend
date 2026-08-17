@@ -79,6 +79,7 @@ export const getRegisteredCoursesAction =
             Authorization: `Bearer ${token}`,
           },
           cache: "no-store",
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -210,6 +211,7 @@ export const getAcademicProgressAction =
             Authorization: `Bearer ${token}`,
           },
           cache: "no-store",
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -332,6 +334,7 @@ export const getAcademicResultsAction =
             Authorization: `Bearer ${token}`,
           },
           cache: "no-store",
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -463,6 +466,7 @@ export const getCarryoverRepeatedAction =
             Authorization: `Bearer ${token}`,
           },
           cache: "no-store",
+          signal: AbortSignal.timeout(15000),
         }
       );
 

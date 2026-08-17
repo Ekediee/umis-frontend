@@ -1,10 +1,16 @@
 import "server-only";
 import * as fs from "fs";
 import * as path from "path";
+import { Agent } from "undici";
 
 // ── TLS bypass ────────────────────────────────────────────────────────────────
-// Set NODE_TLS_REJECT_UNAUTHORIZED=0 globally in Node.js process so fetch ignores
-// expired/invalid SSL certificates when connecting to HTTPS backends.
+// Node's built-in fetch uses undici which ignores NODE_TLS_REJECT_UNAUTHORIZED.
+// We must pass a custom undici Agent with rejectUnauthorized:false so that
+// fetch() can connect to the backend even when the SSL certificate is expired.
+// This agent is used only for outgoing server-side API calls (loggedFetch).
+const insecureAgent = new Agent({ connect: { rejectUnauthorized: false } });
+
+// Also set the legacy env var for any code that still uses https.get / axios.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Ensure the logs directory exists at startup/import time
@@ -177,7 +183,17 @@ export async function loggedFetch(
   });
 
   try {
-    const response = await fetch(input, init);
+    // Use an insecure undici Agent so fetch() bypasses expired SSL certs.
+    // NODE_TLS_REJECT_UNAUTHORIZED=0 is ignored by undici; a custom dispatcher is required.
+    // Callers can still override the timeout via their own AbortSignal.
+    const signal = init?.signal ?? AbortSignal.timeout(8000);
+    const response = await fetch(input, {
+      ...init,
+      signal,
+      // @ts-expect-error — undici dispatcher is not in the standard fetch types
+      dispatcher: insecureAgent,
+    });
+
     const duration = Date.now() - startTime;
 
     if (response.ok) {

@@ -10,6 +10,23 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   output: 'standalone',
   transpilePackages: ["@base-ui/react"],
+  images: {
+    remotePatterns: [
+      // Backend (HTTPS — production / when cert is valid)
+      {
+        protocol: "https",
+        hostname: "umis-sb.babcock.edu.ng",
+        pathname: "/**",
+      },
+      // Backend (HTTP — dev env uses http://umis-sb... in API_URL)
+      {
+        protocol: "http",
+        hostname: "umis-sb.babcock.edu.ng",
+        pathname: "/**",
+      },
+    ],
+  },
+
   webpack: (config) => {
     config.watchOptions = {
       poll: 1000,

@@ -35,35 +35,78 @@ export function StudentProfileBanner({
 
   const DEFAULT_AVATAR = "/images/student-image.png";
   const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR);
+
+  /**
+   * Wraps an external backend image URL in the local proxy route so the
+   * browser fetches it from /api/image-proxy instead of hitting the backend
+   * directly. This sidesteps expired-cert and CORS issues.
+   *
+   * Safe to keep after the cert is renewed — the proxy works for any URL.
+   * To revert to direct loading just return `url` here instead.
+   */
+  const proxyImageUrl = (url: string): string => {
+    if (!url || url.startsWith("/") || url.startsWith("data:")) return url;
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  };
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Derive the per-user localStorage key from the matric number so that
+  // switching accounts never shows a stale avatar from a different user.
+  const matric = userData?.user_data?.personal_information?.matric_number ?? null;
+  const avatarKey = matric ? `profile_avatar:${matric}` : null;
+
   // Sync avatar URL from props / localStorage / events
   useEffect(() => {
+    // Always clear the legacy (non-namespaced) keys to avoid stale data
+    // from older sessions where the key wasn't namespaced.
+    localStorage.removeItem("profile_avatar");
+    localStorage.removeItem("student_avatar");
+
     const apiPic = userData?.user_data?.personal_information?.profile_picture_url;
     if (apiPic) {
-      setAvatarUrl(apiPic);
-      localStorage.setItem("profile_avatar", apiPic);
-      localStorage.setItem("student_avatar", apiPic);
+      // Route through the local proxy so the browser never hits the backend
+      // directly (avoids expired-cert / CORS failures).
+      const proxied = proxyImageUrl(apiPic);
+      setAvatarUrl(proxied);
+      // Store the raw (un-proxied) URL under a per-user key.
+      if (avatarKey) {
+        localStorage.setItem(avatarKey, apiPic);
+      }
       return;
     }
 
-    const saved = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
-    if (saved) {
-      setAvatarUrl(saved);
+    // No API pic — try the per-user cache
+    if (avatarKey) {
+      const saved = localStorage.getItem(avatarKey);
+      if (saved) {
+        setAvatarUrl(proxyImageUrl(saved));
+        return;
+      }
     }
 
-    const handleAvatarUpdate = () => {
-      const updated = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
-      if (updated) setAvatarUrl(updated);
+    // Reset to default avatar if this user has no image
+    setAvatarUrl(DEFAULT_AVATAR);
+
+    const handleAvatarUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent<{ url?: string; matric?: string }>;
+      if (customEvt.detail?.url && (!customEvt.detail.matric || customEvt.detail.matric === matric)) {
+        setAvatarUrl(customEvt.detail.url);
+        return;
+      }
+      if (avatarKey) {
+        const updated = localStorage.getItem(avatarKey);
+        if (updated) setAvatarUrl(proxyImageUrl(updated));
+      }
     };
 
     window.addEventListener("profile_avatar_updated", handleAvatarUpdate);
     return () => {
       window.removeEventListener("profile_avatar_updated", handleAvatarUpdate);
     };
-  }, [userData]);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData, avatarKey]);
+  console.log("avatar", avatarUrl);
   const handleAvatarClick = () => {
     if (isUploading) return;
     fileInputRef.current?.click();
@@ -115,11 +158,20 @@ export function StudentProfileBanner({
     setIsUploading(false);
 
     if (result.success) {
-      const newPicUrl = result.profile_picture_url || (reader.result as string) || avatarUrl;
-      setAvatarUrl(newPicUrl);
-      localStorage.setItem("profile_avatar", newPicUrl);
-      localStorage.setItem("student_avatar", newPicUrl);
-      window.dispatchEvent(new Event("profile_avatar_updated"));
+      const rawUrl = result.profile_picture_url || (reader.result as string) || avatarUrl;
+      // Store raw URL, display via proxy
+      const newPicUrl = result.profile_picture_url || rawUrl;
+      setAvatarUrl(proxyImageUrl(rawUrl));
+      // Store raw URL under the per-user key (not the proxy URL) so it can
+      // be re-proxied on next load.
+      if (result.profile_picture_url && avatarKey) {
+        localStorage.setItem(avatarKey, result.profile_picture_url);
+      }
+      window.dispatchEvent(
+        new CustomEvent("profile_avatar_updated", {
+          detail: { url: proxyImageUrl(rawUrl), matric },
+        })
+      );
 
       toast.success(result.message || "Profile picture updated successfully!");
       if (onAvatarUpdated) {

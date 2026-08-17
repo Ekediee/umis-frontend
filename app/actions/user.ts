@@ -33,6 +33,10 @@ export async function getStudentProfileAction(): Promise<UMISResponse | null> {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
+        // Give the backend up to 15 s before falling back to the session cookie.
+        // The backend can be slow (4–5 s is common); 4 s was too tight and caused
+        // constant TimeoutError → session fallback on every profile page load.
+        signal: AbortSignal.timeout(15000),
       });
 
       if (response.ok) {

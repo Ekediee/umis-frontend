@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { OnboardingGuideSheet } from "@/components/dashboard/onboarding-guide-sheet";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -21,19 +22,33 @@ export function Header() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
-    const updateAvatar = () => {
-      const saved = localStorage.getItem("profile_avatar") || localStorage.getItem("student_avatar");
-      if (saved) {
-        setAvatarUrl(saved);
+    // Clear legacy (non-namespaced) avatar keys on every navigation so a
+    // previously-cached avatar from a different user is never shown.
+    localStorage.removeItem("profile_avatar");
+    localStorage.removeItem("student_avatar");
+
+    import("@/app/actions/user").then(({ getStudentProfileAction }) => {
+      getStudentProfileAction().then((res) => {
+        const pic = res?.user_data?.personal_information?.profile_picture_url;
+        if (pic) {
+          const proxied = pic.startsWith("/") || pic.startsWith("data:") ? pic : `/api/image-proxy?url=${encodeURIComponent(pic)}`;
+          setAvatarUrl(proxied);
+        } else {
+          setAvatarUrl("/images/student-image.png");
+        }
+      });
+    });
+
+    const updateAvatar = (e: Event) => {
+      const customEvt = e as CustomEvent<{ url?: string }>;
+      if (customEvt.detail?.url) {
+        setAvatarUrl(customEvt.detail.url);
       }
     };
-    updateAvatar();
 
     window.addEventListener("profile_avatar_updated", updateAvatar);
-    window.addEventListener("storage", updateAvatar);
     return () => {
       window.removeEventListener("profile_avatar_updated", updateAvatar);
-      window.removeEventListener("storage", updateAvatar);
     };
   }, [pathname]);
 
@@ -93,10 +108,20 @@ export function Header() {
         {/* Left: Avatar with Badge */}
         <div className="relative z-10">
           <button type="button" className="p-1 touch-manipulation" onClick={() => router.push('/profile')}>
-            <Avatar className="w-9 h-9 border border-gray-100 dark:border-gray-700">
-              <AvatarFallback className="bg-[#f5f8fe] dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff] font-medium text-xs">YJ</AvatarFallback>
-              <AvatarImage src={avatarUrl} alt="Yakubu Onome Joy" />
-            </Avatar>
+            <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 overflow-hidden relative">
+              <Image
+                src={avatarUrl}
+                alt="Student Avatar"
+                fill
+                unoptimized
+                className="object-cover"
+                onError={() => {
+                  if (avatarUrl !== "/images/student-image.png") {
+                    setAvatarUrl("/images/student-image.png");
+                  }
+                }}
+              />
+            </div>
           </button>
           <span className="absolute bottom-[4px] right-[0px] w-[14px] h-[14px] bg-[#003cbb] border-[2px] border-white rounded-full flex items-center justify-center pointer-events-none">
              <span className="w-1 h-1 bg-white rounded-full opacity-80"></span>

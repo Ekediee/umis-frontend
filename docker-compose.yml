@@ -34,10 +34,10 @@ services:
       - logs_data:/app/logs
 
     dns:
-      - 196.11.231.82
+      - 196.11.231.176
 
     extra_hosts:
-      - "umis-sb.babcock.edu.ng:196.11.231.82"
+      - "umis-sb.babcock.edu.ng:196.11.231.176"
 
     # Health check: restart the container if Next.js stops responding
     healthcheck:

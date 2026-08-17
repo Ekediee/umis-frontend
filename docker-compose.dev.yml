@@ -37,10 +37,10 @@ services:
       - /app/.next
 
     dns:
-      - 196.11.231.82
+      - 196.11.231.176
 
     extra_hosts:
-      - "umis-sb.babcock.edu.ng:196.11.231.82"
+      - "umis-sb.babcock.edu.ng:196.11.231.176"
 
     # Keep container's stdin open and allocate a pseudo-TTY.
     # Useful for debugging with console.log output clearly visible.
