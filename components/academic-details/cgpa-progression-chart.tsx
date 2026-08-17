@@ -38,35 +38,42 @@ export function CGPAProgressionChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 
-  const height = 240;
-  const paddingY = 40;
+  const height = 270;
+  const paddingTop = 28;
+  const paddingBottom = 65;
   
   // Responsive horizontal padding based on card width
-  const paddingX = width < 500 ? 24 : 36;
+  const paddingX = width < 500 ? 36 : 48;
   const isMobile = width < 500;
 
-  // Formats semester labels for mobile viewports to prevent clutter
-  const formatSemesterLabel = (label: string) => {
-    if (!isMobile) return label;
-    
-    const ordinalMap: { [key: string]: string } = {
-      "1st": "1",
-      "2nd": "2",
-      "3rd": "3",
-      "4th": "4",
-    };
-    
-    const parts = label.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      const levelStr = parts[0].replace("L", "");
-      const levelNum = Number(levelStr);
-      const yearNum = !isNaN(levelNum) && levelNum >= 100 ? Math.floor(levelNum / 100) : (levelStr || "1");
-      
-      const termWord = parts[1].toLowerCase();
-      const term = ordinalMap[termWord] || termWord.replace(/\D/g, "") || "1";
-      return `Y${yearNum}.${term}`;
+  // Formats semester labels cleanly with academic session/year for the x-axis
+  const formatSemesterLabel = (semester: string, label?: string) => {
+    // Extract session if present (e.g. "2024/2025" from "2024/2025.2P")
+    const sessionMatch = semester.match(/^(\d{4})\/(\d{4})/);
+    let sessionPrefix = "";
+    if (sessionMatch) {
+      const yr1 = sessionMatch[1].slice(2);
+      const yr2 = sessionMatch[2].slice(2);
+      sessionPrefix = `${yr1}/${yr2}`; // e.g. "24/25"
     }
-    return label;
+
+    const cleanLabel = label?.trim() || "";
+
+    if (sessionPrefix && cleanLabel) {
+      return `${sessionPrefix} · ${cleanLabel}`; // e.g. "24/25 · 800L 2nd"
+    }
+
+    if (cleanLabel) return cleanLabel;
+
+    // Fallback if label is missing
+    const match = semester.match(/^(\d{4})\/(\d{4})\.(\d+)/);
+    if (match) {
+      const yr1 = match[1];
+      const yr2 = match[2].slice(2);
+      const term = match[3] === "1" ? "1st" : match[3] === "2" ? "2nd" : `${match[3]}th`;
+      return `${yr1}/${yr2} ${term}`;
+    }
+    return semester;
   };
 
   // Respond to container size
@@ -110,6 +117,7 @@ export function CGPAProgressionChart() {
   }
 
   const gpaRange = maxGpa - minGpa || 1; // avoid divide-by-zero
+  const availableHeight = height - paddingTop - paddingBottom;
 
   // 4 evenly-spaced horizontal grid lines
   const gridValues = [0, 1, 2, 3].map((i) =>
@@ -124,8 +132,8 @@ export function CGPAProgressionChart() {
         : paddingX + (i * (width - 2 * paddingX)) / (chartData.length - 1);
     const y =
       height -
-      paddingY -
-      ((d.semesterGpa - minGpa) / gpaRange) * (height - 2 * paddingY);
+      paddingBottom -
+      ((d.semesterGpa - minGpa) / gpaRange) * availableHeight;
     return { ...d, x, y };
   });
 
@@ -147,7 +155,7 @@ export function CGPAProgressionChart() {
   const linePath = createPath(points);
   const areaPath =
     points.length > 0 && width > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`
+      ? `${linePath} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`
       : "";
 
   return (
@@ -179,7 +187,7 @@ export function CGPAProgressionChart() {
         {/* Chart Container */}
         <div
           ref={containerRef}
-          className="relative w-full h-[240px]"
+          className="relative w-full h-[265px]"
           onMouseLeave={() => setHoveredIndex(null)}
         >
           {/* Loading skeleton */}
@@ -224,8 +232,8 @@ export function CGPAProgressionChart() {
               {gridValues.map((gpa, i) => {
                 const y =
                   height -
-                  paddingY -
-                  ((gpa - minGpa) / gpaRange) * (height - 2 * paddingY);
+                  paddingBottom -
+                  ((gpa - minGpa) / gpaRange) * availableHeight;
                 return (
                   <g key={`grid-${i}`}>
                     <line
@@ -268,80 +276,88 @@ export function CGPAProgressionChart() {
               />
 
               {/* Data points & hover targets */}
-              {points.map((p, i) => (
-                <g
-                  key={`point-${i}`}
-                  onMouseEnter={() => setHoveredIndex(i)}
-                  className="cursor-pointer group"
-                >
-                  {/* Invisible larger hit area */}
-                  <circle cx={p.x} cy={p.y} r={15} fill="transparent" />
-
-                  {/* Outer glow ring (on hover) */}
-                  <circle
-                    cx={p.x}
-                    cy={p.y}
-                    r={hoveredIndex === i ? 7 : 0}
-                    fillOpacity="0.2"
-                    className="transition-all duration-200 fill-[#003cbb] dark:fill-[#4d82ff]"
-                  />
-
-                  {/* Inner dot */}
-                  <circle
-                    cx={p.x}
-                    cy={p.y}
-                    r={hoveredIndex === i ? 5 : 4}
-                    strokeWidth="2.5"
-                    className={`transition-all duration-200 fill-white dark:fill-gray-900 ${
-                      hoveredIndex === i
-                        ? "stroke-[#003cbb] dark:stroke-[#4d82ff]"
-                        : "stroke-[#e2e8f0] dark:stroke-gray-700"
-                    }`}
-                  />
-
-                  {/* X-axis label */}
-                  <text
-                    x={p.x}
-                    y={height - 10}
-                    textAnchor="middle"
-                    className={`text-[11px] font-semibold transition-colors duration-200 ${
-                      hoveredIndex === i
-                        ? "fill-[#003cbb] dark:fill-[#4d82ff]"
-                        : "fill-gray-500 dark:fill-gray-400"
-                    }`}
+              {points.map((p, i) => {
+                const displayLabel = formatSemesterLabel(p.semester, p.label);
+                const labelY = height - paddingBottom + 16;
+                return (
+                  <g
+                    key={`point-${i}`}
+                    onMouseEnter={() => setHoveredIndex(i)}
+                    className="cursor-pointer group"
                   >
-                    {formatSemesterLabel(p.semester)}
-                    {p.label}
-                  </text>
-                </g>
-              ))}
+                    {/* Invisible larger hit area */}
+                    <circle cx={p.x} cy={p.y} r={15} fill="transparent" />
+
+                    {/* Outer glow ring (on hover) */}
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r={hoveredIndex === i ? 7 : 0}
+                      fillOpacity="0.2"
+                      className="transition-all duration-200 fill-[#003cbb] dark:fill-[#4d82ff]"
+                    />
+
+                    {/* Inner dot */}
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r={hoveredIndex === i ? 5 : 4}
+                      strokeWidth="2.5"
+                      className={`transition-all duration-200 fill-white dark:fill-gray-900 ${
+                        hoveredIndex === i
+                          ? "stroke-[#003cbb] dark:stroke-[#4d82ff]"
+                          : "stroke-[#e2e8f0] dark:stroke-gray-700"
+                      }`}
+                    />
+
+                    {/* 45-degree slanted X-axis label */}
+                    <text
+                      x={p.x}
+                      y={labelY}
+                      textAnchor="end"
+                      transform={`rotate(-45, ${p.x}, ${labelY})`}
+                      className={`text-[11px] font-semibold transition-colors duration-200 ${
+                        hoveredIndex === i
+                          ? "fill-[#003cbb] dark:fill-[#4d82ff]"
+                          : "fill-gray-500 dark:fill-gray-400"
+                      }`}
+                    >
+                      {displayLabel}
+                    </text>
+                  </g>
+                );
+              })}
             </svg>
           )}
 
           {/* HTML tooltip overlay */}
           {!isLoading &&
             width > 0 &&
-            points.map((p, i) => (
-              <div
-                key={`tooltip-${i}`}
-                className={`absolute flex flex-col items-center pointer-events-none transition-all duration-200 ease-out ${
-                  hoveredIndex === i
-                    ? "opacity-100 scale-100 translate-y-0"
-                    : "opacity-0 scale-95 translate-y-2"
-                }`}
-                style={{
-                  left: p.x,
-                  top: p.y - 45,
-                  transform: "translateX(-50%)",
-                  zIndex: 10,
-                }}
-              >
-                <div className="bg-[#1e293b] dark:bg-gray-800 text-white dark:text-gray-100 text-[12px] font-bold px-3 py-1.5 rounded-lg shadow-lg relative border dark:border-gray-700 transition-colors duration-200">
-                  {p.semesterGpa.toFixed(2)} GPA
-                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1e293b] dark:bg-gray-800 border-b border-r dark:border-gray-700 rotate-45 transition-colors duration-200" />
+            points.map((p, i) => {
+              const displayLabel = formatSemesterLabel(p.semester, p.label);
+              return (
+                <div
+                  key={`tooltip-${i}`}
+                  className={`absolute flex flex-col items-center pointer-events-none transition-all duration-200 ease-out ${
+                    hoveredIndex === i
+                      ? "opacity-100 scale-100 translate-y-0"
+                      : "opacity-0 scale-95 translate-y-2"
+                  }`}
+                  style={{
+                    left: p.x,
+                    top: p.y - 54,
+                    transform: "translateX(-50%)",
+                    zIndex: 10,
+                  }}
+                >
+                  <div className="bg-[#1e293b] dark:bg-gray-800 text-white dark:text-gray-100 text-center px-3 py-1.5 rounded-lg shadow-lg relative border dark:border-gray-700 transition-colors duration-200 whitespace-nowrap">
+                    <div className="text-[12px] font-bold">{p.semesterGpa.toFixed(2)} GPA</div>
+                    <div className="text-[10px] text-gray-300 dark:text-gray-400 font-normal">{displayLabel}</div>
+                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1e293b] dark:bg-gray-800 border-b border-r dark:border-gray-700 rotate-45 transition-colors duration-200" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       </CardContent>
     </Card>

@@ -39,14 +39,19 @@ const otherNavItems = [
   { title: "Support", href: "https://support.babcock.edu.ng/", icon: Headset },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  initialUserData?: UMISResponse | null;
+}
+
+export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
   const pathname = usePathname();
   const contextUserData = useUserData();
-  const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
+  const [profileData, setProfileData] = useState<UMISResponse | null>(
+    initialUserData ?? contextUserData
+  );
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const DEFAULT_AVATAR = "/images/student-image.png";
-  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
 
   /** Routes backend images through the local proxy to avoid TLS/CORS issues. */
   const proxyImageUrl = (url: string): string => {
@@ -64,6 +69,11 @@ export function Sidebar() {
       null
     );
   };
+
+  const initialPic = extractPicUrl(initialUserData ?? contextUserData);
+  const [avatarUrl, setAvatarUrl] = useState<string>(
+    initialPic ? proxyImageUrl(initialPic) : DEFAULT_AVATAR
+  );
 
   const userData = profileData ?? contextUserData;
   const matricNumber =

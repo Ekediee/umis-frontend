@@ -22,14 +22,20 @@ const UserDataContext = createContext<UMISResponse | null | undefined>(
  */
 export function UserDataProvider({
   children,
+  initialData = null,
 }: {
   children: React.ReactNode;
+  initialData?: UMISResponse | null;
 }) {
-  const [userData, setUserData] = useState<UMISResponse | null>(null);
+  const [userData, setUserData] = useState<UMISResponse | null>(initialData);
 
   useEffect(() => {
-    getUserData().then(setUserData);
-  }, []);
+    if (initialData) {
+      setUserData(initialData);
+    } else {
+      getUserData().then(setUserData);
+    }
+  }, [initialData]);
 
   return (
     <UserDataContext.Provider value={userData}>

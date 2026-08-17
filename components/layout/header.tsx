@@ -12,13 +12,38 @@ import { useTheme } from "@/components/theme-provider";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+import type { UMISResponse } from "@/lib/session";
+
+interface HeaderProps {
+  initialUserData?: UMISResponse | null;
+}
+
+export function Header({ initialUserData = null }: HeaderProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState("/images/student-image.png");
+
+  const extractPicUrl = (data: any): string | null => {
+    if (!data) return null;
+    return (
+      data?.user_data?.personal_information?.profile_picture_url ||
+      data?.user_data?.profile_picture_url ||
+      data?.personal_information?.profile_picture_url ||
+      data?.profile_picture_url ||
+      null
+    );
+  };
+
+  const initialPic = extractPicUrl(initialUserData);
+  const [avatarUrl, setAvatarUrl] = useState(
+    initialPic
+      ? initialPic.startsWith("/") || initialPic.startsWith("data:")
+        ? initialPic
+        : `/api/image-proxy?url=${encodeURIComponent(initialPic)}`
+      : "/images/student-image.png"
+  );
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
