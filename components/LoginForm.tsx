@@ -1,15 +1,26 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { User, Lock, Eye, Loader2 } from "lucide-react";
+import { useState, useTransition, useEffect, Suspense } from "react";
+import { User, Lock, Eye, Loader2, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { loginAction } from "@/app/actions/auth";
+import { clearAuthExpiredFlag } from "@/lib/auth-cleanup";
 import { toast } from "sonner";
 
-export function LoginForm() {
+function LoginFormInner() {
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+
+  const reason = searchParams.get("reason");
+  const isSessionExpired = reason === "idle_timeout" || reason === "session_expired";
+
+  useEffect(() => {
+    // Clear residual expiration flags on login page
+    clearAuthExpiredFlag();
+  }, []);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -29,6 +40,16 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 lg:gap-5">
+      {/* Session Expired Banner */}
+      {isSessionExpired && (
+        <div className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-900 text-[13px] leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold block text-amber-950">Session Expired</span>
+            You were automatically signed out after 30 minutes of inactivity. Please log in again to continue.
+          </div>
+        </div>
+      )}
       {/* Username / Matric Number */}
       <div>
         <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
@@ -110,5 +131,13 @@ export function LoginForm() {
         )}
       </Button>
     </form>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<div className="h-64 animate-pulse bg-gray-50 rounded-2xl" />}>
+      <LoginFormInner />
+    </Suspense>
   );
 }

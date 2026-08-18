@@ -315,7 +315,7 @@ export function CGPAProgressionChart() {
                       x={p.x}
                       y={labelY}
                       textAnchor="end"
-                      transform={`rotate(-45, ${p.x}, ${labelY})`}
+                      transform={`rotate(-60, ${p.x}, ${labelY})`}
                       className={`text-[11px] font-semibold transition-colors duration-200 ${
                         hoveredIndex === i
                           ? "fill-[#003cbb] dark:fill-[#4d82ff]"

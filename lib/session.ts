@@ -132,6 +132,34 @@ export async function deleteSession() {
   cookieStore.delete(USER_DATA_COOKIE_NAME);
 }
 
+export async function touchSession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const userData = cookieStore.get(USER_DATA_COOKIE_NAME)?.value;
+
+  if (!token) return false;
+
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: useSecureCookies,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+
+  if (userData) {
+    cookieStore.set(USER_DATA_COOKIE_NAME, userData, {
+      httpOnly: true,
+      secure: useSecureCookies,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+  }
+
+  return true;
+}
+
 export async function getSessionToken() {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;

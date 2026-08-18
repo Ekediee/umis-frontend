@@ -74,12 +74,23 @@ export async function loginAction(formData: FormData) {
 }
 
 /**
- * Destroys current student session and redirects to login/home page.
+ * Destroys current student session and redirects to login/home page with optional reason.
  */
-export async function logoutAction() {
+export async function logoutAction(reason?: string) {
   const { deleteSession } = await import("@/lib/session");
   await deleteSession();
+  if (reason) {
+    redirect(`/?reason=${encodeURIComponent(reason)}`);
+  }
   redirect("/");
+}
+
+/**
+ * Refreshes cookie expiration timestamps when the user chooses to stay logged in.
+ */
+export async function touchSessionAction(): Promise<boolean> {
+  const { touchSession } = await import("@/lib/session");
+  return await touchSession();
 }
 
 /**
