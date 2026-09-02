@@ -5,8 +5,7 @@ import { X, Plus, Trash2, Sparkles, TrendingUp, AlertCircle, CheckCircle, Target
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
-import { getStudentProfileAction } from "@/app/actions/user";
-import type { UMISResponse } from "@/lib/session";
+import { getRegisteredCoursesAction } from "@/app/actions/academic-details";
 
 interface MockCourse {
   id: string;
@@ -40,7 +39,6 @@ const GRADE_LABELS: Record<string, string> = {
 
 export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps) {
   const contextUserData = useUserData();
-  const [profileData, setProfileData] = useState<UMISResponse | null>(null);
 
   // Baseline student stats
   const [baselineHours, setBaselineHours] = useState<number>(93);
@@ -50,26 +48,34 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
   // Target GPA State (Default target semester GPA: 4.50)
   const [targetSemesterGPA, setTargetSemesterGPA] = useState<number>(4.5);
 
-  // Initial Course List
-  const [courses, setCourses] = useState<MockCourse[]>([
-    { id: "1", code: "COSC 311", units: 3, grade: "A" },
-    { id: "2", code: "COSC 313", units: 3, grade: "B" },
-    { id: "3", code: "COSC 315", units: 4, grade: "A" },
-    { id: "4", code: "COSC 317", units: 2, grade: "B" },
-    { id: "5", code: "GEDS 301", units: 2, grade: "A" },
-  ]);
+  // Course list — pre-populated from the student's registered courses on open.
+  // Grades default to "A" so the student can explore optimistic projections.
+  const [courses, setCourses] = useState<MockCourse[]>([]);
 
-  // Fetch student profile dynamically when modal opens
+  // Fetch student's real registered courses when the modal opens.
+  // Replace hardcoded COSC department defaults so every student sees their
+  // own courses, regardless of department.
   useEffect(() => {
-    if (isOpen) {
-      getStudentProfileAction().then((res) => {
-        if (res) setProfileData(res);
-      });
-    }
+    if (!isOpen) return;
+    getRegisteredCoursesAction().then((result) => {
+      if (result.data && result.data.length > 0) {
+        setCourses(
+          result.data.map((c, i) => ({
+            id: String(i + 1),
+            code: c.courseId,
+            units: c.units,
+            grade: "A", // Default to A so students can model best-case scenarios
+          }))
+        );
+      } else {
+        // Fall back to an empty list if no courses are registered yet
+        setCourses([]);
+      }
+    });
   }, [isOpen]);
 
-  const userData = profileData ?? contextUserData;
-  const currentCGPA = userData?.user_data?.cummulative_gpa ?? 
+  const userData = contextUserData;
+  const currentCGPA = userData?.user_data?.cummulative_gpa ??
                       userData?.user_data?.academic_information?.cummulative_gpa;
 
   // Set default baseline CGPA when currentCGPA is fetched

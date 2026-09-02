@@ -151,11 +151,33 @@ export async function updateProfilePictureAction(
 
     const json = await response.json();
     const message = json.message || "Profile picture updated successfully!";
-    const newPictureUrl =
+    let newPictureUrl: string | null =
       json.data?.profile_picture_url ||
-      json.profile_picture_url ||
+      json.data?.profile_picture ||
+      json.data?.picture_url ||
+      json.data?.picture ||
+      json.data?.photo_url ||
+      json.data?.photo ||
       json.data?.url ||
+      json.profile_picture_url ||
+      json.profile_picture ||
+      json.picture_url ||
+      json.picture ||
+      json.url ||
       null;
+
+    // If the upload response didn't include the new URL directly, fetch the updated profile
+    if (!newPictureUrl) {
+      try {
+        const freshProfile = await getStudentProfileAction();
+        newPictureUrl =
+          freshProfile?.user_data?.personal_information?.profile_picture_url ||
+          (freshProfile as unknown as Record<string, unknown>)?.profile_picture_url as string ||
+          null;
+      } catch {
+        // Fallback
+      }
+    }
 
     // Update session user cookie if new picture URL is returned or payload exists
     const currentUser = await getSessionUser();

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -11,10 +11,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { cn } from "@/lib/utils";
-
 import { useUserData } from "@/contexts/user-data-context";
-import { getStudentProfileAction } from "@/app/actions/user";
 import type { UMISResponse } from "@/lib/session";
+import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
 
 interface HeaderProps {
   initialUserData?: UMISResponse | null;
@@ -26,101 +25,11 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   const { theme, setTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const contextUserData = useUserData();
-  const [profileData, setProfileData] = useState<UMISResponse | null>(
-    initialUserData ?? contextUserData
-  );
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
-  const DEFAULT_AVATAR = "/images/student-image.png";
+  // Single source of truth for avatar — no more copy-pasted logic
+  const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
 
-  /** Routes backend images through the local proxy to avoid TLS/CORS issues. */
-  const proxyImageUrl = (url: string): string => {
-    if (!url || url.startsWith("/") || url.startsWith("data:")) return url;
-    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-  };
-
-  const extractPicUrl = (data: any): string | null => {
-    if (!data) return null;
-    return (
-      data?.user_data?.personal_information?.profile_picture_url ||
-      data?.user_data?.profile_picture_url ||
-      data?.personal_information?.profile_picture_url ||
-      data?.profile_picture_url ||
-      null
-    );
-  };
-
-  const initialPic = extractPicUrl(initialUserData ?? contextUserData);
-  const [avatarUrl, setAvatarUrl] = useState<string>(
-    initialPic ? proxyImageUrl(initialPic) : DEFAULT_AVATAR
-  );
-
-  const userData = profileData ?? contextUserData;
-  const matricNumber =
-    userData?.user_data?.personal_information?.matric_number ??
-    userData?.user_data?.matric_number ??
-    null;
-  const avatarKey = matricNumber ? `profile_avatar:${matricNumber}` : null;
-
-  // Sync avatar whenever profileData, contextUserData, or route changes
-  useEffect(() => {
-    // Clear legacy (non-namespaced) keys
-    localStorage.removeItem("profile_avatar");
-    localStorage.removeItem("student_avatar");
-
-    // 1. Check live userData
-    const livePic = extractPicUrl(profileData) || extractPicUrl(contextUserData);
-    if (livePic) {
-      setAvatarUrl(proxyImageUrl(livePic));
-      if (avatarKey) localStorage.setItem(avatarKey, livePic);
-      return;
-    }
-
-    // 2. Check per-user cache
-    if (avatarKey) {
-      const cached = localStorage.getItem(avatarKey);
-      if (cached) {
-        setAvatarUrl(proxyImageUrl(cached));
-        return;
-      }
-    }
-
-    // 3. Fallback
-    setAvatarUrl(DEFAULT_AVATAR);
-  }, [profileData, contextUserData, avatarKey]);
-
-  useEffect(() => {
-    getStudentProfileAction().then((res) => {
-      if (res) {
-        setProfileData(res);
-        const pic = extractPicUrl(res);
-        const matric = res.user_data?.personal_information?.matric_number;
-        const key = matric ? `profile_avatar:${matric}` : null;
-        if (pic) {
-          setAvatarUrl(proxyImageUrl(pic));
-          if (key) localStorage.setItem(key, pic);
-        }
-      }
-    });
-
-    const updateAvatar = (e: Event) => {
-      const customEvt = e as CustomEvent<{ url?: string }>;
-      if (customEvt.detail?.url) {
-        setAvatarUrl(customEvt.detail.url);
-      }
-    };
-
-    window.addEventListener("profile_avatar_updated", updateAvatar);
-    window.addEventListener("storage", updateAvatar);
-    return () => {
-      window.removeEventListener("profile_avatar_updated", updateAvatar);
-      window.removeEventListener("storage", updateAvatar);
-    };
-  }, [pathname]);
-
-
-  
   const getTitle = () => {
     if (pathname?.includes('/finance/receipt')) return "Payment";
     if (pathname?.includes('/finance/fees')) return "Financial Registration";

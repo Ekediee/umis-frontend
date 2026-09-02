@@ -166,7 +166,7 @@ export async function getSessionToken() {
   return session;
 }
 
-export async function getSessionUser(): Promise<any> {
+export async function getSessionUser(): Promise<UMISResponse | null> {
   const cookieStore = await cookies();
   const raw = cookieStore.get(USER_DATA_COOKIE_NAME)?.value;
   if (!raw) return null;

@@ -94,7 +94,9 @@ export async function touchSessionAction(): Promise<boolean> {
 }
 
 /**
- * Requests password reset instructions for a given matric number.
+ * Sends an OTP to the student's registered email for password reset.
+ * Endpoint: POST /api/v1/entity/send-otp
+ * Body: { user_name, email }
  */
 export async function requestPasswordResetAction(formData: FormData) {
   const matricNo = formData.get("user_name") as string;
@@ -119,21 +121,14 @@ export async function requestPasswordResetAction(formData: FormData) {
   }
 
   try {
-    const response = await loggedFetch(`${apiUrl}/api/auth/forgot-password`, {
+    const response = await loggedFetch(`${apiUrl}/api/v1/entity/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_name: matricNo, email }),
     });
 
-    if (response.status === 404) {
-      return {
-        error:
-          "Password reset is not available at the moment. Please contact the ICT Helpdesk at helpdesk@support.babcock.edu.ng or call +2348100008877 for assistance.",
-      };
-    }
-
     if (!response.ok) {
-      let errorMessage = "Failed to request password reset. Please try again or contact support.";
+      let errorMessage = "Failed to send OTP. Please try again or contact support.";
       try {
         const contentType = response.headers.get("content-type") || "";
         if (contentType.includes("application/json")) {
@@ -144,33 +139,59 @@ export async function requestPasswordResetAction(formData: FormData) {
       return { error: errorMessage };
     }
 
-    // API responded with a success status
     return {
       success: true,
-      message: `Password reset instructions have been sent to the email registered with ${matricNo}.`,
+      message: `A one-time passcode has been sent to the email registered with ${matricNo}.`,
     };
   } catch (e) {
-    console.error("Forgot password API call failed:", e);
+    console.error("Send OTP API call failed:", e);
     return { error: "Failed to connect to the server. Please check your connection and try again." };
   }
 }
 
 /**
- * Resets user password with verification token/code.
+ * Verifies the OTP and resets the student's password in one step.
+ * Endpoint: POST /api/v1/entity/verify-otp
+ * Body: { user_name, otp, new_password, new_password_confirmation }
  */
-export async function resetPasswordAction(formData: FormData) {
-  const newPassword = (formData.get("new_password") as string) || "";
-  const confirmPassword = (formData.get("confirm_password") as string) || (formData.get("new_password_confirmation") as string) || "";
+export async function verifyOtpResetPasswordAction(formData: FormData) {
+  const user_name = (formData.get("user_name") as string)?.trim();
+  const otp = (formData.get("otp") as string)?.trim();
+  const new_password = (formData.get("new_password") as string) || "";
+  const new_password_confirmation = (formData.get("new_password_confirmation") as string) || "";
 
-  if (!newPassword || !confirmPassword) {
-    return { error: "New password and password confirmation are required." };
+  if (!user_name) return { error: "Matric number is missing. Please go back and try again." };
+  if (!otp || otp.length < 4) return { error: "Please enter the OTP sent to your email." };
+  if (!new_password || !new_password_confirmation) return { error: "New password and confirmation are required." };
+  if (new_password !== new_password_confirmation) return { error: "Passwords do not match." };
+
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    return { error: "Internal server error: Missing API configuration." };
   }
 
-  if (newPassword !== confirmPassword) {
-    return { error: "Passwords do not match." };
-  }
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/entity/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_name, otp, new_password, new_password_confirmation }),
+    });
 
-  return changePasswordAction(formData);
+    const json = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMessage = json?.message || json?.error || "OTP verification failed. Please try again.";
+      return { error: errorMessage };
+    }
+
+    return {
+      success: true,
+      message: json?.message || "Password reset successfully. You can now log in.",
+    };
+  } catch (e) {
+    console.error("Verify OTP API call failed:", e);
+    return { error: "Failed to connect to the server. Please try again." };
+  }
 }
 
 /**

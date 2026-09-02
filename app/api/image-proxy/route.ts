@@ -30,11 +30,19 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Missing url parameter", { status: 400 });
   }
 
-  // Basic safety check — only proxy URLs from the known backend hostname.
-  // Prevents open-proxy abuse.
+  // Parse and normalize the URL. Support both absolute and relative image URLs.
   let parsedUrl: URL;
   try {
-    parsedUrl = new URL(imageUrl);
+    if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+      const apiBase =
+        process.env.API_URL ||
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://umis-sb.babcock.edu.ng";
+      const cleanPath = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
+      parsedUrl = new URL(cleanPath, apiBase);
+    } else {
+      parsedUrl = new URL(imageUrl);
+    }
   } catch {
     return new NextResponse("Invalid url parameter", { status: 400 });
   }
@@ -42,9 +50,33 @@ export async function GET(req: NextRequest) {
   const allowedHosts = [
     "umis-sb.babcock.edu.ng",
     "bu-pulse-sb.babcock.edu.ng",
+    "babcock.edu.ng",
   ];
 
-  if (!allowedHosts.includes(parsedUrl.hostname)) {
+  if (process.env.API_URL) {
+    try {
+      const envHost = new URL(process.env.API_URL).hostname;
+      if (!allowedHosts.includes(envHost)) allowedHosts.push(envHost);
+    } catch {
+      // Ignore
+    }
+  }
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    try {
+      const pubHost = new URL(process.env.NEXT_PUBLIC_API_BASE_URL).hostname;
+      if (!allowedHosts.includes(pubHost)) allowedHosts.push(pubHost);
+    } catch {
+      // Ignore
+    }
+  }
+
+  const isAllowedHost =
+    allowedHosts.includes(parsedUrl.hostname) ||
+    parsedUrl.hostname.endsWith(".babcock.edu.ng") ||
+    parsedUrl.hostname === "localhost" ||
+    parsedUrl.hostname === "127.0.0.1";
+
+  if (!isAllowedHost) {
     return new NextResponse("URL hostname not allowed", { status: 403 });
   }
 

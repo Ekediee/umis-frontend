@@ -12,6 +12,9 @@ vi.mock('@/app/actions/auth', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(() => null),
+  })),
 }));
 
 vi.mock('sonner', () => ({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Info, ChevronDown, ChevronRight, CreditCard, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
+import { Info, ChevronDown, ChevronRight, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -9,7 +9,9 @@ import Link from "next/link";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
-import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
+import { FundWalletModal, FundWalletStep } from "@/components/fees/fund-wallet-modal";
+import { fundWalletAction } from "@/app/actions/payment";
+import { useWalletStore } from "@/hooks/use-wallet-store";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -53,9 +55,68 @@ function FinancePageContent() {
   const searchParams = useSearchParams();
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
-  const [walletBalance, setWalletBalance] = useState(0);
+  const { balance, rawBalance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
+  const [fundWalletStep, setFundWalletStep] = useState<FundWalletStep>("amount");
   const [showWalletBalance, setShowWalletBalance] = useState(true);
+  const [successAmount, setSuccessAmount] = useState<number | undefined>(undefined);
+  const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    getUserData().then(setUserData);
+    fetchBalance();
+  }, [fetchBalance]);
+
+  // Open modal when ?action=fund is in the URL
+  useEffect(() => {
+    if (searchParams.get("action") === "fund") {
+      setFundWalletStep("amount");
+      setIsFundWalletModalOpen(true);
+    }
+  }, [searchParams]);
+
+  // Handle the payment callback redirected from the backend after merchant checkout.
+  // URL format: /dashboard/finance?status=1&message=Payment+settled+successfully&data=flw-S230039-...
+  useEffect(() => {
+    const txRef = searchParams.get("data") || searchParams.get("transaction_reference");
+    const status = searchParams.get("status");
+    const message = searchParams.get("message");
+    const paymentStatus = searchParams.get("payment_status");
+
+    // Do nothing if there are no payment callback parameters in the URL
+    if (!txRef && !status && !paymentStatus) return;
+
+    // Clean the URL immediately so parameters don't persist on page reload
+    router.replace("/dashboard/finance");
+
+    if (txRef && (status === "1" || status === "completed" || !status)) {
+      // Optimistically read amount if the backend adds it to the callback in future
+      const amountParam = searchParams.get("amount");
+      const callbackAmount = amountParam ? parseFloat(amountParam) : undefined;
+
+      fundWalletAction(txRef).then((result) => {
+        if (result.success) {
+          const displayMsg = result.message || message || "Wallet funded successfully!";
+          if (callbackAmount && callbackAmount > 0) {
+            setSuccessAmount(callbackAmount);
+          } else {
+            setSuccessAmount(undefined);
+          }
+          setSuccessMessage(displayMsg);
+          setFundWalletStep("success");
+          setIsFundWalletModalOpen(true);
+          // Refetch fresh balance from backend
+          fetchBalance();
+        } else {
+          toast.error(result.error || "Wallet funding failed. Please contact support.");
+        }
+      });
+    } else {
+      // Payment was cancelled, failed, or returned a non-success status
+      toast.error(message || "Payment was not completed. Please try again.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const previousSemesters = [
     { value: "1st-semester-200l", label: "1st Semester 200L", session: "2025/2026" },
@@ -64,16 +125,6 @@ function FinancePageContent() {
   ];
   const [selectedSemester, setSelectedSemester] = useState<typeof previousSemesters[number] | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    getUserData().then(setUserData);
-  }, []);
-
-  useEffect(() => {
-    if (searchParams.get("action") === "fund") {
-      setIsFundWalletModalOpen(true);
-    }
-  }, [searchParams]);
 
   return (
     <div className="max-w-6x px-4 md:px-8 flex flex-col gap-6 pb-12">
@@ -196,7 +247,13 @@ function FinancePageContent() {
               <span className="text-[12px] font-medium text-white/80">Wallet Balance</span>
               <div className="flex items-center gap-2">
                 <span className="text-[22px] font-bold tracking-tight">
-                  {showWalletBalance ? `₦${walletBalance.toLocaleString()}` : "****"}
+                  {!showWalletBalance
+                    ? "****"
+                    : isWalletLoading && balance === null
+                    ? "₦..."
+                    : balance !== null
+                    ? `₦${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : "₦0.00"}
                 </span>
                 <button
                   onClick={() => setShowWalletBalance(!showWalletBalance)}
@@ -213,7 +270,12 @@ function FinancePageContent() {
                 S{userData?.user_data?.personal_information?.matric_number || "S190087"}
               </span>
               <Button
-                onClick={() => setIsFundWalletModalOpen(true)}
+                onClick={() => {
+                  setFundWalletStep("amount");
+                  setSuccessAmount(undefined);
+                  setSuccessMessage(undefined);
+                  setIsFundWalletModalOpen(true);
+                }}
                 className="bg-white hover:bg-blue-50 text-[#003cbb] text-[12px] font-semibold h-8 px-4 rounded-[10px] transition-all border-none"
               >
                 Fund Wallet
@@ -431,11 +493,18 @@ function FinancePageContent() {
 
       <FundWalletModal
         isOpen={isFundWalletModalOpen}
-        onClose={() => setIsFundWalletModalOpen(false)}
-        onSuccess={(amount) => {
-          setWalletBalance((prev) => prev + amount);
-          toast.success(`Successfully funded wallet with ₦${amount.toLocaleString()}`);
+        onClose={() => {
+          setIsFundWalletModalOpen(false);
+          setFundWalletStep("amount");
+          setSuccessAmount(undefined);
+          setSuccessMessage(undefined);
         }}
+        onSuccess={() => {
+          fetchBalance();
+        }}
+        initialStep={fundWalletStep}
+        successAmount={successAmount}
+        successMessage={successMessage}
       />
     </div>
   );

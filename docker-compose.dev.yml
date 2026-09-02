@@ -4,7 +4,11 @@
 #
 # Hot-reload works by bind-mounting the host source directory into /app.
 # Any file you save on the host is immediately visible inside the container,
-# triggering Next.js HMR. The browser at http://localhost:3000 updates within ~1s.
+# triggering Next.js HMR.
+#
+# Next.js dev server binds to both port 80 and port 3000 on the host.
+# This ensures that payment merchant callbacks to http://localhost/api/v1/...
+# hit the Next.js route handler directly without needing an extra proxy.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -21,7 +25,9 @@ services:
       - .env.dev
 
     ports:
-      # Expose Next.js dev server directly — no Nginx needed in development
+      # Expose on port 80 (for merchant redirects to http://localhost/...)
+      # and port 3000 (standard dev port)
+      - "80:3000"
       - "3000:3000"
 
     volumes:
@@ -46,3 +52,5 @@ services:
     # Useful for debugging with console.log output clearly visible.
     stdin_open: true
     tty: true
+
+

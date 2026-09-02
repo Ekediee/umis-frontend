@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { decodeJwt } from 'jose'
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
@@ -11,6 +12,36 @@ export function middleware(request: NextRequest) {
   if (!token && !isAuthPage) {
     return NextResponse.redirect(new URL('/', request.url))
   }
+
+  // Validate token expiry for authenticated requests to protected routes.
+  // We decode the JWT to read the `exp` claim — we do NOT verify the signature
+  // (that's the backend's responsibility). This simply prevents obviously-expired
+  // tokens from reaching the dashboard and triggering a cascade of 401 errors.
+  // if (token && !isAuthPage) {
+  //   try {
+  //     const payload = decodeJwt(token)
+  //     const isExpired = payload.exp ? payload.exp * 1000 < Date.now() : false
+  //     if (isExpired) {
+  //       const response = NextResponse.redirect(
+  //         new URL('/?reason=session_expired', request.url)
+  //       )
+  //       // Clear both auth cookies so the login page starts clean
+  //       response.cookies.delete('token')
+  //       response.cookies.delete('user_data')
+  //       return response
+  //     }
+  //   } catch {
+  //     // Malformed or non-JWT token — treat as expired and force re-login
+  //     if (!isAuthPage) {
+  //       const response = NextResponse.redirect(
+  //         new URL('/?reason=session_expired', request.url)
+  //       )
+  //       response.cookies.delete('token')
+  //       response.cookies.delete('user_data')
+  //       return response
+  //     }
+  //   }
+  // }
 
   // Redirect authenticated users to the dashboard if they visit auth pages
   if (token && isAuthPage) {

@@ -47,7 +47,16 @@ export async function performClientLogout(
   // 2. Explicit localStorage cleanup (iterating explicitly across all keys)
   if (typeof window !== "undefined") {
     try {
-      const keysToRemove = Object.keys(localStorage).filter(
+      const allKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k) allKeys.push(k);
+      }
+      Object.keys(localStorage).forEach((k) => {
+        if (!allKeys.includes(k)) allKeys.push(k);
+      });
+
+      const keysToRemove = allKeys.filter(
         (k) =>
           k.startsWith("profile_avatar") ||
           k.startsWith("student_") ||
@@ -73,10 +82,14 @@ export async function performClientLogout(
 
   // 3. Clear server session cookie and navigate to login
   try {
+    // Reset the latch before the redirect so that if the module is re-imported
+    // (e.g. HMR in dev) a fresh logout attempt is never silently swallowed.
+    isLoggingOut = false;
     await logoutAction(reason);
   } catch {
     // Next.js redirect() throws an internal NEXT_REDIRECT error which is caught here,
     // or if a network disconnect occurred, force client-side redirection.
+    isLoggingOut = false;
     if (typeof window !== "undefined") {
       window.location.href = `/?reason=${encodeURIComponent(reason)}`;
     }

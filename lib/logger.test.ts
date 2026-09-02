@@ -3,17 +3,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock server-only before import
 vi.mock("server-only", () => ({}));
 
-// Spy/mock fs calls so tests don't affect actual file system
-const appendFileSpy = vi.fn((path, data, encoding, cb) => {
-  if (typeof cb === "function") cb(null);
-});
-const existsSyncSpy = vi.fn(() => true);
-const mkdirSyncSpy = vi.fn();
+// Spy/mock fs calls using vi.hoisted so they are available when vi.mock is hoisted
+const { appendFileSpy, existsSyncSpy, mkdirSyncSpy } = vi.hoisted(() => ({
+  appendFileSpy: vi.fn((path, data, encoding, cb) => {
+    if (typeof cb === "function") cb(null);
+  }),
+  existsSyncSpy: vi.fn(() => true),
+  mkdirSyncSpy: vi.fn(),
+}));
 
 vi.mock("fs", () => ({
   existsSync: () => existsSyncSpy(),
-  mkdirSync: (path: string, options?: any) => mkdirSyncSpy(path, options),
-  appendFile: (path: string, data: string, encoding: string, cb: any) =>
+  mkdirSync: (path: string, options?: unknown) => mkdirSyncSpy(path, options),
+  appendFile: (path: string, data: string, encoding: string, cb: (err?: unknown) => void) =>
     appendFileSpy(path, data, encoding, cb),
 }));
 

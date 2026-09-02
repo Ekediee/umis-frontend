@@ -7,11 +7,11 @@ import { Agent } from "undici";
 // Node's built-in fetch uses undici which ignores NODE_TLS_REJECT_UNAUTHORIZED.
 // We must pass a custom undici Agent with rejectUnauthorized:false so that
 // fetch() can connect to the backend even when the SSL certificate is expired.
-// This agent is used only for outgoing server-side API calls (loggedFetch).
+// This scoped agent is used ONLY for outgoing server-side API calls (loggedFetch).
+// DO NOT add process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0" here — it would
+// disable TLS verification globally for the entire Node process, including
+// third-party integrations. The scoped agent below is the correct minimal fix.
 const insecureAgent = new Agent({ connect: { rejectUnauthorized: false } });
-
-// Also set the legacy env var for any code that still uses https.get / axios.
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Ensure the logs directory exists at startup/import time
 const logsDir = path.join(process.cwd(), "logs");
@@ -29,7 +29,7 @@ const errorLogPath = path.join(logsDir, "error.log");
 /**
  * Safely sanitizes sensitive fields (passwords, tokens, etc.) from metadata and payloads.
  */
-export function sanitize(obj: any): any {
+export function sanitize<T = unknown>(obj: T): T {
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === "string") {
@@ -38,14 +38,14 @@ export function sanitize(obj: any): any {
     if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
       try {
         const parsed = JSON.parse(obj);
-        return JSON.stringify(sanitize(parsed));
+        return JSON.stringify(sanitize(parsed)) as T;
       } catch {
         // Fallback to regex masking if parsing fails
       }
     }
 
     // Fallback: search and replace patterns in query strings or raw strings
-    let sanitizedStr = obj;
+    let sanitizedStr: string = obj;
     // Regex to mask "password":"..." or password=...
     sanitizedStr = sanitizedStr.replace(
       /("password"\s*:\s*")([^"]+)(")/gi,
@@ -71,18 +71,18 @@ export function sanitize(obj: any): any {
       /(secret\s*=\s*)([^&]+)/gi,
       '$1*****'
     );
-    return sanitizedStr;
+    return sanitizedStr as T;
   }
 
   if (typeof obj !== "object") return obj;
 
   if (Array.isArray(obj)) {
-    return obj.map(sanitize);
+    return obj.map(sanitize) as T;
   }
 
-  const sanitized: any = {};
-  for (const key of Object.keys(obj)) {
-    const value = obj[key];
+  const sanitized: Record<string, unknown> = {};
+  for (const key of Object.keys(obj as Record<string, unknown>)) {
+    const value = (obj as Record<string, unknown>)[key];
     const lowerKey = key.toLowerCase();
     if (
       lowerKey.includes("password") ||
@@ -98,13 +98,13 @@ export function sanitize(obj: any): any {
       sanitized[key] = value;
     }
   }
-  return sanitized;
+  return sanitized as T;
 }
 
 /**
  * Write a formatted log line to file.
  */
-function writeToFile(filePath: string, level: string, message: string, meta?: any) {
+function writeToFile(filePath: string, level: string, message: string, meta?: unknown) {
   const timestamp = new Date().toISOString();
   const sanitizedMeta = meta ? sanitize(meta) : null;
   const metaStr = sanitizedMeta ? ` ${JSON.stringify(sanitizedMeta)}` : "";
@@ -122,21 +122,21 @@ function writeToFile(filePath: string, level: string, message: string, meta?: an
  * Core application logger. Writes to files and prints to system console.
  */
 export const logger = {
-  info(message: string, meta?: any) {
+  info(message: string, meta?: unknown) {
     // Print to server console
     console.log(`[INFO] ${message}`, meta ? sanitize(meta) : "");
     // Write to app.log
     writeToFile(appLogPath, "INFO", message, meta);
   },
 
-  warn(message: string, meta?: any) {
+  warn(message: string, meta?: unknown) {
     // Print to server console
     console.warn(`[WARN] ${message}`, meta ? sanitize(meta) : "");
     // Write to app.log
     writeToFile(appLogPath, "WARN", message, meta);
   },
 
-  error(message: string, meta?: any) {
+  error(message: string, meta?: unknown) {
     // Print to server console
     console.error(`[ERROR] ${message}`, meta ? sanitize(meta) : "");
     // Write to app.log and error.log
@@ -218,13 +218,13 @@ export async function loggedFetch(
     }
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errStack = error instanceof Error ? error.stack : undefined;
     logger.error(
-      `Outgoing API Response Exception: ${method} ${url} - Error: ${
-        error.message || String(error)
-      } - Duration: ${duration}ms`,
-      { stack: error.stack }
+      `Outgoing API Response Exception: ${method} ${url} - Error: ${errMsg} - Duration: ${duration}ms`,
+      { stack: errStack }
     );
     throw error;
   }
@@ -234,9 +234,9 @@ export async function loggedFetch(
  * Next.js API Route Handler wrapper (HOF) to log incoming requests, status and duration.
  */
 export function withLogging(
-  handler: (req: Request, ...args: any[]) => Promise<Response>
+  handler: (req: Request, ...args: unknown[]) => Promise<Response>
 ) {
-  return async (req: Request, ...args: any[]) => {
+  return async (req: Request, ...args: unknown[]) => {
     const startTime = Date.now();
     const url = new URL(req.url);
     const method = req.method;
@@ -257,13 +257,13 @@ export function withLogging(
         );
       }
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
       logger.error(
-        `Incoming API Exception: ${method} ${url.pathname} - Error: ${
-          error.message || String(error)
-        } - Duration: ${duration}ms`,
-        { stack: error.stack }
+        `Incoming API Exception: ${method} ${url.pathname} - Error: ${errMsg} - Duration: ${duration}ms`,
+        { stack: errStack }
       );
       throw error;
     }

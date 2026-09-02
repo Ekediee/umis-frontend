@@ -8,6 +8,11 @@ import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { UMISResponse } from "@/lib/session";
 import { toTitleCase } from "@/lib/utils";
 import { updateProfilePictureAction } from "@/app/actions/user";
+import {
+  proxyImageUrl,
+  extractPicUrl,
+  DEFAULT_AVATAR,
+} from "@/hooks/use-student-avatar";
 
 interface StudentProfileBannerProps {
   /** Show the camera edit button on the avatar (only on profile page) */
@@ -32,80 +37,88 @@ export function StudentProfileBanner({
   showDetailedRow,
   onAvatarUpdated,
 }: StudentProfileBannerProps) {
-
-  const DEFAULT_AVATAR = "/images/student-image.png";
-  const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR);
-
-  /**
-   * Wraps an external backend image URL in the local proxy route so the
-   * browser fetches it from /api/image-proxy instead of hitting the backend
-   * directly. This sidesteps expired-cert and CORS issues.
-   *
-   * Safe to keep after the cert is renewed — the proxy works for any URL.
-   * To revert to direct loading just return `url` here instead.
-   */
-  const proxyImageUrl = (url: string): string => {
-    if (!url || url.startsWith("/") || url.startsWith("data:")) return url;
-    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-  };
+  const initialPic = extractPicUrl(userData);
+  const [avatarUrl, setAvatarUrl] = useState<string>(
+    initialPic ? proxyImageUrl(initialPic) : DEFAULT_AVATAR
+  );
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Derive the per-user localStorage key from the matric number so that
-  // switching accounts never shows a stale avatar from a different user.
-  const matric = userData?.user_data?.personal_information?.matric_number ?? null;
+  // Derive the per-user localStorage key from the matric number
+  const matric =
+    userData?.user_data?.personal_information?.matric_number ??
+    (userData?.user_data as unknown as Record<string, unknown>)?.matric_number as string ??
+    null;
   const avatarKey = matric ? `profile_avatar:${matric}` : null;
 
   // Sync avatar URL from props / localStorage / events
   useEffect(() => {
-    // Always clear the legacy (non-namespaced) keys to avoid stale data
-    // from older sessions where the key wasn't namespaced.
-    localStorage.removeItem("profile_avatar");
-    localStorage.removeItem("student_avatar");
+    // Clear legacy un-namespaced keys
+    try {
+      localStorage.removeItem("profile_avatar");
+      localStorage.removeItem("student_avatar");
+    } catch {
+      // Ignore
+    }
 
-    const apiPic = userData?.user_data?.personal_information?.profile_picture_url;
+    const apiPic = extractPicUrl(userData);
     if (apiPic) {
-      // Route through the local proxy so the browser never hits the backend
-      // directly (avoids expired-cert / CORS failures).
       const proxied = proxyImageUrl(apiPic);
       setAvatarUrl(proxied);
-      // Store the raw (un-proxied) URL under a per-user key.
       if (avatarKey) {
-        localStorage.setItem(avatarKey, apiPic);
+        try {
+          localStorage.setItem(avatarKey, apiPic);
+        } catch {
+          // Ignore
+        }
       }
       return;
     }
 
-    // No API pic — try the per-user cache
+    // Fall back to per-user cache
     if (avatarKey) {
-      const saved = localStorage.getItem(avatarKey);
-      if (saved) {
-        setAvatarUrl(proxyImageUrl(saved));
-        return;
+      try {
+        const saved = localStorage.getItem(avatarKey);
+        if (saved) {
+          setAvatarUrl(proxyImageUrl(saved));
+          return;
+        }
+      } catch {
+        // Ignore
       }
     }
 
-    // Reset to default avatar if this user has no image
+    // Default avatar
     setAvatarUrl(DEFAULT_AVATAR);
+  }, [userData, avatarKey]);
 
+  useEffect(() => {
     const handleAvatarUpdate = (e: Event) => {
       const customEvt = e as CustomEvent<{ url?: string; matric?: string }>;
-      if (customEvt.detail?.url && (!customEvt.detail.matric || customEvt.detail.matric === matric)) {
-        setAvatarUrl(customEvt.detail.url);
+      if (
+        customEvt.detail?.url &&
+        (!customEvt.detail.matric || customEvt.detail.matric === matric)
+      ) {
+        setAvatarUrl(proxyImageUrl(customEvt.detail.url));
         return;
       }
       if (avatarKey) {
-        const updated = localStorage.getItem(avatarKey);
-        if (updated) setAvatarUrl(proxyImageUrl(updated));
+        try {
+          const updated = localStorage.getItem(avatarKey);
+          if (updated) setAvatarUrl(proxyImageUrl(updated));
+        } catch {
+          // Ignore
+        }
       }
     };
 
     window.addEventListener("profile_avatar_updated", handleAvatarUpdate);
+    window.addEventListener("storage", handleAvatarUpdate);
     return () => {
       window.removeEventListener("profile_avatar_updated", handleAvatarUpdate);
+      window.removeEventListener("storage", handleAvatarUpdate);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData, avatarKey]);
+  }, [matric, avatarKey]);
   console.log("avatar", avatarUrl);
   const handleAvatarClick = () => {
     if (isUploading) return;
@@ -159,23 +172,24 @@ export function StudentProfileBanner({
 
     if (result.success) {
       const rawUrl = result.profile_picture_url || (reader.result as string) || avatarUrl;
-      // Store raw URL, display via proxy
-      const newPicUrl = result.profile_picture_url || rawUrl;
-      setAvatarUrl(proxyImageUrl(rawUrl));
-      // Store raw URL under the per-user key (not the proxy URL) so it can
-      // be re-proxied on next load.
-      if (result.profile_picture_url && avatarKey) {
-        localStorage.setItem(avatarKey, result.profile_picture_url);
+      const proxiedUrl = proxyImageUrl(rawUrl);
+      setAvatarUrl(proxiedUrl);
+      if (rawUrl && avatarKey && !rawUrl.startsWith("data:")) {
+        try {
+          localStorage.setItem(avatarKey, rawUrl);
+        } catch {
+          // Ignore
+        }
       }
       window.dispatchEvent(
         new CustomEvent("profile_avatar_updated", {
-          detail: { url: proxyImageUrl(rawUrl), matric },
+          detail: { url: proxiedUrl, matric },
         })
       );
 
       toast.success(result.message || "Profile picture updated successfully!");
       if (onAvatarUpdated) {
-        onAvatarUpdated(newPicUrl);
+        onAvatarUpdated(proxiedUrl);
       }
     } else {
       toast.error(result.error || "Failed to update profile picture.");
