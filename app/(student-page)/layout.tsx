@@ -4,14 +4,17 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { MainContent } from "@/components/layout/main-content";
 import { UserDataProvider } from "@/contexts/user-data-context";
 import { SessionTimeoutProvider } from "@/components/providers/session-timeout-provider";
-import { getUserData } from "@/app/actions/user";
+import { getUserData, getStudentProfileAction } from "@/app/actions/user";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const initialUserData = await getUserData();
+  // If the user_data cookie is absent (evicted / partially cleared) but the
+  // session token is still valid, fall back to the live API so components
+  // always receive populated initialData rather than null.
+  const initialUserData = await getUserData() ?? await getStudentProfileAction();
 
   return (
     <UserDataProvider initialData={initialUserData}>

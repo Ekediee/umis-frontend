@@ -188,7 +188,7 @@ describe("auth actions", () => {
       expect(result).toEqual({
         success: true,
         message:
-          "Password reset instructions have been sent to the email registered with 18/0654.",
+          "A one-time passcode has been sent to the email registered with 18/0654.",
       });
     });
   });

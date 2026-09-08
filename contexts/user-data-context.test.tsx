@@ -6,10 +6,12 @@ import type { UMISResponse } from "@/lib/session";
 // ─── Mock the server action ───────────────────────────────────────────────────
 vi.mock("@/app/actions/user", () => ({
   getUserData: vi.fn(),
+  getStudentProfileAction: vi.fn().mockResolvedValue(null),
 }));
 
-import { getUserData } from "@/app/actions/user";
+import { getUserData, getStudentProfileAction } from "@/app/actions/user";
 const mockGetUserData = getUserData as ReturnType<typeof vi.fn>;
+const mockGetStudentProfileAction = getStudentProfileAction as ReturnType<typeof vi.fn>;
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 const mockUserData: UMISResponse = {

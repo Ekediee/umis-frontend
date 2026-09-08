@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { getUserData } from "@/app/actions/user";
+import { getUserData, getStudentProfileAction } from "@/app/actions/user";
 import type { UMISResponse } from "@/lib/session";
 
 /**
@@ -33,7 +33,16 @@ export function UserDataProvider({
     if (initialData) {
       setUserData(initialData);
     } else {
-      getUserData().then(setUserData);
+      // The user_data cookie can be absent while the session token is still
+      // valid (e.g. cookie eviction, partial clear). If getUserData() returns
+      // null, fall back to the live API so the context is never silently empty.
+      getUserData().then((data) => {
+        if (data) {
+          setUserData(data);
+        } else {
+          getStudentProfileAction().then(setUserData);
+        }
+      });
     }
   }, [initialData]);
 

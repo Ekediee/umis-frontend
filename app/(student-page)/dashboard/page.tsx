@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const currentLevel = Number(rawLevel) || 100;
   const is100L = currentLevel === 100;
 
+
   useEffect(() => {
     if (searchParams.get("login") === "success") {
       toast.success("Login successful! Welcome back 👋");
