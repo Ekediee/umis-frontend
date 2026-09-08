@@ -61,8 +61,8 @@ export default function RegistrationPage() {
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  // Derived convenience boolean — truthy when semester info has been fetched
-  const isRegisteredForSemester = semesterInfo !== null;
+  // Derived boolean — true only if student has commenced registration for the semester
+  const isRegisteredForSemester = Boolean(semesterInfo?.check);
 
   const fetchRegistrationStatus = async () => {
     if (isFetchingSemesterInfo) return;
@@ -183,8 +183,8 @@ export default function RegistrationPage() {
           illustrationSrc="/Reg-image.png"
           onClick={() => {
             if (isLoadingStatus) return;
-            if (!semesterInfo) {
-              // No active semester registered yet — open the commencement confirm modal
+            if (!semesterInfo?.check) {
+              // Registration not yet commenced for the semester — open commencement modal
               setIsSemesterConfirmOpen(true);
             } else if (regState !== "completed") {
               router.push("/registration/courses");

@@ -177,6 +177,7 @@ const MOCK_SEMESTER_RESPONSE = {
     start_date: "2026-01-05",
     end_date: "2026-04-24",
     late_reg_date: "2026-04-24",
+    check: false,
   },
 };
 
@@ -186,6 +187,7 @@ const EXPECTED_SEMESTER_INFO = {
   startDate: "2026-01-05",
   endDate: "2026-04-24",
   lateRegDate: "2026-04-24",
+  check: false,
 };
 
 describe("getSemesterRegistrationStatusAction — environment / auth guards", () => {
@@ -232,6 +234,7 @@ describe("getSemesterRegistrationStatusAction — HTTP responses", () => {
     expect(result.data?.startDate).toBe("2026-01-05");
     expect(result.data?.endDate).toBe("2026-04-24");
     expect(result.data?.lateRegDate).toBe("2026-04-24");
+    expect(result.data?.check).toBe(false);
   });
 
   it("returns an error when the API responds with a non-OK status", async () => {

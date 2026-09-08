@@ -10,6 +10,7 @@ interface RawSemesterData {
   start_date: string;
   end_date: string;
   late_reg_date: string;
+  check: boolean;
 }
 
 interface RawSemesterRegistrationResponse {
@@ -29,6 +30,8 @@ export interface SemesterInfo {
   endDate: string;
   /** ISO date string — last day for late registration */
   lateRegDate: string;
+  /** Whether the student has commenced registration for this semester */
+  check: boolean;
 }
 
 export interface RegistrationStatusResult {
@@ -81,6 +84,7 @@ export const getSemesterRegistrationStatusAction = async (): Promise<Registratio
         startDate: json.data.start_date,
         endDate: json.data.end_date,
         lateRegDate: json.data.late_reg_date,
+        check: Boolean(json.data.check),
       },
       message: json?.message,
     };
