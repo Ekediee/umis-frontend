@@ -3,50 +3,49 @@
 import { useState } from "react";
 import Link from "next/link";
 import { 
-  Laptop, 
   CheckCircle2, 
   Circle, 
   ShieldAlert, 
-  ArrowRight, 
   Sparkles,
-  ChevronRight,
-  Info
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { useRegistrationStore } from "@/hooks/use-registration-store";
+
 export const REGISTRATION_STEPS = [
   {
     id: 1,
-    title: "Step 1: Course Selection",
-    description: "Select and verify your required and elective courses for the current semester.",
-    href: "/registration/courses",
-    btnText: "Go to Course Selection",
+    title: "Step 1: Commence Registration",
+    description: "Initialize and confirm your registration for the current semester.",
+    href: "/registration",
+    btnText: "Commence Registration",
   },
   {
     id: 2,
-    title: "Step 2: Commence Registration",
-    description: "Follow on-screen passing (Meal, Residence, Worship Center, and Courses). Do not jump the processes.",
-    href: "/registration",
-    btnText: "Start Registration Flow",
+    title: "Step 2: Register Courses",
+    description: "Select class group, choose required and elective courses, and submit your registration.",
+    href: "/registration/courses",
+    btnText: "Register Courses",
   },
   {
     id: 3,
-    title: "Step 3: Finance Statement",
-    description: "Review your detailed financial statement and fee breakdown.",
-    href: "/dashboard/finance",
-    btnText: "View Finance Statement",
+    title: "Step 3: Financial Registration",
+    description: "Select residence, meal plan, worship center, and complete fee payment.",
+    href: "/dashboard/finance/fees",
+    btnText: "Financial Registration",
   },
   {
     id: 4,
-    title: "Step 4: Select Payments",
-    description: "Choose your preferred payment structure and approved payment gateway.",
-    href: "/dashboard/finance/fees/payment",
-    btnText: "Proceed to Payments",
+    title: "Step 4: Print Course Form",
+    description: "Generate and print your official semester course registration form.",
+    href: "/dashboard/registration/course-form",
+    btnText: "Print Course Form",
   },
   {
     id: 5,
-    title: "Step 5: Print Receipt",
+    title: "Step 5: Print Financial Receipt",
     description: "Generate and print your official registration receipt.",
     href: "/dashboard/finance/receipt",
     btnText: "Print Receipt",
@@ -58,16 +57,29 @@ interface OnboardingGuideCardProps {
   isSheet?: boolean;
 }
 
-export function OnboardingGuideCard({ className, isSheet = false }: OnboardingGuideCardProps) {
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+export function OnboardingGuideCard({ className }: OnboardingGuideCardProps) {
+  const { semesterInfo, regState, payState } = useRegistrationStore();
+  const [manualOverrides, setManualOverrides] = useState<Record<number, boolean>>({});
 
-  const toggleStep = (id: number) => {
-    setCompletedSteps((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
-    );
+  const isStepDone = (id: number): boolean => {
+    if (manualOverrides[id] !== undefined) {
+      return manualOverrides[id];
+    }
+    if (id === 1) return Boolean(semesterInfo?.check);
+    if (id === 2) return regState === "completed";
+    if (id === 3) return payState === "completed";
+    return false;
   };
 
-  const progressPercent = Math.round((completedSteps.length / REGISTRATION_STEPS.length) * 100);
+  const toggleStep = (id: number) => {
+    setManualOverrides((prev) => ({
+      ...prev,
+      [id]: !isStepDone(id),
+    }));
+  };
+
+  const completedCount = REGISTRATION_STEPS.filter((step) => isStepDone(step.id)).length;
+  const progressPercent = Math.round((completedCount / REGISTRATION_STEPS.length) * 100);
 
   return (
     <Card className={cn("rounded-[24px] border-blue-100 dark:border-gray-800 shadow-[0_4px_20px_rgba(0,60,187,0.06)] bg-gradient-to-br from-white via-[#fcfdff] to-[#f4f7ff] dark:from-gray-900 dark:via-gray-900 dark:to-gray-800/80 transition-all overflow-hidden", className)}>
@@ -91,7 +103,7 @@ export function OnboardingGuideCard({ className, isSheet = false }: OnboardingGu
               To complete your registration, you must complete the following steps:
             </h3>
             <span className="text-xs font-bold text-[#003cbb] dark:text-[#4d82ff]">
-              {completedSteps.length} of 5 completed ({progressPercent}%)
+              {completedCount} of 5 completed ({progressPercent}%)
             </span>
           </div>
 
@@ -107,7 +119,7 @@ export function OnboardingGuideCard({ className, isSheet = false }: OnboardingGu
         {/* Step Checklist */}
         <div className="flex flex-col gap-3">
           {REGISTRATION_STEPS.map((step) => {
-            const isDone = completedSteps.includes(step.id);
+            const isDone = isStepDone(step.id);
             return (
               <div
                 key={step.id}
@@ -142,13 +154,25 @@ export function OnboardingGuideCard({ className, isSheet = false }: OnboardingGu
                   </div>
                 </div>
 
-                <Link
-                  href={step.href}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#eef3fd] hover:bg-[#e2ebfd] dark:bg-[#003cbb]/20 dark:hover:bg-[#003cbb]/30 text-[#003cbb] dark:text-[#4d82ff] text-xs font-semibold transition-colors shrink-0 self-start sm:self-auto"
-                >
-                  <span>{step.btnText}</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
+                {step.id === 1 && isDone ? (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-xs font-semibold cursor-not-allowed shrink-0 self-start sm:self-auto border border-gray-200/70 dark:border-gray-700/60 select-none"
+                  >
+                    <span>{step.btnText}</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+                  </button>
+                ) : (
+                  <Link
+                    href={step.href}
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#eef3fd] hover:bg-[#e2ebfd] dark:bg-[#003cbb]/20 dark:hover:bg-[#003cbb]/30 text-[#003cbb] dark:text-[#4d82ff] text-xs font-semibold transition-colors shrink-0 self-start sm:self-auto"
+                  >
+                    <span>{step.btnText}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
               </div>
             );
           })}

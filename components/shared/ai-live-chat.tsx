@@ -82,7 +82,7 @@ export function AILiveChat() {
     }
   }, [messages, status, error]);
 
-  const isLoading = status === "submitted" || status === "streaming";
+  const isLoading = status === "submitted";
 
   // Auto-scroll to bottom
   useEffect(() => {

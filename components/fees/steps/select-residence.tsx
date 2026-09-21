@@ -154,9 +154,9 @@ export function SelectResidence({
               <div
                 key={OFF_CAMPUS_ID}
                 className={cn(
-                  "relative bg-white dark:bg-gray-900 border border-[#f5f5f5] dark:border-gray-800 rounded-[12px] overflow-hidden flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
+                  "relative bg-white dark:bg-gray-900 rounded-[12px] border border-[#f5f5f5] dark:border-gray-800 flex flex-col gap-3 p-3 transition-all cursor-pointer",
                   isSelected
-                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border border-[#003CBB] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
+                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
                     : "shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
                 )}
                 onClick={() => onSelect(OFF_CAMPUS_ID)}
@@ -166,7 +166,7 @@ export function SelectResidence({
                   alt="Off Campus Residence"
                   className="h-[120px] md:h-[182px] w-full"
                 />
-                <div className="flex flex-col gap-2 px-1">
+                <div className="flex flex-col gap-2">
                   <p className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 leading-tight truncate transition-colors">
                     Off Campus Residence
                   </p>
@@ -179,7 +179,7 @@ export function SelectResidence({
                   </button>
                 </div>
                 {isSelected && (
-                  <div className="absolute top-0 left-0 bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] p-1">
+                  <div className="absolute -top-px -left-px bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] pt-2 pl-2 pr-1.5 pb-1.5 z-10">
                     <div className="w-5 h-5 rounded-[4px] bg-[#ebf1ff] dark:bg-gray-900 flex items-center justify-center shadow-[inset_0px_2px_2px_0px_rgba(22,38,100,0.32)]">
                       <Check className="w-3 h-3 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
                     </div>
@@ -203,7 +203,7 @@ export function SelectResidence({
                 <div
                   key={hall.qresidenceid}
                   className={cn(
-                    "relative bg-white dark:bg-gray-900 rounded-[12px] border border-[#f5f5f5] dark:border-gray-800 overflow-hidden flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
+                    "relative bg-white dark:bg-gray-900 rounded-[12px] border border-[#f5f5f5] dark:border-gray-800 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
                     isSelected
                       ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
                       : "shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
@@ -254,7 +254,7 @@ export function SelectResidence({
 
                   {/* Selection Indicator */}
                   {isSelected && (
-                    <div className="absolute top-0 left-0 bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] p-1">
+                    <div className="absolute -top-px -left-px bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] pt-2 pl-2 pr-1.5 pb-1.5 z-10">
                       <div className="w-5 h-5 rounded-[4px] bg-[#ebf1ff] dark:bg-gray-900 flex items-center justify-center shadow-[inset_0px_2px_2px_0px_rgba(22,38,100,0.32)]">
                         <Check className="w-3 h-3 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
                       </div>
