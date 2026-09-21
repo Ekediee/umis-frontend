@@ -245,3 +245,44 @@ export function FinancialSuccessModal({
     />
   );
 }
+
+export interface ResetProgressModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  description?: React.ReactNode;
+}
+
+export function ResetProgressConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "Reset All Selections?",
+  description = "Are you sure you want to cancel your progress and reset all selections? This will clear your saved choices and return you to step 1.",
+}: ResetProgressModalProps) {
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      icon={AlertCircle}
+      iconBgClass="bg-red-50 dark:bg-red-950/30"
+      iconColorClass="text-red-600 dark:text-red-400"
+      title={title}
+      description={
+        typeof description === "string" ? (
+          <p className="text-[13.5px] leading-relaxed text-[#525866] dark:text-gray-300">
+            {description}
+          </p>
+        ) : (
+          description
+        )
+      }
+      primaryActionText="Yes, Reset All"
+      secondaryActionText="Keep Selections"
+      onPrimaryAction={onConfirm}
+      onSecondaryAction={onClose}
+    />
+  );
+}
+

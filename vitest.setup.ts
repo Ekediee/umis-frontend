@@ -26,7 +26,10 @@ const localStorageMock = (function () {
   }
 })()
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-  writable: true,
-})
+// Skipped in `@vitest-environment node` test files, where there is no window.
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+    writable: true,
+  })
+}

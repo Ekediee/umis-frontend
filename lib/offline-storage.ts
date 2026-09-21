@@ -1,6 +1,23 @@
 import { get, set, del } from 'idb-keyval';
 
 export const OFFLINE_COURSE_CART_KEY = 'offline-course-cart';
+export const OFFLINE_FINANCE_REG_KEY = 'offline-finance-registration';
+
+export interface CourseRegistrationDraft {
+  currentStep: number;
+  groups: string[];
+  courses: string[];
+  worshipCenter: string | null;
+}
+
+export interface FinanceRegistrationDraft {
+  currentStep: number;
+  selectedResidence: string | null;
+  selectedWorshipCenterId: string | null;
+  selectedMealPlan: string | null;
+  customAmount: number | null;
+  updatedAt?: number;
+}
 
 export async function saveOfflineDraft<T>(key: string, data: T): Promise<void> {
   try {

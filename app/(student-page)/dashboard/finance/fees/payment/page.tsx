@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,14 @@ import { FinancialConfirmationModal } from "@/components/fees/financial-confirma
 import { FinancialSuccessModal } from "@/components/registration/registration-status-modals";
 import { useUserData } from "@/contexts/user-data-context";
 import { useFinanceRegistration } from "@/hooks/use-finance-registration";
+import { useWalletStore } from "@/hooks/use-wallet-store";
+import {
+  saveOfflineDraft,
+  getOfflineDraft,
+  clearOfflineDraft,
+  OFFLINE_FINANCE_REG_KEY,
+  FinanceRegistrationDraft,
+} from "@/lib/offline-storage";
 
 function PaymentFlowContent() {
   const router = useRouter();
@@ -31,15 +39,21 @@ function PaymentFlowContent() {
 
   // Fetch all finance registration data from single endpoint /api/v1/student/finance-registration
   const { data: financeData, isLoading, error } = useFinanceRegistration();
-  
+  const { balance: storeWalletBalance, fetchBalance, setBalance: setStoreWalletBalance } = useWalletStore();
+  const walletBalance = storeWalletBalance ?? 0;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isPartialPaymentOpen, setIsPartialPaymentOpen] = useState(false);
   const [isMobilePaymentSelectionOpen, setIsMobilePaymentSelectionOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(0);
   const [customAmount, setCustomAmount] = useState<number | null>(null);
+  const [isRestored, setIsRestored] = useState(false);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
 
   // Derive dynamic student details from context
   const studentName = userData?.user_data?.student_name || userData?.entity_name || "Yakubu Onome Joy";
@@ -58,6 +72,73 @@ function PaymentFlowContent() {
   const [isFinancialConfirmOpen, setIsFinancialConfirmOpen] = useState(false);
   const [isFinancialSuccessOpen, setIsFinancialSuccessOpen] = useState(false);
 
+  // Restore draft from offline storage on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDraft() {
+      try {
+        const draft = await getOfflineDraft<FinanceRegistrationDraft>(OFFLINE_FINANCE_REG_KEY);
+        if (draft && isMounted) {
+          if (draft.selectedResidence !== undefined) setSelectedResidence(draft.selectedResidence);
+          if (draft.selectedWorshipCenterId !== undefined) setSelectedWorshipCenterId(draft.selectedWorshipCenterId);
+          if (draft.selectedMealPlan !== undefined) setSelectedMealPlan(draft.selectedMealPlan);
+          if (draft.customAmount !== undefined) setCustomAmount(draft.customAmount);
+          if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 4) {
+            setCurrentStep(draft.currentStep);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to restore finance draft:", err);
+      } finally {
+        if (isMounted) setIsRestored(true);
+      }
+    }
+    loadDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Save draft to offline storage on state changes
+  useEffect(() => {
+    if (!isRestored) return;
+    const stepToSave = currentStep <= 4 ? currentStep : 4;
+    const draft: FinanceRegistrationDraft = {
+      currentStep: stepToSave,
+      selectedResidence,
+      selectedWorshipCenterId,
+      selectedMealPlan,
+      customAmount,
+      updatedAt: Date.now(),
+    };
+    saveOfflineDraft(OFFLINE_FINANCE_REG_KEY, draft).catch((err) => {
+      console.warn("Failed to save finance draft:", err);
+    });
+  }, [isRestored, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
+
+  const hasProgress = useMemo(() => {
+    return (
+      currentStep > 1 ||
+      selectedResidence !== null ||
+      selectedWorshipCenterId !== null ||
+      selectedMealPlan !== null ||
+      customAmount !== null
+    );
+  }, [currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
+
+  const handleResetProgress = async () => {
+    try {
+      await clearOfflineDraft(OFFLINE_FINANCE_REG_KEY);
+    } catch (err) {
+      console.warn("Failed to clear finance draft:", err);
+    }
+    setSelectedResidence(null);
+    setSelectedWorshipCenterId(null);
+    setSelectedMealPlan(null);
+    setCustomAmount(null);
+    setCurrentStep(1);
+  };
+
   // Map worship centers to component shape
   const mappedWorshipCenters = useMemo(() => {
     if (!financeData?.worship_centers) return [];
@@ -69,7 +150,7 @@ function PaymentFlowContent() {
       declaredCapacity: wc.declared_capacity,
       spacesLeft: wc.space_left,
     }));
-  }, [financeData?.worship_centers]);
+  }, [financeData]);
 
   // Derived selected objects
   const selectedResidenceObj = useMemo(() => {
@@ -77,7 +158,7 @@ function PaymentFlowContent() {
       return null;
     }
     return financeData.residence.find((r) => String(r.qresidenceid) === selectedResidence) || null;
-  }, [selectedResidence, financeData?.residence]);
+  }, [selectedResidence, financeData]);
 
   const selectedWorshipCenterObj = useMemo(() => {
     if (!selectedWorshipCenterId || !financeData?.worship_centers) return null;
@@ -86,7 +167,7 @@ function PaymentFlowContent() {
         (wc) => String(wc.sabbath_class_id) === selectedWorshipCenterId
       ) || null
     );
-  }, [selectedWorshipCenterId, financeData?.worship_centers]);
+  }, [selectedWorshipCenterId, financeData]);
 
   const selectedMealTypeObj = useMemo(() => {
     if (!selectedMealPlan || !financeData?.meal_types) return null;
@@ -95,7 +176,7 @@ function PaymentFlowContent() {
         (m) => String(m.qselectionid) === selectedMealPlan || m.mealtype === selectedMealPlan
       ) || null
     );
-  }, [selectedMealPlan, financeData?.meal_types]);
+  }, [selectedMealPlan, financeData]);
 
   const totalSteps = 4;
 
@@ -187,7 +268,10 @@ function PaymentFlowContent() {
     // Simulate payment via wallet (2.5s delay)
     setTimeout(() => {
       setIsProcessing(false);
-      setWalletBalance((prev) => Math.max(0, prev - total));
+      setStoreWalletBalance(Math.max(0, walletBalance - total));
+      clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch((err) => {
+        console.warn("Failed to clear finance draft on pay:", err);
+      });
       
       router.push(
         `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=Wallet`
@@ -207,6 +291,8 @@ function PaymentFlowContent() {
           <MobileFlowHeader
             title={getStepTitle()}
             onProgressClick={() => setIsMobileSheetOpen(true)}
+            hasProgress={hasProgress}
+            onCancelProgress={handleResetProgress}
           />
         </div>
       )}
@@ -218,6 +304,8 @@ function PaymentFlowContent() {
             currentStep={currentStep}
             sessionLabel={sessionLabel}
             typeLabel={typeLabel}
+            hasProgress={hasProgress}
+            onCancelProgress={handleResetProgress}
           />
         </div>
       )}
@@ -350,7 +438,7 @@ function PaymentFlowContent() {
       <FundWalletModal
         isOpen={isFundWalletModalOpen}
         onClose={() => setIsFundWalletModalOpen(false)}
-        onSuccess={(amount) => setWalletBalance((prev) => prev + amount)}
+        onSuccess={(amount) => setStoreWalletBalance(walletBalance + amount)}
       />
 
       <FinancialConfirmationModal

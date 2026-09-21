@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
   getClassGroupsAction, 
@@ -18,7 +17,8 @@ import {
   saveOfflineDraft, 
   getOfflineDraft, 
   clearOfflineDraft, 
-  OFFLINE_COURSE_CART_KEY 
+  OFFLINE_COURSE_CART_KEY,
+  type CourseRegistrationDraft
 } from "@/lib/offline-storage";
 
 interface RegistrationContextType {
@@ -29,6 +29,8 @@ interface RegistrationContextType {
   getStepTitle: () => string;
   handleNext: () => void;
   handlePrevious: () => void;
+  hasProgress: boolean;
+  resetAllSelections: () => Promise<void>;
 
   // Step 1: Class Group States
   classGroups: ClassGroup[];
@@ -79,8 +81,6 @@ interface RegistrationContextType {
 export const RegistrationContext = createContext<RegistrationContextType | undefined>(undefined);
 
 export function RegistrationProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  
   // Outstanding payment configuration
   const [hasOutstandingPayment] = useState(false);
 
@@ -203,11 +203,23 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   // Load draft from Offline Storage on mount
   useEffect(() => {
     const loadDraft = async () => {
-      const draft = await getOfflineDraft<{ groups: string[]; courses: string[], worshipCenter: string | null }>(OFFLINE_COURSE_CART_KEY);
+      const draft = await getOfflineDraft<CourseRegistrationDraft>(OFFLINE_COURSE_CART_KEY);
       if (draft) {
         if (draft.groups && draft.groups.length > 0) setSelectedGroups(draft.groups);
         if (draft.courses && draft.courses.length > 0) setSelectedCourseIds(draft.courses);
         if (draft.worshipCenter) setSelectedWorshipCenterId(draft.worshipCenter);
+
+        // If user stopped at Step 2 or Step 3, load courses and advance step
+        if (draft.currentStep && draft.currentStep > 1 && draft.groups && draft.groups.length > 0) {
+          setCoursesLoading(true);
+          const coursesResult = await getCoursesAction(draft.groups);
+          if (!coursesResult.error && coursesResult.data?.courses) {
+            setCourses(coursesResult.data.courses);
+            setRawCourses(coursesResult.data.rawCourses ?? []);
+            setCurrentStep(draft.currentStep);
+          }
+          setCoursesLoading(false);
+        }
         toast.info("Offline draft loaded", { description: "Your previous selections have been restored." });
       }
     };
@@ -227,12 +239,17 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Save to draft whenever selectedGroups, selectedCourseIds, or selectedWorshipCenterId changes
+  // Save to draft whenever currentStep, selectedGroups, selectedCourseIds, or selectedWorshipCenterId changes
   useEffect(() => {
-    if (selectedGroups.length > 0 || selectedCourseIds.length > 0 || selectedWorshipCenterId !== null) {
-      saveOfflineDraft(OFFLINE_COURSE_CART_KEY, { groups: selectedGroups, courses: selectedCourseIds, worshipCenter: selectedWorshipCenterId });
+    if (selectedGroups.length > 0 || selectedCourseIds.length > 0 || selectedWorshipCenterId !== null || currentStep > 1) {
+      saveOfflineDraft<CourseRegistrationDraft>(OFFLINE_COURSE_CART_KEY, {
+        currentStep,
+        groups: selectedGroups,
+        courses: selectedCourseIds,
+        worshipCenter: selectedWorshipCenterId,
+      });
     }
-  }, [selectedGroups, selectedCourseIds, selectedWorshipCenterId]);
+  }, [currentStep, selectedGroups, selectedCourseIds, selectedWorshipCenterId]);
 
   // Actions
   const handleNext = async () => {
@@ -366,10 +383,26 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     (currentStep === 1 && (selectedGroups.length === 0 || coursesLoading)) ||
     (currentStep === 2 && selectedCourseIds.length === 0);
 
-  const nextLabel = 
-    currentStep === 1 ? "Select Courses" : 
-    currentStep === 2 ? "Summary" : 
-    "Submit Course Registration";
+  const nextLabel = currentStep === 3 ? "Submit" : "Next";
+
+  const hasProgress = 
+    selectedGroups.length > 0 || 
+    selectedCourseIds.length > 0 || 
+    selectedWorshipCenterId !== null || 
+    currentStep > 1;
+
+  const resetAllSelections = async () => {
+    await clearOfflineDraft(OFFLINE_COURSE_CART_KEY);
+    setSelectedGroups([]);
+    setSelectedCourseIds([]);
+    setSelectedWorshipCenterId(null);
+    setCourses([]);
+    setRawCourses([]);
+    setCurrentStep(1);
+    toast.success("Selections cleared", {
+      description: "Your course registration selections have been reset to step 1.",
+    });
+  };
 
   return (
     <RegistrationContext.Provider
@@ -380,6 +413,8 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
         getStepTitle,
         handleNext,
         handlePrevious,
+        hasProgress,
+        resetAllSelections,
         classGroups,
         hasManyClassOptions,
         classGroupsLoading,

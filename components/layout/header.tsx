@@ -10,11 +10,13 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
 import { useNotifications } from "@/components/providers/notification-provider";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
 import type { UMISResponse } from "@/lib/session";
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
+import { useRegistrationStore } from "@/hooks/use-registration-store";
+import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
 
 interface HeaderProps {
   initialUserData?: UMISResponse | null;
@@ -44,6 +46,18 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
     "";
 
 
+  const { semesterInfo, setSemesterInfo } = useRegistrationStore();
+
+  useEffect(() => {
+    if (!semesterInfo && pathname?.includes('/timetable')) {
+      getSemesterRegistrationStatusAction()
+        .then((res) => {
+          if (res?.data) setSemesterInfo(res.data);
+        })
+        .catch(() => {});
+    }
+  }, [semesterInfo, pathname, setSemesterInfo]);
+
   const getTitle = () => {
     if (pathname?.includes('/finance/receipt')) return "Payment";
     if (pathname?.includes('/finance/fees')) return "Financial Registration";
@@ -52,7 +66,40 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
     if (pathname?.includes('/registration')) return "Registration";
     if (pathname?.includes('/profile')) return "Profile";
     if (pathname?.includes('/notifications')) return "Notifications";
+    if (pathname?.includes('/timetable')) return "My Timetable";
     return "Dashboard";
+  };
+
+  const getDescription = () => {
+    if (pathname?.includes('/timetable')) {
+      const rawDept =
+        userData?.user_data?.department ||
+        userData?.user_data?.degree_name ||
+        "Computer Science";
+      const department = toTitleCase(rawDept);
+
+      let session = "2026 / 2027";
+      let semester = "First Semester";
+
+      if (semesterInfo?.semester) {
+        const parts = semesterInfo.semester.split(".");
+        if (parts[0]) {
+          const rawSession = parts[0].trim();
+          session = rawSession.includes("/")
+            ? rawSession.split("/").map((s) => s.trim()).join(" / ")
+            : rawSession;
+        }
+        if (parts[1]) {
+          if (parts[1] === "1") semester = "First Semester";
+          else if (parts[1] === "2") semester = "Second Semester";
+          else if (parts[1] === "3") semester = "Summer Semester";
+          else semester = `${parts[1]} Semester`;
+        }
+      }
+
+      return `${department} — ${session}, ${semester}`;
+    }
+    return null;
   };
 
   // Close bottom sheet on route change
@@ -74,7 +121,12 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
     <>
       {/* Desktop Header */}
       <header className="hidden md:flex h-[76px] border-b dark:border-gray-800 bg-white dark:bg-gray-900 items-center justify-between px-8 shrink-0 relative z-10 transition-colors duration-200">
-        <h2 className="text-[20px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{getTitle()}</h2>
+        <div className="flex flex-col">
+          <h2 className="text-[20px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{getTitle()}</h2>
+          {getDescription() && (
+            <p className="text-[14px] text-gray-500 dark:text-gray-400 mt-0.5">{getDescription()}</p>
+          )}
+        </div>
         <div className="flex items-center gap-5 text-gray-400 dark:text-gray-500">
           <ThemeToggle />
           <Link 
@@ -119,9 +171,16 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
         </div>
 
         {/* Center: Title */}
-        <h2 className="text-[17px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight absolute left-1/2 -translate-x-1/2 pointer-events-none">
-          {getTitle()}
-        </h2>
+        <div className="flex flex-col items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-none">
+          <h2 className="text-[17px] font-semibold text-gray-900 dark:text-gray-100 tracking-tight text-center">
+            {getTitle()}
+          </h2>
+          {getDescription() && (
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 text-center line-clamp-1 max-w-[200px]">
+              {getDescription()}
+            </p>
+          )}
+        </div>
 
         {/* Right: Bell + Three-Dot Menu */}
         <div className="flex items-center gap-1 z-10">

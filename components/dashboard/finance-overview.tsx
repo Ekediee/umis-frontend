@@ -1,6 +1,6 @@
 "use client";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
-import { Wallet, CheckCircle2, Flag, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Wallet, CheckCircle2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 export function FinanceOverview() {

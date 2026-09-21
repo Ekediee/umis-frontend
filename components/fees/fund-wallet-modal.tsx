@@ -9,15 +9,20 @@ import {
   initialisePaymentAction,
 } from "@/app/actions/payment";
 import type { PaymentMethod } from "@/app/actions/payment.types";
+import { recordWalletFundingEvent } from "@/lib/wallet-history";
 
-// ─── Static descriptions for known payment method codes ───────────────────────
-const GATEWAY_DESCRIPTIONS: Record<string, string> = {
-  FLW: "Secure payment processing for all African bank cards",
-  PYZ: "Instant confirmation via cards, USSD or Bank Transfer",
-  PYS: "Pay via cards, bank transfer or USSD",
+// ─── Connected Payment Channel ───────────────────────────────────────────────
+export const CONNECTED_PAYMENT_CHANNEL: PaymentMethod = {
+  code: "FLW",
+  provider_name: "Flutterwave",
+  image: "/flutterwave_symbol.svg.svg",
 };
 
-const GATEWAY_DEFAULT_DESCRIPTION = "Fast and secure payment gateway";
+const GATEWAY_DESCRIPTIONS: Record<string, string> = {
+  FLW: "Instant confirmation via cards, bank transfer & USSD",
+};
+
+const GATEWAY_DEFAULT_DESCRIPTION = "Instant confirmation via cards, bank transfer & USSD";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,8 +58,8 @@ export function FundWalletModal({
 }: FundWalletModalProps) {
   const [step, setStep] = useState<FundWalletStep>(initialStep);
   const [amount, setAmount] = useState("");
-  const [selectedMethodCode, setSelectedMethodCode] = useState<string | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [selectedMethodCode, setSelectedMethodCode] = useState<string | null>("FLW");
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([CONNECTED_PAYMENT_CHANNEL]);
   const [isLoadingMethods, setIsLoadingMethods] = useState(false);
   const [methodsError, setMethodsError] = useState<string | null>(null);
   const [isInitialisingPayment, setIsInitialisingPayment] = useState(false);
@@ -66,27 +71,38 @@ export function FundWalletModal({
   // Sync step when initialStep changes (e.g. parent opens modal at "success")
   useEffect(() => {
     if (isOpen) {
-      setStep(initialStep);
-      if (initialStep === "amount") {
-        setAmount("");
-        setSelectedMethodCode(null);
-        setPaymentMethods([]);
-        setMethodsError(null);
-        setInitialisationError(null);
-      }
+      const timer = setTimeout(() => {
+        setStep(initialStep);
+        if (initialStep === "amount") {
+          setAmount("");
+          setSelectedMethodCode("FLW");
+          setPaymentMethods([CONNECTED_PAYMENT_CHANNEL]);
+          setMethodsError(null);
+          setInitialisationError(null);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, initialStep]);
 
   // Trigger confetti celebration when opening at or transitioning to the "success" step
   useEffect(() => {
     if (isOpen && step === "success") {
-      setShowConfetti(true);
-      const timer = setTimeout(() => {
+      const t1 = setTimeout(() => {
+        setShowConfetti(true);
+      }, 0);
+      const t2 = setTimeout(() => {
         setShowConfetti(false);
       }, 5000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     } else {
-      setShowConfetti(false);
+      const t = setTimeout(() => {
+        setShowConfetti(false);
+      }, 0);
+      return () => clearTimeout(t);
     }
   }, [isOpen, step]);
 
@@ -120,23 +136,47 @@ export function FundWalletModal({
     setIsLoadingMethods(true);
     setMethodsError(null);
 
-    const result = await getPaymentRequirementsAction();
+    try {
+      const result = await getPaymentRequirementsAction();
 
-    setIsLoadingMethods(false);
+      // Filter strictly for the connected payment channel (Flutterwave)
+      let connectedMethods: PaymentMethod[] = [];
+      if (result.success && result.data && Array.isArray(result.data.payment_methods)) {
+        const matched = result.data.payment_methods.filter(
+          (m) =>
+            m.code?.toUpperCase() === "FLW" ||
+            m.provider_name?.toLowerCase().includes("flutterwave")
+        );
+        if (matched.length > 0) {
+          connectedMethods = matched.map((m) => ({
+            ...m,
+            image: m.image || "/flutterwave_symbol.svg.svg",
+          }));
+        }
+      }
 
-    if (!result.success || !result.data) {
-      setMethodsError(result.error ?? "Failed to load payment options.");
-      return;
+      // Default to official connected channel configuration
+      if (connectedMethods.length === 0) {
+        connectedMethods = [CONNECTED_PAYMENT_CHANNEL];
+      }
+
+      setPaymentMethods(connectedMethods);
+      setSelectedMethodCode(connectedMethods[0].code);
+      setInitialisationError(null);
+      setStep("gateway");
+    } catch {
+      // Graceful fallback to the connected payment channel without blocking the student
+      setPaymentMethods([CONNECTED_PAYMENT_CHANNEL]);
+      setSelectedMethodCode(CONNECTED_PAYMENT_CHANNEL.code);
+      setInitialisationError(null);
+      setStep("gateway");
+    } finally {
+      setIsLoadingMethods(false);
     }
-
-    setPaymentMethods(result.data.payment_methods);
-    setSelectedMethodCode(null);
-    setInitialisationError(null);
-    setStep("gateway");
   };
 
   const handlePay = async () => {
-    if (!selectedMethodCode) return;
+    const channelCode = selectedMethodCode || CONNECTED_PAYMENT_CHANNEL.code;
 
     setIsInitialisingPayment(true);
     setInitialisationError(null);
@@ -149,7 +189,7 @@ export function FundWalletModal({
     const result = await initialisePaymentAction({
       amount: parsedAmount,
       currency: "NGN",
-      payment_method: selectedMethodCode,
+      payment_method: channelCode,
       wallet_payment: true,
       redirect_url: redirectUrl,
     });
@@ -166,7 +206,17 @@ export function FundWalletModal({
   };
 
   const handleComplete = () => {
-    onSuccess(successAmount ?? parsedAmount);
+    const finalAmount = successAmount ?? parsedAmount;
+    if (finalAmount > 0) {
+      recordWalletFundingEvent({
+        reference: `FLW-${Date.now().toString(36).toUpperCase()}`,
+        amount: finalAmount,
+        gateway: "Flutterwave",
+        status: "successful",
+        description: "Wallet Credit • Online Gateway Settlement",
+      }).catch((err) => console.warn("Failed to record wallet event:", err));
+    }
+    onSuccess(finalAmount);
     onClose();
   };
 
@@ -235,12 +285,12 @@ export function FundWalletModal({
               <div className="flex items-start justify-between p-6 pb-0 shrink-0">
                 <div>
                   <h3 className="text-[18px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {step === "amount" ? "Fund Your Wallet" : "Select Payment Method"}
+                    {step === "amount" ? "Fund Your Wallet" : "Payment Channel"}
                   </h3>
                   <p className="text-[14px] text-[#525866] dark:text-gray-400 mt-1 transition-colors">
                     {step === "amount"
                       ? "Enter the amount you wish to add to your wallet."
-                      : "Choose how you want to pay."}
+                      : "Secure payment powered by Babcock University's connected payment gateway."}
                   </p>
                 </div>
                 <button
@@ -322,11 +372,10 @@ export function FundWalletModal({
                 {step === "gateway" && (
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-3">
-                      {paymentMethods.map((method, index) => {
+                      {paymentMethods.map((method) => {
                         const isSelected = selectedMethodCode === method.code;
                         const description =
                           GATEWAY_DESCRIPTIONS[method.code] ?? GATEWAY_DEFAULT_DESCRIPTION;
-                        const isFirst = index === 0;
 
                         return (
                           <button
@@ -369,11 +418,9 @@ export function FundWalletModal({
                                 <span className="text-[14px] font-bold text-[#0a0d14] dark:text-gray-100">
                                   {method.provider_name}
                                 </span>
-                                {isFirst && (
-                                  <span className="px-2 py-0.5 bg-[#10b981] text-white text-[9px] font-bold rounded-[4px] uppercase">
-                                    Recommended
-                                  </span>
-                                )}
+                                <span className="px-2 py-0.5 bg-[#10b981] text-white text-[9px] font-bold rounded-[4px] uppercase tracking-wider">
+                                  Connected Channel
+                                </span>
                               </div>
                               <span className="text-[12px] text-[#525866] dark:text-gray-400 mt-0.5 block">
                                 {description}

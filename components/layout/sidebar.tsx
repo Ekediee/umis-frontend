@@ -16,6 +16,7 @@ import {
   LogOut,
   MoreVertical,
   KeyRound,
+  CalendarCheck,
 } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -35,6 +36,7 @@ const mainNavItems = [
   { title: "Academic Details", href: "/academic-details", icon: BookOpen },
   { title: "Registration", href: "/registration", icon: ListTodo },
   { title: "Finance", href: "/dashboard/finance", icon: Wallet },
+  { title: "Timetable", href: "/dashboard/timetable", icon: CalendarCheck },
   { title: "My Profile", href: "/profile", icon: User },
 ];
 

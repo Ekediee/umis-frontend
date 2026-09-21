@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { Info, ChevronDown, ChevronRight, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,11 @@ import { fundWalletAction } from "@/app/actions/payment";
 import { useWalletStore } from "@/hooks/use-wallet-store";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
+import { 
+  getWalletFundingHistory, 
+  recordWalletFundingEvent, 
+  WalletFundingRecord 
+} from "@/lib/wallet-history";
 
 const paymentHistoryData = [
   {
@@ -55,23 +60,42 @@ function FinancePageContent() {
   const searchParams = useSearchParams();
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
-  const { balance, rawBalance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
+  const { balance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [fundWalletStep, setFundWalletStep] = useState<FundWalletStep>("amount");
   const [showWalletBalance, setShowWalletBalance] = useState(true);
   const [successAmount, setSuccessAmount] = useState<number | undefined>(undefined);
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
+  const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "wallet">("payment");
+  const [walletFundingHistory, setWalletFundingHistory] = useState<WalletFundingRecord[]>([]);
+
+  const loadWalletHistory = useCallback(async () => {
+    try {
+      const history = await getWalletFundingHistory();
+      setWalletFundingHistory(history);
+    } catch (err) {
+      console.warn("Failed to load wallet funding history:", err);
+    }
+  }, []);
 
   useEffect(() => {
     getUserData().then(setUserData);
     fetchBalance();
+    getWalletFundingHistory().then((history) => {
+      setWalletFundingHistory(history);
+    }).catch((err) => {
+      console.warn("Failed to load wallet funding history:", err);
+    });
   }, [fetchBalance]);
 
   // Open modal when ?action=fund is in the URL
   useEffect(() => {
     if (searchParams.get("action") === "fund") {
-      setFundWalletStep("amount");
-      setIsFundWalletModalOpen(true);
+      const timer = setTimeout(() => {
+        setFundWalletStep("amount");
+        setIsFundWalletModalOpen(true);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
@@ -97,6 +121,7 @@ function FinancePageContent() {
       fundWalletAction(txRef).then((result) => {
         if (result.success) {
           const displayMsg = result.message || message || "Wallet funded successfully!";
+          const fundedAmt = callbackAmount && callbackAmount > 0 ? callbackAmount : 500000;
           if (callbackAmount && callbackAmount > 0) {
             setSuccessAmount(callbackAmount);
           } else {
@@ -107,6 +132,19 @@ function FinancePageContent() {
           setIsFundWalletModalOpen(true);
           // Refetch fresh balance from backend
           fetchBalance();
+
+          // Record wallet funding transaction event
+          recordWalletFundingEvent({
+            reference: String(txRef),
+            amount: fundedAmt,
+            gateway: "Flutterwave",
+            status: "successful",
+            description: "Wallet Credit • Online Checkout Settlement",
+          }).then(() => {
+            loadWalletHistory();
+          }).catch((err) => {
+            console.warn("Failed to record wallet callback event:", err);
+          });
         } else {
           toast.error(result.error || "Wallet funding failed. Please contact support.");
         }
@@ -396,99 +434,283 @@ function FinancePageContent() {
 
 
 
-      {/* Payment History */}
-      <div className="mt-4">
-        <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-6">Payment History</h3>
+      {/* Transaction & Funding History Section */}
+      <div className="mt-4 flex flex-col gap-6">
+        {/* Tab Switcher Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
+          <div className="flex items-center gap-2 p-1.5 bg-[#f6f8fa] dark:bg-gray-800/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 w-fit">
+            <button
+              type="button"
+              onClick={() => setActiveHistoryTab("payment")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold transition-all duration-200",
+                activeHistoryTab === "payment"
+                  ? "bg-white dark:bg-gray-900 text-[#003cbb] dark:text-[#4d82ff] shadow-xs"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              )}
+            >
+              <span>Payment History</span>
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] font-bold",
+                activeHistoryTab === "payment"
+                  ? "bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]"
+                  : "bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+              )}>
+                {paymentHistoryData.length}
+              </span>
+            </button>
 
-        {/* Desktop View: Table */}
-        <div className="hidden md:block w-full overflow-x-auto">
-          <div className="min-w-[800px]">
-            {/* Table Header */}
-            <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 border-b-0 transition-colors">
-              <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Semester</div>
-              <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Amount to pay</div>
-              <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Amount paid</div>
-              <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Deficit/Surplus</div>
-              <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400 text-center">View Invoice</div>
-              <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400 text-center">Download Invoice</div>
+            <button
+              type="button"
+              onClick={() => setActiveHistoryTab("wallet")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold transition-all duration-200",
+                activeHistoryTab === "wallet"
+                  ? "bg-white dark:bg-gray-900 text-[#003cbb] dark:text-[#4d82ff] shadow-xs"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              )}
+            >
+              <span>Wallet Funding History</span>
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] font-bold",
+                activeHistoryTab === "wallet"
+                  ? "bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]"
+                  : "bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+              )}>
+                {walletFundingHistory.length}
+              </span>
+            </button>
+          </div>
+
+          <p className="text-[12px] text-gray-500 dark:text-gray-400">
+            {activeHistoryTab === "payment"
+              ? "Official semester invoice records and tuition clearance receipts"
+              : "Verifiable student digital wallet credits and top-up receipts"}
+          </p>
+        </div>
+
+        {/* TAB 1: Payment History */}
+        {activeHistoryTab === "payment" && (
+          <div>
+            {/* Desktop View: Table */}
+            <div className="hidden md:block w-full overflow-x-auto">
+              <div className="min-w-[800px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 border-b-0 transition-colors">
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Semester</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Amount to pay</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Amount paid</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Deficit/Surplus</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400 text-center">View Invoice</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400 text-center">Download Invoice</div>
+                </div>
+
+                {/* Table Rows */}
+                <div className="flex flex-col gap-2 mt-2">
+                  {paymentHistoryData.map((row) => (
+                    <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                      <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
+                        {row.year}<span className="text-orange-500">.{row.semesterId}</span>
+                      </div>
+                      <div className="text-[14px] text-gray-600 dark:text-gray-300">{row.amountToPay}</div>
+                      <div className="text-[14px] text-gray-600 dark:text-gray-300">{row.amountPaid}</div>
+                      <div>
+                        <span className={`px-3 py-1.5 rounded-full text-[13px] font-bold transition-colors ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] dark:bg-[#D92D20]/15 text-[#D92D20] dark:text-[#f87171]' : 'bg-[#ECFDF3] dark:bg-[#12B76A]/15 text-[#12B76A] dark:text-[#4ade80]'}`}>
+                          {row.statusValue}
+                        </span>
+                      </div>
+                      <div className="flex justify-center">
+                        <Link href="/dashboard/finance/receipt" className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </div>
+                      <div className="flex justify-center">
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Table Rows */}
-            <div className="flex flex-col gap-2 mt-2">
+            {/* Mobile View: Cards */}
+            <div className="md:hidden flex flex-col gap-4">
               {paymentHistoryData.map((row) => (
-                <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
-                  <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
-                    {row.year}<span className="text-orange-500">.{row.semesterId}</span>
+                <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 shadow-sm transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-1">{row.title}</h4>
+                      <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
+                        {row.year}<span className="text-orange-500">.{row.semesterId}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link href="/dashboard/finance/receipt" className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <Eye className="w-5 h-5" />
+                      </Link>
+                      <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <Download className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-[14px] text-gray-600 dark:text-gray-300">{row.amountToPay}</div>
-                  <div className="text-[14px] text-gray-600 dark:text-gray-300">{row.amountPaid}</div>
-                  <div>
-                    <span className={`px-3 py-1.5 rounded-full text-[13px] font-bold transition-colors ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] dark:bg-[#D92D20]/15 text-[#D92D20] dark:text-[#f87171]' : 'bg-[#ECFDF3] dark:bg-[#12B76A]/15 text-[#12B76A] dark:text-[#4ade80]'}`}>
-                      {row.statusValue}
-                    </span>
-                  </div>
-                  <div className="flex justify-center">
-                    <Link href="/dashboard/finance/receipt" className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <Eye className="w-4 h-4" />
-                    </Link>
-                  </div>
-                  <div className="flex justify-center">
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <Download className="w-4 h-4" />
-                    </button>
+
+                  <div className="bg-[#F8F9FB] dark:bg-gray-950 rounded-[16px] p-4 mt-5 flex flex-col gap-3 transition-colors">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[14px] text-gray-500 dark:text-gray-400">Amount to pay</span>
+                      <span className="bg-white dark:bg-gray-900 rounded-full px-4 py-1.5 font-bold text-[#1E293B] dark:text-gray-100 text-[15px] border dark:border-gray-850">
+                        {row.amountToPay}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[14px] text-gray-500 dark:text-gray-400">Amount paid</span>
+                      <span className="bg-white dark:bg-gray-900 rounded-full px-4 py-1.5 font-bold text-[#1E293B] dark:text-gray-100 text-[15px] border dark:border-gray-850">
+                        {row.amountPaid}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-[14px] text-gray-500 dark:text-gray-400">
+                        {row.statusType === 'deficit' ? 'Deficit:' : 'Surplus:'}
+                      </span>
+                      <span className={`rounded-full px-4 py-1.5 font-bold text-[15px] transition-colors ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] dark:bg-[#D92D20]/15 text-[#D92D20] dark:text-[#f87171]' : 'bg-[#ECFDF3] dark:bg-[#12B76A]/15 text-[#12B76A] dark:text-[#4ade80]'}`}>
+                        {row.statusValue}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Mobile View: Cards */}
-        <div className="md:hidden flex flex-col gap-4">
-          {paymentHistoryData.map((row) => (
-            <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 shadow-sm transition-colors">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-1">{row.title}</h4>
-                  <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
-                    {row.year}<span className="text-orange-500">.{row.semesterId}</span>
-                  </div>
+        {/* TAB 2: Wallet Funding History */}
+        {activeHistoryTab === "wallet" && (
+          <div>
+            {/* Desktop View: Table */}
+            <div className="hidden md:block w-full overflow-x-auto">
+              <div className="min-w-[800px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 border-b-0 transition-colors">
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Reference</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Date &amp; Time</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Amount Funded</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Payment Channel</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Status</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400 text-center">Receipt Actions</div>
                 </div>
-                <div className="flex gap-2">
-                  <Link href="/dashboard/finance/receipt" className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <Eye className="w-5 h-5" />
-                  </Link>
-                  <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <Download className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
 
-              <div className="bg-[#F8F9FB] dark:bg-gray-950 rounded-[16px] p-4 mt-5 flex flex-col gap-3 transition-colors">
-                <div className="flex justify-between items-center">
-                  <span className="text-[14px] text-gray-500 dark:text-gray-400">Amount to pay</span>
-                  <span className="bg-white dark:bg-gray-900 rounded-full px-4 py-1.5 font-bold text-[#1E293B] dark:text-gray-100 text-[15px] border dark:border-gray-850">
-                    {row.amountToPay}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[14px] text-gray-500 dark:text-gray-400">Amount paid</span>
-                  <span className="bg-white dark:bg-gray-900 rounded-full px-4 py-1.5 font-bold text-[#1E293B] dark:text-gray-100 text-[15px] border dark:border-gray-850">
-                    {row.amountPaid}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-[14px] text-gray-500 dark:text-gray-400">
-                    {row.statusType === 'deficit' ? 'Deficit:' : 'Surplus:'}
-                  </span>
-                  <span className={`rounded-full px-4 py-1.5 font-bold text-[15px] transition-colors ${row.statusType === 'deficit' ? 'bg-[#FEE4E2] dark:bg-[#D92D20]/15 text-[#D92D20] dark:text-[#f87171]' : 'bg-[#ECFDF3] dark:bg-[#12B76A]/15 text-[#12B76A] dark:text-[#4ade80]'}`}>
-                    {row.statusValue}
-                  </span>
+                {/* Table Rows */}
+                <div className="flex flex-col gap-2 mt-2">
+                  {walletFundingHistory.length === 0 ? (
+                    <div className="p-8 text-center bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400">
+                      No wallet funding transactions recorded yet.
+                    </div>
+                  ) : (
+                    walletFundingHistory.map((row) => (
+                      <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                        <div className="font-mono text-[13.5px] font-bold text-gray-900 dark:text-gray-100 truncate">
+                          {row.reference}
+                        </div>
+                        <div className="text-[13px] text-gray-600 dark:text-gray-300">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{row.date}</p>
+                          <p className="text-[11px] text-gray-400 dark:text-gray-500">{row.time}</p>
+                        </div>
+                        <div className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400">
+                          {row.formattedAmount}
+                        </div>
+                        <div>
+                          <span className="text-[12px] font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-lg border border-gray-200/60 dark:border-gray-700">
+                            {row.gateway}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="px-3 py-1.5 rounded-full text-[12px] font-bold bg-[#ECFDF3] dark:bg-[#12B76A]/15 text-[#12B76A] dark:text-[#4ade80] border border-[#D1FADF]/60 dark:border-[#12B76A]/20">
+                            Successful
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            href={`/dashboard/finance/receipt?type=wallet&ref=${encodeURIComponent(row.reference)}&amount=${row.amount}&gateway=${encodeURIComponent(row.gateway)}&date=${encodeURIComponent(row.date)}&time=${encodeURIComponent(row.time)}`}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            title="View Receipt"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <Link
+                            href={`/dashboard/finance/receipt?type=wallet&ref=${encodeURIComponent(row.reference)}&amount=${row.amount}&gateway=${encodeURIComponent(row.gateway)}&date=${encodeURIComponent(row.date)}&time=${encodeURIComponent(row.time)}&action=download`}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            title="Download Receipt PDF"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Mobile View: Wallet Funding Cards */}
+            <div className="md:hidden flex flex-col gap-4">
+              {walletFundingHistory.length === 0 ? (
+                <div className="p-6 text-center bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400">
+                  No wallet funding transactions recorded yet.
+                </div>
+              ) : (
+                walletFundingHistory.map((row) => (
+                  <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 shadow-sm transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Top-up Ref</span>
+                        <h4 className="font-mono text-[15px] font-bold text-gray-900 dark:text-gray-100 mb-0.5">{row.reference}</h4>
+                        <p className="text-[12px] text-gray-500 dark:text-gray-400">{row.date} • {row.time}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/dashboard/finance/receipt?type=wallet&ref=${encodeURIComponent(row.reference)}&amount=${row.amount}&gateway=${encodeURIComponent(row.gateway)}&date=${encodeURIComponent(row.date)}&time=${encodeURIComponent(row.time)}`}
+                          className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          title="View Receipt"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/finance/receipt?type=wallet&ref=${encodeURIComponent(row.reference)}&amount=${row.amount}&gateway=${encodeURIComponent(row.gateway)}&date=${encodeURIComponent(row.date)}&time=${encodeURIComponent(row.time)}&action=download`}
+                          className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          title="Download Receipt"
+                        >
+                          <Download className="w-5 h-5" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#F8F9FB] dark:bg-gray-950 rounded-[16px] p-4 mt-4 flex flex-col gap-3 transition-colors">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[14px] text-gray-500 dark:text-gray-400">Amount Funded</span>
+                        <span className="bg-white dark:bg-gray-900 rounded-full px-4 py-1.5 font-bold text-emerald-600 dark:text-emerald-400 text-[15px] border dark:border-gray-850">
+                          {row.formattedAmount}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[14px] text-gray-500 dark:text-gray-400">Payment Channel</span>
+                        <span className="text-[13px] font-semibold text-gray-800 dark:text-gray-200">
+                          {row.gateway}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-[14px] text-gray-500 dark:text-gray-400">Status</span>
+                        <span className="rounded-full px-3 py-1 font-bold text-[13px] bg-[#ECFDF3] dark:bg-[#12B76A]/15 text-[#12B76A] dark:text-[#4ade80]">
+                          Successful
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <FundWalletModal
@@ -501,6 +723,7 @@ function FinancePageContent() {
         }}
         onSuccess={() => {
           fetchBalance();
+          loadWalletHistory();
         }}
         initialStep={fundWalletStep}
         successAmount={successAmount}

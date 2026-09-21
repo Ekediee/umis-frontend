@@ -8,22 +8,65 @@ import { Button } from "@/components/ui/button";
 import { loginAction } from "@/app/actions/auth";
 import { clearAuthExpiredFlag } from "@/lib/auth-cleanup";
 import { toast } from "sonner";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { SSO_ERROR_MESSAGES, isSsoErrorCode, type SsoErrorCode } from "@/lib/auth/sso-errors";
 
-function LoginFormInner() {
+interface LoginFormProps {
+  /** Show "Sign in with your Babcock email". Decided on the server from env config. */
+  ssoEnabled?: boolean;
+}
+
+function LoginFormInner({ ssoEnabled = false }: LoginFormProps) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSsoRedirecting, setIsSsoRedirecting] = useState(false);
+  const [ssoError, setSsoError] = useState<SsoErrorCode | null>(null);
 
   const reason = searchParams.get("reason");
   const isSessionExpired = reason === "idle_timeout" || reason === "session_expired";
+  const ssoErrorParam = searchParams.get("sso_error");
+  const ssoErrorMessage = ssoError ? SSO_ERROR_MESSAGES[ssoError] : null;
+
+  // Google SSO failures come back as /?sso_error=<code>. Copy a known code into
+  // state (adjusting state during render, as React recommends for values derived
+  // from props) so the banner survives the URL cleanup below.
+  const [seenSsoErrorParam, setSeenSsoErrorParam] = useState<string | null>(null);
+  if (ssoErrorParam && ssoErrorParam !== seenSsoErrorParam) {
+    setSeenSsoErrorParam(ssoErrorParam);
+    if (isSsoErrorCode(ssoErrorParam)) setSsoError(ssoErrorParam);
+  }
 
   useEffect(() => {
     // Clear residual expiration flags on login page
     clearAuthExpiredFlag();
   }, []);
 
+  useEffect(() => {
+    // Drop the param so a refresh or shared link doesn't replay the error.
+    if (!ssoErrorParam) return;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("sso_error");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      // Non-critical: the banner still shows.
+    }
+  }, [ssoErrorParam]);
+
+  useEffect(() => {
+    // Pressing Back from Google can restore this page from the bfcache with the
+    // "Redirecting..." state still set; reset it so the form is usable again.
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) setIsSsoRedirecting(false);
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSsoRedirecting) return;
     const formData = new FormData(event.currentTarget);
 
     startTransition(async () => {
@@ -49,6 +92,19 @@ function LoginFormInner() {
           <div>
             <span className="font-semibold block text-amber-950">Session Expired</span>
             You were automatically signed out after 30 minutes of inactivity. Please log in again to continue.
+          </div>
+        </div>
+      )}
+      {/* Google SSO failure banner */}
+      {ssoErrorMessage && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200/80 rounded-xl text-red-900 text-[13px] leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <ShieldAlert className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold block text-red-950">Google sign-in failed</span>
+            {ssoErrorMessage}
           </div>
         </div>
       )}
@@ -120,7 +176,7 @@ function LoginFormInner() {
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || isSsoRedirecting}
         className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70 disabled:cursor-not-allowed"
       >
         {isPending ? (
@@ -132,14 +188,32 @@ function LoginFormInner() {
           "Login"
         )}
       </Button>
+
+      {/* Google SSO (Babcock accounts only — enforced server-side) */}
+      {ssoEnabled && (
+        <>
+          <div className="flex items-center gap-3" role="separator">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-[12px] lg:text-[13px] text-gray-400 font-medium uppercase tracking-wide">or</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+          <GoogleSignInButton
+            pending={isSsoRedirecting}
+            onStart={() => {
+              setSsoError(null);
+              setIsSsoRedirecting(true);
+            }}
+          />
+        </>
+      )}
     </form>
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ ssoEnabled = false }: LoginFormProps) {
   return (
     <Suspense fallback={<div className="h-64 animate-pulse bg-gray-50 rounded-2xl" />}>
-      <LoginFormInner />
+      <LoginFormInner ssoEnabled={ssoEnabled} />
     </Suspense>
   );
 }
