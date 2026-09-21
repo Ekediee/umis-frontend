@@ -25,9 +25,22 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
     }, [semester_gpa]);
 
     const effectiveSemGpa = semester_gpa ?? fetchedSemGpa;
-    const mounted = mountedCgpa && mountedSemesterGpa;
 
-    if (!mounted) return null;
+    // mountedCgpa / mountedSemesterGpa become true after localStorage is read.
+    // We no longer do an early `return null` here because that was hiding the
+    // Level card (which has no localStorage dependency) during hydration.
+    // Instead, each GPA tile falls back to "****" until mounted.
+    const cgpaValue = !mountedCgpa
+        ? "****"
+        : showCgpa
+            ? (cgpa != null ? (typeof cgpa === "number" ? cgpa.toFixed(2) : cgpa) : "—")
+            : "****";
+
+    const semGpaValue = !mountedSemesterGpa
+        ? "****"
+        : showSemesterGpa
+            ? (effectiveSemGpa != null ? (typeof effectiveSemGpa === "number" ? effectiveSemGpa.toFixed(2) : effectiveSemGpa) : "—")
+            : "****";
 
     return (
         <div className="w-full flex flex-col gap-4">
@@ -36,16 +49,18 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
                 <div className="bg-[#f6f8fa] dark:bg-gray-800 rounded-[20px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] relative transition-colors duration-200">
                     <div className="flex items-center gap-3 justify-between md:gap-5 w-full">
                         <span className="text-[24px] md:text-[28px] font-black text-[#253ea7] dark:text-[#4d82ff] leading-none">
-                            {showCgpa ? (cgpa != null ? (typeof cgpa === "number" ? cgpa.toFixed(2) : cgpa) : "—") : "****"}
+                            {cgpaValue}
                         </span>
-                        <button
-                            type="button"
-                            onClick={toggleCgpa}
-                            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
-                            aria-label={showCgpa ? "Hide CGPA" : "Show CGPA"}
-                        >
-                            {showCgpa ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                        </button>
+                        {mountedCgpa && (
+                            <button
+                                type="button"
+                                onClick={toggleCgpa}
+                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
+                                aria-label={showCgpa ? "Hide CGPA" : "Show CGPA"}
+                            >
+                                {showCgpa ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                            </button>
+                        )}
                     </div>
                     <span className="text-[12px] font-normal text-[#4a5565] dark:text-gray-400 mt-1">CGPA</span>
                 </div>
@@ -54,21 +69,23 @@ const GPAMetric = ({ cgpa, semester_gpa, current_level }: AcademicProgressProps)
                 <div className="bg-[#f6f8fa] dark:bg-gray-800 rounded-[20px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] relative transition-colors duration-200">
                     <div className="flex items-center gap-3 justify-between md:gap-5 w-full">
                         <span className="text-[24px] md:text-[28px] font-black text-[#2d9f75] dark:text-[#34d399] leading-none">
-                            {showSemesterGpa ? (effectiveSemGpa != null ? (typeof effectiveSemGpa === "number" ? effectiveSemGpa.toFixed(2) : effectiveSemGpa) : "—") : "****"}
+                            {semGpaValue}
                         </span>
-                        <button
-                            type="button"
-                            onClick={toggleSemesterGpa}
-                            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
-                            aria-label={showSemesterGpa ? "Hide Semester GPA" : "Show Semester GPA"}
-                        >
-                            {showSemesterGpa ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                        </button>
+                        {mountedSemesterGpa && (
+                            <button
+                                type="button"
+                                onClick={toggleSemesterGpa}
+                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
+                                aria-label={showSemesterGpa ? "Hide Semester GPA" : "Show Semester GPA"}
+                            >
+                                {showSemesterGpa ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                            </button>
+                        )}
                     </div>
                     <span className="text-[12px] font-normal text-[#4a5565] dark:text-gray-400 mt-1">Semester GPA</span>
                 </div>
 
-                {/* CURRENT LEVEL */}
+                {/* CURRENT LEVEL — always rendered; no localStorage dependency */}
                 <div className="col-span-2 md:col-span-1 bg-[#f6f8fa] dark:bg-gray-800 rounded-[20px] p-4 md:p-5 flex flex-col items-start justify-center h-[70px] md:h-[80px] transition-colors duration-200">
                     <span className="text-[24px] md:text-[28px] font-black text-[#0a0d14] dark:text-gray-100 leading-none">
                         {current_level ?? "—"}

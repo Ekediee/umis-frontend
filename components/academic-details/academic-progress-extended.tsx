@@ -1,27 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TrendingUp, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import GPAMetric from "@/components/dashboard/gpa-metric";
 import { GPAWhatIfSimulator } from "@/components/academic-details/gpa-what-if-simulator";
 import { useUserData } from "@/contexts/user-data-context";
-import { getStudentProfileAction } from "@/app/actions/user";
-import type { UMISResponse } from "@/lib/session";
 
 export function AcademicProgressExtended() {
-  const contextUserData = useUserData();
-  const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
 
-  useEffect(() => {
-    getStudentProfileAction().then((res) => {
-      if (res) setProfileData(res);
-    });
-  }, []);
-
-  const userData = profileData ?? contextUserData;
+  // The layout already fetches the profile server-side and populates
+  // UserDataProvider — no second fetch needed here. A duplicate
+  // getStudentProfileAction() call was racing against the context and
+  // overwriting current_level with null when the API shape differed.
+  const userData = useUserData();
   const cgpa =
     userData?.user_data?.cummulative_gpa ??
     userData?.user_data?.academic_information?.cummulative_gpa ??
