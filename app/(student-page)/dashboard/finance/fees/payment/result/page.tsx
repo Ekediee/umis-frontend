@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, X, ChevronRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { clearOfflineDraft, OFFLINE_FINANCE_REG_KEY } from "@/lib/offline-storage";
+import { getUserData } from "@/app/actions/user";
+import { UMISResponse } from "@/lib/session";
 
 function formatPrice(price: number): string {
   return `₦${price.toLocaleString()}.00`;
@@ -17,7 +20,7 @@ function PaymentResultContent() {
   const status = searchParams.get("status") || "success";
   const ref = searchParams.get("ref") || "PAY-728910-ARTH";
   const amount = parseFloat(searchParams.get("amount") || "647000");
-  const gateway = searchParams.get("gateway") || "Payzeep";
+  const gateway = searchParams.get("gateway") || "Flutterwave";
   const isSuccess = status === "success";
   
   const getGatewayLogo = () => {
@@ -28,9 +31,23 @@ function PaymentResultContent() {
   };
   
   const [showConfetti, setShowConfetti] = useState(isSuccess);
+  const [userData, setUserData] = useState<UMISResponse | null>(null);
+
+  useEffect(() => {
+    getUserData().then(setUserData);
+  }, []);
+
+  const studentName = 
+    userData?.user_data?.personal_information?.student_name ||
+    userData?.user_data?.student_name ||
+    userData?.entity_name ||
+    "Loading...";
 
   useEffect(() => {
     if (isSuccess) {
+      clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch((err) => {
+        console.warn("Failed to clear finance draft on result page:", err);
+      });
       const timer = setTimeout(() => {
         setShowConfetti(false);
       }, 4000); // Plays for ~4 seconds (approx 2 loops)
@@ -38,8 +55,8 @@ function PaymentResultContent() {
     }
   }, [isSuccess]);
 
-  const handleContinueToDashboard = () => {
-    router.push("/dashboard");
+  const handleContinueToFinance = () => {
+    router.push("/dashboard/finance");
   };
 
   const handleDownloadReceipt = () => {
@@ -75,7 +92,7 @@ function PaymentResultContent() {
       <div className="relative z-10 w-full max-w-[560px] bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-6 md:p-10 flex flex-col items-center overflow-hidden transition-all duration-200">
         {/* Background Watermark Image */}
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.04] z-0 transition-opacity">
-          <img src="/images/BU Torch.png" alt="" className="w-[80%] object-contain" />
+          <Image src="/images/BU Torch.png" alt="BU Torch Watermark" width={400} height={400} className="w-[80%] object-contain" priority />
         </div>
 
         <div className="relative z-10 w-full flex flex-col items-center">
@@ -121,7 +138,7 @@ function PaymentResultContent() {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[12px] text-[#868c98] dark:text-gray-400 transition-colors">Student Name</span>
                   <span className="text-[14px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    Yakubu Onome Joy
+                    {studentName}
                   </span>
                 </div>
 
@@ -184,10 +201,10 @@ function PaymentResultContent() {
           {/* Action Buttons */}
           <div className="w-full flex flex-col sm:flex-row items-center gap-3 mt-6">
             <Button
-              onClick={handleContinueToDashboard}
+              onClick={handleContinueToFinance}
               className="w-full sm:flex-1 h-12 rounded-[12px] text-[14px] font-medium bg-[#003cbb] hover:bg-[#002e8f] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white transition-all gap-2"
             >
-              Continue to Dashboard
+              Continue to Finance Page
               <ChevronRight className="w-4 h-4" />
             </Button>
 

@@ -1,7 +1,6 @@
 "use server";
 
-import { createSession } from "@/lib/session";
-import { UMISResponse } from "@/lib/session";
+import { completeLogin } from "@/lib/auth/complete-login";
 import { loggedFetch } from "@/lib/logger";
 import { redirect } from "next/navigation";
 import { getUserFriendlyErrorMessage } from "@/lib/utils";
@@ -48,18 +47,12 @@ export async function loginAction(formData: FormData) {
 
     const data = await response.json();
 
-    // Token is at data.token or data.data.token
-    const token = data.data.token;
-
-    if (!token) {
-      return { error: "Authentication successful, but no token was received." };
+    // Stores token (data.data.token) + user data (data.data.user) in HTTP-only
+    // cookies. Shared with Google SSO so both paths create identical sessions.
+    const result = await completeLogin(data);
+    if (!result.ok) {
+      return { error: result.error };
     }
-
-    // User data is at data.data.user
-    const userData: UMISResponse | undefined = data.data?.user ?? undefined;
-
-    // Store token + user data securely in HTTP-only cookies
-    await createSession(token, userData);
 
     shouldRedirect = true;
   } catch (error) {

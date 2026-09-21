@@ -8,6 +8,8 @@ import { useRef, useState, useEffect, Suspense } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { useSearchParams } from "next/navigation";
+import { getUserData } from "@/app/actions/user";
+import { UMISResponse } from "@/lib/session";
 
 const receiptItems = [
   { label: "Mandatory Basic Fees", amount: "₦185,000.00" },
@@ -19,12 +21,26 @@ const receiptItems = [
 
 function ReceiptContent() {
   const searchParams = useSearchParams();
-  const ref = searchParams.get("ref") || "PAY-728910-ARTH";
-  const amount = parseFloat(searchParams.get("amount") || "647000");
-  const gateway = searchParams.get("gateway") || "Payzeep";
+  const isWallet = searchParams.get("type") === "wallet";
+  const ref = searchParams.get("ref") || (isWallet ? "FLW-882104-WF" : "PAY-728910-ARTH");
+  const amount = parseFloat(searchParams.get("amount") || (isWallet ? "500000" : "647000"));
+  const gateway = searchParams.get("gateway") || "Flutterwave";
+  const customDate = searchParams.get("date");
+  const customTime = searchParams.get("time");
 
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [userData, setUserData] = useState<UMISResponse | null>(null);
+
+  useEffect(() => {
+    getUserData().then(setUserData);
+  }, []);
+
+  const studentName = 
+    userData?.user_data?.personal_information?.student_name ||
+    userData?.user_data?.student_name ||
+    userData?.entity_name ||
+    "Loading...";
 
   const handleDownload = async () => {
     if (!receiptRef.current) return;
@@ -132,7 +148,7 @@ function ReceiptContent() {
         <div id="printable-receipt" ref={receiptRef} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[24px] shadow-sm dark:shadow-none px-2 py-4 md:p-10 print:p-4 print:pt-2 relative overflow-hidden print:shadow-none print:border-none print:rounded-none transition-colors">
           {/* Background Watermark Image */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-100 z-0 transition-opacity">
-            <img src="/images/BU Torch.png" alt="" className="w-[80%] md:w-[60%] object-contain" />
+            <Image src="/images/BU Torch.png" alt="BU Torch Watermark" width={400} height={400} className="w-[80%] md:w-[60%] object-contain" priority />
           </div>
 
           <div className="relative z-10">
@@ -141,9 +157,13 @@ function ReceiptContent() {
               <div className="w-[72px] h-[72px] rounded-full bg-[#ECFDF3] dark:bg-[#12b76a]/10 flex items-center justify-center mb-5 transition-colors">
                 <CheckCircle className="w-10 h-10 text-[#12B76A]" fill="#12B76A" stroke="white" />
               </div>
-              <h1 className="text-[24px] md:text-[28px] font-bold text-gray-900 dark:text-gray-100 mb-2 transition-colors">Payment Successful!</h1>
+              <h1 className="text-[24px] md:text-[28px] font-bold text-gray-900 dark:text-gray-100 mb-2 transition-colors">
+                {isWallet ? "Wallet Funding Successful!" : "Payment Successful!"}
+              </h1>
               <p className="text-[14px] text-gray-500 dark:text-gray-400 text-center max-w-md leading-relaxed transition-colors">
-                Your registration payment has been confirmed. A receipt has been sent to your registered email address.
+                {isWallet
+                  ? "Your student wallet has been credited successfully. A digital receipt has been generated for your financial records."
+                  : "Your registration payment has been confirmed. A receipt has been sent to your registered email address."}
               </p>
             </div>
 
@@ -159,17 +179,31 @@ function ReceiptContent() {
               <div className="grid grid-cols-2 gap-y-4 gap-x-6">
                 <div>
                   <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">Student Name</p>
-                  <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 transition-colors">Yakubu Onome Joy</p>
+                  <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 transition-colors">{studentName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">Amount Paid</p>
+                  <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">
+                    {isWallet ? "Amount Credited" : "Amount Paid"}
+                  </p>
                   <p className="text-[15px] font-bold text-[#003cbb] dark:text-[#4d82ff] transition-colors">₦{amount.toLocaleString()}.00</p>
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">Payment Method</p>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#003cbb] dark:bg-[#4d82ff] flex items-center justify-center text-white text-[8px] font-bold transition-colors">
-                      {gateway.substring(0, 2)}
+                    <div className="w-6 h-6 rounded-full bg-[#f3f4f6] dark:bg-gray-800 flex items-center justify-center overflow-hidden transition-colors shrink-0">
+                      {gateway.toLowerCase().includes("flutterwave") ? (
+                        <Image
+                          src="/flutterwave_symbol.svg.svg"
+                          alt="Flutterwave"
+                          width={16}
+                          height={16}
+                          className="object-contain"
+                        />
+                      ) : (
+                        <span className="text-[9px] font-bold text-gray-750 dark:text-gray-200">
+                          {gateway.substring(0, 2)}
+                        </span>
+                      )}
                     </div>
                     <span className="text-[15px] font-medium text-gray-900 dark:text-gray-100 transition-colors">{gateway}</span>
                   </div>
@@ -177,22 +211,36 @@ function ReceiptContent() {
                 <div className="text-right">
                   <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">Date & Time</p>
                   <p className="text-[15px] font-medium text-gray-900 dark:text-gray-100 transition-colors">
-                    {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} •{" "}
-                    {new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                    {customDate && customTime ? (
+                      `${customDate} • ${customTime}`
+                    ) : (
+                      `${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} • ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}`
+                    )}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Items Paid For */}
+            {/* Items Paid For / Breakdown */}
             <div className="mb-8 px-2">
               <div className="flex items-center gap-2 mb-5">
                 <ClipboardList className="w-5 h-5 text-gray-600 dark:text-gray-400 transition-colors" />
-                <h3 className="text-[15px] font-bold text-gray-900 dark:text-gray-100 transition-colors">Items Paid For</h3>
+                <h3 className="text-[15px] font-bold text-gray-900 dark:text-gray-100 transition-colors">
+                  {isWallet ? "Wallet Credit Breakdown" : "Items Paid For"}
+                </h3>
               </div>
 
               <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-800 transition-colors">
-                {receiptItems.map((item) => (
+                {(isWallet
+                    ? [
+                        { label: "Wallet Credit Top-up", amount: `₦${amount.toLocaleString()}.00` },
+                        { label: "Gateway & Service Charge", amount: "₦0.00" },
+                        { label: "Beneficiary Account", amount: `Student Wallet (${studentName})` },
+                        { label: "Transaction Channel", amount: `${gateway} Automated Rail` },
+                        { label: "Transaction Purpose", amount: "Wallet Funding" },
+                      ]
+                  : receiptItems
+                ).map((item) => (
                   <div key={item.label} className="flex items-center justify-between py-3.5">
                     <span className="text-[14px] text-gray-600 dark:text-gray-300 transition-colors">{item.label}</span>
                     <span className="text-[14px] font-bold text-gray-900 dark:text-gray-100 transition-colors">{item.amount}</span>
@@ -204,8 +252,14 @@ function ReceiptContent() {
             {/* Total */}
             <div className="bg-[#f5f8fe] dark:bg-[#003cbb]/10 rounded-[16px] p-5 md:p-6 print:p-6 flex flex-col md:flex-row print:flex-row items-center justify-between gap-3 mb-8 transition-colors">
               <div>
-                <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] tracking-wider uppercase transition-colors">TOTAL SUM PAID</span>
-                <p className="text-[12px] text-[#003cbb]/70 dark:text-[#4d82ff]/70 mt-0.5 transition-colors">Calculated including VAT and administrative levies.</p>
+                <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] tracking-wider uppercase transition-colors">
+                  {isWallet ? "TOTAL SUM CREDITED" : "TOTAL SUM PAID"}
+                </span>
+                <p className="text-[12px] text-[#003cbb]/70 dark:text-[#4d82ff]/70 mt-0.5 transition-colors">
+                  {isWallet
+                    ? "Net balance credited directly to student digital wallet account."
+                    : "Calculated including VAT and administrative levies."}
+                </p>
               </div>
               <p className="text-[28px] md:text-[32px] print:text-[32px] font-bold text-[#003cbb] dark:text-[#4d82ff] transition-colors">₦{amount.toLocaleString()}.00</p>
             </div>

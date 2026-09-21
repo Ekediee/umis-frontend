@@ -32,9 +32,9 @@ export function WalletPayment({
   return (
     <div className="w-full max-w-[700px] md:h-[90%] h-[78vh] flex flex-col gap-5">
       {/* Billing Banner */}
-      <div className="bg-gradient-to-r from-[#0a1e6e] to-[#1a3cc0] rounded-[16px] p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
+      <div className="bg-gradient-to-r from-[#003cbb] via-[#1d4ed8] to-[#2563eb] rounded-[16px] p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0 shadow-sm">
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] font-bold text-white/60 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-white/75 uppercase tracking-wider">
             Student Billing Details
           </span>
           <span className="text-[20px] md:text-[24px] font-bold text-white leading-tight">

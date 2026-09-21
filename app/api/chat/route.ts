@@ -2,6 +2,9 @@ import { streamText } from 'ai';
 import { withLogging } from '@/lib/logger';
 import { getAIHandbookContext } from '../../../lib/ai/handbook-loader';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 // Safely attempt to load the Google AI provider dynamically
 let googleProvider: any = null;
 try {
@@ -86,7 +89,7 @@ ${handbookContext}
 ---`,
       });
 
-      return new Response(createLiveRawTextStream(result.textStream as unknown as AsyncIterable<string>), {
+      return result.toTextStreamResponse({
         headers: RAW_STREAM_HEADERS,
       });
     } catch (error: any) {

@@ -1,6 +1,12 @@
 import Image from "next/image";
 import CopyRight from "@/components/CopyRight";
 import { LoginForm } from "@/components/LoginForm";
+import { isGoogleSsoEnabled } from "@/lib/auth/google";
+
+// Render per request: whether the Google button shows depends on runtime env
+// vars, which don't exist yet when the Docker image is built (a static
+// prerender would bake in `false` permanently).
+export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
   return (
@@ -64,7 +70,7 @@ export default function LoginPage() {
             Enter your details to login.
           </p>
 
-          <LoginForm />
+          <LoginForm ssoEnabled={isGoogleSsoEnabled()} />
         </div>
 
         {/* Footer */}

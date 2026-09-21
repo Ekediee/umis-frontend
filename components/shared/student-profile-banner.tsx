@@ -231,7 +231,7 @@ export function StudentProfileBanner({
   const displayLevel = userData?.user_data?.academic_information?.study_level ?? "—";
   const displaySchool = userData?.user_data?.school_name ?? "—";
   const displayDepartment = userData?.user_data?.department ?? "—";
-  const displayStatus = userData?.user_data?.status ?? "Active";
+  const displayStatus = "Active";
   const displayCgpa = userData?.user_data?.academic_information?.cummulative_gpa?.toFixed(2) ?? "—";
 
   return (
