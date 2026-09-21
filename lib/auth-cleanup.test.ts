@@ -26,9 +26,13 @@ vi.mock("@/hooks/use-registration-store", () => ({
 
 // Mock logoutAction
 const logoutActionMock = vi.fn();
+// Mock deleteSessionAction
+const deleteSessionActionMock = vi.fn();
 vi.mock("@/app/actions/auth", () => ({
   logoutAction: (reason?: string) => logoutActionMock(reason),
+  deleteSessionAction: () => deleteSessionActionMock(),
 }));
+
 
 import { performClientLogout, clearAuthExpiredFlag } from "@/lib/auth-cleanup";
 
@@ -56,6 +60,7 @@ describe("lib/auth-cleanup", () => {
       localStorage.setItem("unrelated_key", "keep");
 
       logoutActionMock.mockResolvedValueOnce(undefined);
+      deleteSessionActionMock.mockResolvedValueOnce(undefined);
 
       await performClientLogout("manual", true);
 
@@ -79,16 +84,18 @@ describe("lib/auth-cleanup", () => {
       expect(JSON.parse(broadcast!).reason).toBe("manual");
 
       // Verify server action called
-      expect(logoutActionMock).toHaveBeenCalledWith("manual");
+      expect(deleteSessionActionMock).toHaveBeenCalled();
     });
 
     it("does not set auth_session_expired when isInitiator is false", async () => {
-      logoutActionMock.mockResolvedValueOnce(undefined);
+      deleteSessionActionMock.mockResolvedValueOnce(undefined);
 
       await performClientLogout("storage_event", false);
 
       expect(localStorage.getItem("auth_session_expired")).toBeNull();
-      expect(logoutActionMock).toHaveBeenCalledWith("storage_event");
+      expect(deleteSessionActionMock).toHaveBeenCalled();
     });
   });
 });
+
+

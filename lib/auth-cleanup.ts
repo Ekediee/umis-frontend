@@ -2,7 +2,7 @@
 
 import { useAcademicDetailsStore } from "@/hooks/use-academic-details-store";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
-import { logoutAction } from "@/app/actions/auth";
+import { deleteSessionAction } from "@/app/actions/auth";
 
 let isLoggingOut = false;
 
@@ -44,7 +44,7 @@ export async function performClientLogout(
     console.error("Failed to reset client stores on logout:", err);
   }
 
-  // 2. Explicit localStorage cleanup (iterating explicitly across all keys)
+  // 2. Explicit localStorage cleanup
   if (typeof window !== "undefined") {
     try {
       const allKeys: string[] = [];
@@ -80,18 +80,22 @@ export async function performClientLogout(
     }
   }
 
-  // 3. Clear server session cookie and navigate to login
+  // 3. Clear the server session cookie then navigate to the login page.
+  //
+  // deleteSessionAction only clears cookies with no redirect(), so the promise
+  // resolves cleanly. We then navigate with window.location.replace() which:
+  //   - Replaces the history entry (user cannot press Back to an invalid page)
+  //   - Avoids a try/catch hack that previously caused a hard full-reload,
+  //     breaking React hydration and allowing native GET form submission
+  //     (which put credentials in the URL).
+  isLoggingOut = false;
   try {
-    // Reset the latch before the redirect so that if the module is re-imported
-    // (e.g. HMR in dev) a fresh logout attempt is never silently swallowed.
-    isLoggingOut = false;
-    await logoutAction(reason);
-  } catch {
-    // Next.js redirect() throws an internal NEXT_REDIRECT error which is caught here,
-    // or if a network disconnect occurred, force client-side redirection.
-    isLoggingOut = false;
+    await deleteSessionAction();
+  } catch (err) {
+    console.error("Failed to clear server session on logout:", err);
+  } finally {
     if (typeof window !== "undefined") {
-      window.location.href = `/?reason=${encodeURIComponent(reason)}`;
+      window.location.replace(`/?reason=${encodeURIComponent(reason)}`);
     }
   }
 }

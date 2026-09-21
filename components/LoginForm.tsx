@@ -39,7 +39,9 @@ function LoginFormInner() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 lg:gap-5">
+    // method="post" prevents native GET fallback (which exposes credentials in
+    // the URL) during the React hydration window before onSubmit is attached.
+    <form onSubmit={handleSubmit} method="post" className="flex flex-col gap-4 lg:gap-5">
       {/* Session Expired Banner */}
       {isSessionExpired && (
         <div className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-900 text-[13px] leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">

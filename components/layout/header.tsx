@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles } from "lucide-react";
+import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles, KeyRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
 import type { UMISResponse } from "@/lib/session";
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
+import { ChangePasswordModal } from "@/components/shared/change-password-modal";
 
 interface HeaderProps {
   initialUserData?: UMISResponse | null;
@@ -26,9 +27,22 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   const { unreadCount } = useNotifications();
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // Single source of truth for avatar — no more copy-pasted logic
   const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
+
+  // Derive user fields for the change password modal
+  const contextUserData = useUserData();
+  const userData = contextUserData ?? initialUserData;
+  const studentEmail =
+    userData?.user_data?.contact_information?.email ?? "";
+  const matricNo =
+    userData?.entity_id?.toString() ??
+    userData?.user_data?.matric_number ??
+    userData?.user_data?.personal_information?.matric_number ??
+    "";
+
 
   const getTitle = () => {
     if (pathname?.includes('/finance/receipt')) return "Payment";
@@ -208,6 +222,17 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                     Get Started Guide
                   </button>
 
+                  <button
+                    onClick={() => {
+                      setIsBottomSheetOpen(false);
+                      setIsChangePasswordOpen(true);
+                    }}
+                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1 w-full text-left"
+                  >
+                    <KeyRound className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    Change Password
+                  </button>
+
                   <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
 
                   <Link 
@@ -237,6 +262,13 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
       <OnboardingGuideSheet
         isOpen={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        matricNo={matricNo}
+        email={studentEmail}
       />
     </>
   );

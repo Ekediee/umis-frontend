@@ -122,26 +122,38 @@ export default function RegistrationPage() {
   };
 
   const getPayBannerProps = () => {
+    if (!isRegisteredForSemester && !isLoadingStatus) {
+      return {
+        buttonText: "Financial registration",
+        buttonVariant: "outline" as const,
+        description: "Commence registration first to access financial registration.",
+        disabled: true,
+      };
+    }
     if (payState === "completed") {
       return {
         buttonText: "View Receipt",
         buttonVariant: "outline" as const,
-        description: "Payment successful. You can view or download your receipt."
+        description: "Payment successful. You can view or download your receipt.",
+        disabled: false,
       };
     }
     if (payState === "in_progress") {
       return {
         buttonText: "Complete Payment",
         buttonVariant: "primary" as const,
-        description: "Your payment is in progress. Complete it to clear your finance requirement."
+        description: "Your payment is in progress. Complete it to clear your finance requirement.",
+        disabled: false,
       };
     }
     return {
       buttonText: "Financial registration",
       buttonVariant: "outline" as const,
-      description: "Review your term details and begin the registration process"
+      description: "Review your term details and begin the registration process",
+      disabled: false,
     };
   };
+
 
   const regProps = getRegBannerProps();
   const payProps = getPayBannerProps();
@@ -201,7 +213,9 @@ export default function RegistrationPage() {
           buttonVariant={payProps.buttonVariant}
           gradientClass={payState === 'completed' ? "bg-gradient-to-br from-[#c2f5e1] to-[#e6fff5] dark:from-[#0a3825] dark:to-[#042114]" : "bg-gradient-to-br from-[#dcd6ff] to-[#cbc2ff] dark:from-[#2e234a] dark:to-[#1e1430]"}
           illustrationSrc="/Pay-image.png"
+          disabled={payProps.disabled}
           onClick={() => {
+            if (payProps.disabled) return;
             if (payState !== "completed") {
               router.push("/dashboard/finance/fees");
             } else {

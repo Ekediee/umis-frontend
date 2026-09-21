@@ -13,7 +13,9 @@ import {
   X,
   BadgeCheck,
   Activity,
-  LogOut
+  LogOut,
+  MoreVertical,
+  KeyRound,
 } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,8 +24,11 @@ import { useUserData } from "@/contexts/user-data-context";
 import { performClientLogout } from "@/lib/auth-cleanup";
 import { toTitleCase } from "@/lib/utils";
 import type { UMISResponse } from "@/lib/session";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
+import { ChangePasswordModal } from "@/components/shared/change-password-modal";
+
 
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -46,6 +51,9 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
   const pathname = usePathname();
   const contextUserData = useUserData();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Single source of truth for avatar — no more copy-pasted logic
   const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
@@ -62,12 +70,30 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
     userData?.user_data?.contact_information?.email ??
     "yakubu.onome@univ.edu";
 
+  const matricNo =
+    userData?.entity_id?.toString() ??
+    userData?.user_data?.matric_number ??
+    userData?.user_data?.personal_information?.matric_number ??
+    "";
+
   const initials = studentName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase() || "YJ";
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isMenuOpen]);
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -76,7 +102,9 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
     await performClientLogout("manual", true);
   };
 
+
   return (
+    <>
     <div className="w-64 border-r dark:border-gray-800 bg-white dark:bg-gray-900 h-screen hidden md:flex flex-col flex-shrink-0 transition-colors duration-200">
       {/* Brand */}
       <div className="px-6 py-8 flex items-center gap-3">
@@ -165,17 +193,56 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
             </div>
           </Link>
 
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            title="Log out of account"
-            aria-label="Log out"
-            className="p-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 hover:text-red-700 dark:hover:text-red-300 transition-colors ml-1 shrink-0 disabled:opacity-50"
-          >
-            <LogOut className="w-5 h-5 text-red-600 dark:text-red-400" />
-          </button>
+          <div className="relative" ref={menuRef}>
+            {/* Three-dots trigger */}
+            <button
+              onClick={() => setIsMenuOpen((v) => !v)}
+              disabled={isLoggingOut}
+              title="More options"
+              aria-label="More options"
+              className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors ml-1 shrink-0 disabled:opacity-50"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            {/* Dropdown */}
+            {isMenuOpen && (
+              <div className="absolute bottom-full right-0 mb-2 w-52 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150 origin-bottom-right z-50">
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsChangePasswordOpen(true);
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-xl mx-0"
+                >
+                  <KeyRound className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  Change Password
+                </button>
+
+                <div className="h-px bg-gray-100 dark:bg-gray-800 mx-3 my-1" />
+
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors rounded-xl mx-0 disabled:opacity-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {isLoggingOut ? "Logging out…" : "Log Out"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
+
+      {/* Change Password Modal — rendered outside the sidebar scroll area */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        matricNo={matricNo}
+        email={studentEmail}
+      />
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LockKeyhole } from "lucide-react";
 import Image from "next/image";
 
 interface ActionBannerProps {
@@ -12,6 +12,7 @@ interface ActionBannerProps {
   illustrationSrc: string;
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export function ActionBanner({
@@ -22,12 +23,14 @@ export function ActionBanner({
   gradientClass,
   illustrationSrc,
   onClick,
-  className
+  className,
+  disabled = false,
 }: ActionBannerProps) {
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-[24px] p-6 md:p-8 flex flex-col justify-between min-h-[220px] md:min-h-[260px] flex-1",
+      "relative overflow-hidden rounded-[24px] p-6 md:p-8 flex flex-col justify-between min-h-[220px] md:min-h-[260px] flex-1 transition-opacity duration-200",
       gradientClass,
+      disabled && "opacity-60 cursor-not-allowed select-none",
       className
     )}>
       <div className="relative z-10 max-w-[80%] md:max-w-[60%] flex flex-col gap-3">
@@ -42,15 +45,18 @@ export function ActionBanner({
       <div className="relative z-10 mt-6 md:mt-8">
         <Button
           onClick={onClick}
+          disabled={disabled}
           className={cn(
             "rounded-[12px] px-6 h-11 text-[15px] font-semibold transition-all flex items-center gap-2",
             buttonVariant === "primary" && "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white",
             buttonVariant === "dark" && "bg-[#0a0d14] dark:bg-white hover:bg-[#1a1d24] dark:hover:bg-gray-100 text-white dark:text-gray-900",
-            buttonVariant === "outline" && "bg-[#eef3fd] dark:bg-gray-800 border border-[#ccdcfd] dark:border-gray-700 hover:bg-[#e4ebfa] dark:hover:bg-gray-750 text-[#003cbb] dark:text-gray-100 active:scale-95 transition-all"
+            buttonVariant === "outline" && "bg-[#eef3fd] dark:bg-gray-800 border border-[#ccdcfd] dark:border-gray-700 hover:bg-[#e4ebfa] dark:hover:bg-gray-750 text-[#003cbb] dark:text-gray-100 active:scale-95 transition-all",
+            disabled && "cursor-not-allowed pointer-events-none"
           )}
         >
+          {disabled && <LockKeyhole className="w-4 h-4" />}
           {buttonText}
-          {buttonVariant !== "dark" && <ChevronRight className="w-4 h-4" />}
+          {!disabled && buttonVariant !== "dark" && <ChevronRight className="w-4 h-4" />}
         </Button>
       </div>
 

@@ -4,6 +4,7 @@ import { createSession } from "@/lib/session";
 import { UMISResponse } from "@/lib/session";
 import { loggedFetch } from "@/lib/logger";
 import { redirect } from "next/navigation";
+import { getUserFriendlyErrorMessage } from "@/lib/utils";
 
 export async function loginAction(formData: FormData) {
   const user_name = formData.get("user_name") as string;
@@ -86,6 +87,17 @@ export async function logoutAction(reason?: string) {
 }
 
 /**
+ * Destroys the current student session WITHOUT performing any server-side redirect.
+ * Use this when the caller (client code) will handle the navigation itself.
+ * This prevents the Next.js redirect() throw from being mistaken for a network error
+ * and triggering a fallback hard-reload that breaks React hydration on the login page.
+ */
+export async function deleteSessionAction(): Promise<void> {
+  const { deleteSession } = await import("@/lib/session");
+  await deleteSession();
+}
+
+/**
  * Refreshes cookie expiration timestamps when the user chooses to stay logged in.
  */
 export async function touchSessionAction(): Promise<boolean> {
@@ -136,7 +148,7 @@ export async function requestPasswordResetAction(formData: FormData) {
           errorMessage = json.message || json.error || errorMessage;
         }
       } catch {}
-      return { error: errorMessage };
+      return { error: getUserFriendlyErrorMessage(errorMessage, "Failed to send OTP. Please try again or contact support.") };
     }
 
     return {
@@ -181,7 +193,7 @@ export async function verifyOtpResetPasswordAction(formData: FormData) {
 
     if (!response.ok) {
       const errorMessage = json?.message || json?.error || "OTP verification failed. Please try again.";
-      return { error: errorMessage };
+      return { error: getUserFriendlyErrorMessage(errorMessage, "OTP verification failed. Please try again.") };
     }
 
     return {
@@ -195,31 +207,124 @@ export async function verifyOtpResetPasswordAction(formData: FormData) {
 }
 
 /**
- * Changes student password via the backend API.
- * Endpoint: POST /api/v1/student/change-password
- * Body: { new_password, new_password_confirmation }
+ * Sends an OTP to the student's email for password change or verification.
+ * Endpoint: POST /api/v1/entity/send-otp
+ * Body: { user_name, email }
  */
-export async function changePasswordAction(
-  formData: FormData | { new_password?: string; new_password_confirmation?: string; confirm_password?: string }
-) {
-  let new_password = "";
-  let new_password_confirmation = "";
+export async function sendOtpAction(payload: { user_name: string; email: string }) {
+  const { user_name, email } = payload;
+  if (!user_name) return { error: "Matric number is required." };
+  if (!email) return { error: "Email is required." };
 
-  if (formData instanceof FormData) {
-    new_password = (formData.get("new_password") as string) || (formData.get("password") as string) || "";
-    new_password_confirmation =
-      (formData.get("new_password_confirmation") as string) || (formData.get("confirm_password") as string) || "";
-  } else if (typeof formData === "object" && formData !== null) {
-    new_password = formData.new_password || "";
-    new_password_confirmation = formData.new_password_confirmation || formData.confirm_password || "";
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    return { error: "Internal server error: Missing API configuration." };
   }
 
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/entity/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_name,
+        username: user_name,
+        matric_number: user_name,
+        email,
+      }),
+    });
+
+    const json = await response.json().catch(() => null);
+
+    if (!response.ok || (json && json.status === false)) {
+      const errorMessage = json?.message || json?.error || "Failed to send OTP. Please try again.";
+      return { error: getUserFriendlyErrorMessage(errorMessage, "Failed to send OTP. Please try again.") };
+    }
+
+    return {
+      success: true,
+      message: json?.message || `A one-time passcode has been sent to ${email}.`,
+    };
+  } catch (e) {
+    console.error("Send OTP API call failed:", e);
+    return { error: "Failed to connect to the server. Please try again." };
+  }
+}
+
+/**
+ * Verifies OTP and returns the reset_token.
+ * Endpoint: POST /api/v1/entity/verify-otp
+ * Body: { otp, email }
+ * Response: { status: true, message: "Otp verified successfully", data: { reset_token: "..." } }
+ */
+export async function verifyOtpAction(payload: { otp: string; email: string }) {
+  const { otp, email } = payload;
+  if (!email) return { error: "Email address is missing." };
+  if (!otp || otp.length < 4) return { error: "Please enter the OTP sent to your email." };
+
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    return { error: "Internal server error: Missing API configuration." };
+  }
+
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/entity/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        otp,
+        email,
+      }),
+    });
+
+
+    const json = await response.json().catch(() => null);
+
+    if (!response.ok || (json && json.status === false)) {
+      const errorMessage = json?.message || json?.error || "OTP verification failed. Please try again.";
+      return { error: getUserFriendlyErrorMessage(errorMessage, "OTP verification failed. Please try again.") };
+    }
+
+    const resetToken = json?.data?.reset_token || json?.reset_token;
+    if (!resetToken) {
+      return { error: "Verification succeeded but no reset token was received. Please try again." };
+    }
+
+    return {
+      success: true,
+      message: json?.message || "Otp verified successfully",
+      reset_token: resetToken,
+    };
+  } catch (e) {
+    console.error("Verify OTP API call failed:", e);
+    return { error: "Failed to connect to the server. Please try again." };
+  }
+}
+
+/**
+ * Changes student password via the backend API using an OTP-issued reset token.
+ * Endpoint: POST /api/v1/student/change-password
+ * Body: { username, reset_token, new_password, new_password_confirmation }
+ *
+ * This replaces the old changePasswordAction — the reset_token obtained from
+ * verifyOtpAction must be passed along with the student's matric
+ * number (username) so the backend can authorise the password update without
+ * requiring the current password.
+ */
+export async function changePasswordWithTokenAction(payload: {
+  username: string;
+  reset_token: string;
+  new_password: string;
+  new_password_confirmation: string;
+}) {
+  const { username, reset_token, new_password, new_password_confirmation } = payload;
+
+  if (!username) return { error: "Matric number is missing." };
+  if (!reset_token) return { error: "Reset token is missing. Please verify your OTP again." };
   if (!new_password || !new_password_confirmation) {
-    return { error: "New password and confirmation password are required." };
+    return { error: "New password and confirmation are required." };
   }
-
   if (new_password !== new_password_confirmation) {
-    return { error: "New password and confirmation password do not match." };
+    return { error: "Passwords do not match." };
   }
 
   const apiUrl = process.env.API_URL;
@@ -244,6 +349,9 @@ export async function changePasswordAction(
       method: "POST",
       headers,
       body: JSON.stringify({
+        username,
+        user_name: username,
+        reset_token,
         new_password,
         new_password_confirmation,
       }),
@@ -251,9 +359,9 @@ export async function changePasswordAction(
 
     const json = await response.json().catch(() => null);
 
-    if (!response.ok) {
+    if (!response.ok || (json && json.status === false)) {
       const errorMessage = json?.message || json?.error || "Failed to change password. Please try again.";
-      return { error: errorMessage };
+      return { error: getUserFriendlyErrorMessage(errorMessage, "Failed to change password. Please try again.") };
     }
 
     return {
@@ -261,8 +369,10 @@ export async function changePasswordAction(
       message: json?.message || "Password changed successfully.",
     };
   } catch (e) {
-    console.error("Change password API call failed:", e);
+    console.error("changePasswordWithTokenAction failed:", e);
     return { error: "Failed to connect to server. Please try again." };
   }
 }
+
+
 
