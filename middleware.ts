@@ -5,12 +5,12 @@ import { decodeJwt } from 'jose'
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
 
-  // Both the root login page and forgot-password pages are accessible without authentication
-  const isAuthPage = request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/forgot-password')
+  // Both the landing page, login page, and forgot-password pages are accessible without authentication
+  const isAuthPage = request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/login' || request.nextUrl.pathname.startsWith('/forgot-password')
 
   // Redirect unauthenticated users to the login page if they try to access protected routes
   if (!token && !isAuthPage) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Validate token expiry for authenticated requests to protected routes.

@@ -46,6 +46,24 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-shimmer: shimmer 2.8s ease-in-out infinite;
+
+  /* Brand Colours — single source of truth */
+  --color-brand-blue: #003CBB;
+  --color-brand-blue-hover: #003199;
+  --color-brand-student: #155DFC;
+  --color-brand-lecturer: #9810FA;
+  --color-brand-guardian: #059669;
+  --color-brand-alumnae: #EA580C;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
 }
 
 :root {
