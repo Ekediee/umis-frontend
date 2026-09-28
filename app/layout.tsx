@@ -35,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${inter.className} bg-[#F8F9FB] dark:bg-gray-900 rounded-[32px] text-gray-900 dark:text-gray-100 antialiased overflow-y-auto transition-colors duration-200`}>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <body suppressHydrationWarning className={`${inter.className} bg-[#F8F9FB] dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-200`}>
         <ThemeProvider defaultTheme="system" storageKey="pulse-theme">
           <NotificationProvider>
             {children}
