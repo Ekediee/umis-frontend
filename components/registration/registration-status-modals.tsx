@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { AlertCircle, CheckCircle, XCircle, X } from "lucide-react";
+import { AlertCircle, CheckCircle, XCircle, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -31,7 +31,7 @@ const Overlay = ({ children, onClose }: { children: React.ReactNode, onClose?: (
 interface BaseModalProps {
   isOpen: boolean;
   onClose?: () => void;
-  icon: React.ElementType;
+  icon: LucideIcon;
   iconBgClass: string;
   iconColorClass: string;
   title: string;

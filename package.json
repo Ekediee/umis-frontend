@@ -21,7 +21,7 @@
     "ai": "^6.0.184",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "framer-motion": "^13.4.3",
+    "framer-motion": "^13.4.5",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "idb-keyval": "^6.2.2",

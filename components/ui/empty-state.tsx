@@ -1,10 +1,10 @@
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   title: string;
   description: string;
-  icon?: React.ElementType;
+  icon?: LucideIcon;
   action?: React.ReactNode;
   className?: string;
 }
