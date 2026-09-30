@@ -1,11 +1,10 @@
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, Clock, XCircle, AlertCircle, type LucideIcon } from "lucide-react";
 
 export type ClearanceStatus = "pending" | "approved" | "not_approved" | "no_request";
 
 interface ClearanceRequirementProps {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   title: string;
   description: string;
   status: ClearanceStatus;
@@ -13,7 +12,7 @@ interface ClearanceRequirementProps {
   onAction?: () => void;
 }
 
-const statusConfig = {
+const statusConfig: Record<ClearanceStatus, { bg: string; text: string; label: string; icon: LucideIcon }> = {
   pending: {
     bg: "bg-[#fbdfb1] dark:bg-[#fbdfb1]/10",
     text: "text-[#693d11] dark:text-[#f39c12]",
@@ -67,7 +66,7 @@ export function ClearanceRequirement({
           <h4 className="text-[15px] font-bold text-[#0a0d14] dark:text-gray-100">{title}</h4>
           <p className="text-[13px] text-[#525866] dark:text-gray-400 leading-snug max-w-[320px] sm:max-w-[640px] pr-2">{description}</p>
           {actionText && (
-            <button 
+            <button
               onClick={onAction}
               className="text-[#003cbb] dark:text-[#4d82ff] text-[13px] font-semibold hover:underline mt-1 w-fit"
             >

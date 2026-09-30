@@ -166,7 +166,7 @@ export function SelectResidence({
                   alt="Off Campus Residence"
                   className="h-[120px] md:h-[152px] w-full"
                 />
-                <div className="flex flex-col gap-2 px-1">
+                <div className="flex flex-col gap-2">
                   <p className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 leading-tight truncate transition-colors">
                     Off Campus Residence
                   </p>
