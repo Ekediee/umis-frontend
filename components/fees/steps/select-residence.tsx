@@ -54,7 +54,7 @@ function ResidenceCardSkeleton() {
       <div className="h-[120px] md:h-[152px] w-full bg-gray-200 dark:bg-gray-700 rounded-[8px]" />
       <div className="flex flex-col gap-2 px-1">
         <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
           <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
           <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
         </div>
@@ -100,7 +100,7 @@ export function SelectResidence({
     "off-campus".includes(searchQuery.toLowerCase());
 
   return (
-    <div className="w-full max-w-[1200px] pb-28 flex flex-col gap-5">
+    <div className="w-full max-w-[1200px] pb-36 flex flex-col gap-5">
       {/* Header Row */}
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight leading-[24px] transition-colors">
@@ -139,8 +139,8 @@ export function SelectResidence({
       )}
 
       {/* Card Grid */}
-      <div className="md:overflow-y-scroll overflow-y-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="md:overflow-y-scroll overflow-y-auto p-1.5">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
           {/* Loading skeletons */}
           {isLoading &&
             Array.from({ length: 8 }).map((_, i) => (
@@ -154,17 +154,17 @@ export function SelectResidence({
               <div
                 key={OFF_CAMPUS_ID}
                 className={cn(
-                  "relative bg-white dark:bg-gray-900 rounded-[12px] border border-[#f5f5f5] dark:border-gray-800 flex flex-col gap-3 p-3 transition-all cursor-pointer",
+                  "relative bg-white dark:bg-gray-900 rounded-[12px] border-2 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
                   isSelected
-                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
-                    : "shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
+                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
+                    : "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
                 )}
                 onClick={() => onSelect(OFF_CAMPUS_ID)}
               >
                 <ImageCarousel
                   images={RESIDENCE_IMAGE_MAP._OFF_CAMPUS}
                   alt="Off Campus Residence"
-                  className="h-[120px] md:h-[182px] w-full"
+                  className="h-[120px] md:h-[152px] w-full"
                 />
                 <div className="flex flex-col gap-2">
                   <p className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 leading-tight truncate transition-colors">
@@ -179,9 +179,9 @@ export function SelectResidence({
                   </button>
                 </div>
                 {isSelected && (
-                  <div className="absolute -top-px -left-px bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] pt-2 pl-2 pr-1.5 pb-1.5 z-10">
+                  <div className="absolute top-0 left-0 bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[10px] rounded-br-[8px] p-1.5 z-10">
                     <div className="w-5 h-5 rounded-[4px] bg-[#ebf1ff] dark:bg-gray-900 flex items-center justify-center shadow-[inset_0px_2px_2px_0px_rgba(22,38,100,0.32)]">
-                      <Check className="w-3 h-3 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
+                      <Check className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
                     </div>
                   </div>
                 )}
@@ -203,10 +203,10 @@ export function SelectResidence({
                 <div
                   key={hall.qresidenceid}
                   className={cn(
-                    "relative bg-white dark:bg-gray-900 rounded-[12px] border border-[#f5f5f5] dark:border-gray-800 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
+                    "relative bg-white dark:bg-gray-900 rounded-[12px] border-2 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
                     isSelected
-                      ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
-                      : "shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
+                      ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
+                      : "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
                   )}
                   onClick={() => onSelect(String(hall.qresidenceid))}
                 >
@@ -224,7 +224,7 @@ export function SelectResidence({
                     </p>
 
                     {/* Badge + Price */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                       <span
                         className={cn(
                           "px-2 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider leading-[12px]",
@@ -241,7 +241,7 @@ export function SelectResidence({
 
                     {/* Level range */}
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                         <span className="text-[11px] md:text-[12px] text-[#525866] dark:text-gray-400 leading-[16px]">
                           Level range
                         </span>
@@ -254,9 +254,9 @@ export function SelectResidence({
 
                   {/* Selection Indicator */}
                   {isSelected && (
-                    <div className="absolute -top-px -left-px bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] pt-2 pl-2 pr-1.5 pb-1.5 z-10">
+                    <div className="absolute top-0 left-0 bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[10px] rounded-br-[8px] p-1.5 z-10">
                       <div className="w-5 h-5 rounded-[4px] bg-[#ebf1ff] dark:bg-gray-900 flex items-center justify-center shadow-[inset_0px_2px_2px_0px_rgba(22,38,100,0.32)]">
-                        <Check className="w-3 h-3 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
+                        <Check className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
                       </div>
                     </div>
                   )}
