@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export type ClearanceStatus = "pending" | "approved" | "not_approved" | "no_request";
 
 interface ClearanceRequirementProps {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   status: ClearanceStatus;

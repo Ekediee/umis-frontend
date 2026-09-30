@@ -68,7 +68,7 @@ export function SelectMealPlan({
   error = null,
 }: SelectMealPlanProps) {
   return (
-    <div className="w-full max-w-[1200px] h-[79vh] overflow-y-auto flex flex-col gap-5">
+    <div className="w-full max-w-[1200px] h-[79vh] overflow-y-auto flex flex-col gap-5 p-1.5">
       {/* Header */}
       <h2 className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight leading-[24px] transition-colors">
         Select your preferred meal Type
@@ -82,7 +82,7 @@ export function SelectMealPlan({
       )}
 
       {/* Card Grid — 4 columns on desktop, 1 column on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+      <div className="flex flex-col md:grid md:grid-cols-4 gap-3 md:gap-4">
         {isLoading &&
           Array.from({ length: 4 }).map((_, i) => <MealPlanCardSkeleton key={i} />)}
 
@@ -97,10 +97,10 @@ export function SelectMealPlan({
               <div
                 key={meal.qselectionid}
                 className={cn(
-                  "relative bg-white dark:bg-gray-900 border border-[#f5f5f5] dark:border-gray-800 rounded-[12px] flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
+                  "relative bg-white dark:bg-gray-900 border-2 rounded-[12px] flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
                   isSelected
-                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
-                    : "shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
+                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
+                    : "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
                 )}
                 onClick={() => onSelect(String(meal.qselectionid))}
               >
@@ -129,9 +129,9 @@ export function SelectMealPlan({
 
                 {/* Selection Indicator */}
                 {isSelected && (
-                  <div className="absolute -top-px -left-px bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[12px] rounded-br-[8px] pt-2 pl-2 pr-1.5 pb-1.5 z-10">
+                  <div className="absolute top-0 left-0 bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[10px] rounded-br-[8px] p-1.5 z-10">
                     <div className="w-5 h-5 rounded-[4px] bg-[#ebf1ff] dark:bg-gray-900 flex items-center justify-center shadow-[inset_0px_2px_2px_0px_rgba(22,38,100,0.32)]">
-                      <Check className="w-3 h-3 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
+                      <Check className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
                     </div>
                   </div>
                 )}

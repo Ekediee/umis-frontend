@@ -12,17 +12,6 @@ import { UMISResponse } from "@/lib/session";
 import { CourseItem, getWorshipCentersAction, getRegisteredCoursesAction } from "@/app/actions/registration";
 import { getOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
 
-const COURSE_LIST = [
-  { id: "GST 312", title: "Peace and Conflict Resolution", units: "2.0", option: "Soft Eng", lecturer: "APAT KIDEN TANIMU" },
-  { id: "ENT 312", title: "Venture Creation", units: "2.0", option: "Soft Eng", lecturer: "ESATOR GOODLUCK" },
-  { id: "BU-GST 032", title: "Citizenship Orientation", units: "0.0", option: "Soft Eng", lecturer: "ABIOYE FUNKE VICTORIA" },
-  { id: "SEN 322", title: "Software Engineering Innovation", units: "2.0", option: "Soft Eng", lecturer: "MENSAH YAW AGYEI" },
-  { id: "CSC 308", title: "Operating Systems", units: "3.0", option: "Soft Eng", lecturer: "AJAYI WUMI" },
-  { id: "SEN 306", title: "Software Construction", units: "2.0", option: "Soft Eng", lecturer: "OKESOLA KIKELOMO IBIWUNMI" },
-  { id: "SEN 304", title: "Software Testing and QA", units: "2.0", option: "Soft Eng", lecturer: "ADEBANJO ADEDOYIN SAMUEL" },
-  { id: "SEN 350", title: "SIWES", units: "6.0", option: "Soft Eng", lecturer: "FATADE OLUWAYEMISI B" },
-];
-
 function CourseFormContent() {
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const [courses, setCourses] = useState<CourseItem[]>([]);
@@ -42,7 +31,7 @@ function CourseFormContent() {
         const res = await getRegisteredCoursesAction();
         if (res.error) {
           setCourseFetchError(res.error);
-        } else if (res.data && res.data.length > 0) {
+        } else if (res.data) {
           setCourses(res.data);
         }
       } catch (error) {
@@ -122,13 +111,11 @@ function CourseFormContent() {
 
   const displayMatricNumber = student?.personal_information?.matric_number || student?.matric_number || "23/0039";
 
-  const displayCourses = (courses.length > 0 ? courses : COURSE_LIST).map(course => ({
-    code: 'code' in course ? (course.code as string) : (course.id as string),
+  const displayCourses = courses.map(course => ({
+    code: course.code || course.id,
     title: course.title,
-    units: typeof course.units === 'number' ? course.units.toFixed(1) : course.units,
-    option: 'classOption' in course ? (course.classOption as string)
-          : 'option' in course ? (course.option as string)
-          : (student?.department || "Software Engineering"),
+    units: typeof course.units === 'number' ? course.units.toFixed(1) : String(course.units || "0.0"),
+    option: course.classOption || (student?.department || "Software Engineering"),
     lecturer: course.lecturer
   }));
 
@@ -332,7 +319,7 @@ function CourseFormContent() {
                       getRegisteredCoursesAction().then((res) => {
                         if (res.error) {
                           setCourseFetchError(res.error);
-                        } else if (res.data && res.data.length > 0) {
+                        } else if (res.data) {
                           setCourses(res.data);
                         }
                         setIsLoadingCourses(false);
@@ -368,6 +355,12 @@ function CourseFormContent() {
                           <td className="px-4 py-3.5"><div className="h-3.5 w-36 rounded bg-gray-200" /></td>
                         </tr>
                       ))
+                    ) : displayCourses.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-[13px] text-gray-500">
+                          No courses have been registered yet.
+                        </td>
+                      </tr>
                     ) : (
                       displayCourses.map((course, idx) => (
                         <tr key={idx} className="hover:bg-gray-50/50 transition-colors">

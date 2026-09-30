@@ -31,7 +31,7 @@ const Overlay = ({ children, onClose }: { children: React.ReactNode, onClose?: (
 interface BaseModalProps {
   isOpen: boolean;
   onClose?: () => void;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   iconBgClass: string;
   iconColorClass: string;
   title: string;

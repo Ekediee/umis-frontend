@@ -15,10 +15,10 @@ interface PaymentStepperProps {
 }
 
 const steps = [
-  { id: 1, title: "Select Residence" },
-  { id: 2, title: "Select Worship Center" },
-  { id: 3, title: "Select Meal Plan" },
-  { id: 4, title: "Summary" }
+  { id: 1, title: "Residence", fullTitle: "Select Residence" },
+  { id: 2, title: "Worship Center", fullTitle: "Select Worship Center" },
+  { id: 3, title: "Meal Plan", fullTitle: "Select Meal Plan" },
+  { id: 4, title: "Summary", fullTitle: "Summary" }
 ];
 
 export function PaymentStepper({ 
@@ -33,7 +33,7 @@ export function PaymentStepper({
 
   return (
     <>
-      <div className="hidden md:grid grid-cols-[130px_1fr_130px] items-center gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
+      <div className="hidden md:flex items-center justify-between gap-2 xl:gap-4 w-full pt-3 pb-2 px-2 md:px-4 xl:px-8 bg-transparent">
         {/* Left: Back Button */}
         <div className="flex justify-start">
           <button 
@@ -47,21 +47,21 @@ export function PaymentStepper({
         </div>
 
         {/* Center: Centered Pills Container */}
-        <div className="flex items-center justify-center gap-3 md:gap-4 min-w-0">
+        <div className="flex items-center justify-center gap-2 xl:gap-3 flex-1 min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Session Pill */}
-          <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-4 py-2.5 flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 shrink-0 max-w-[220px]">
-            <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">{sessionLabel}</span>
-            <span className="text-[13px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight truncate w-full">{typeLabel}</span>
+          <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-3 xl:px-4 py-2 xl:py-2.5 flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 shrink-0 max-w-[200px] xl:max-w-[220px]">
+            <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight truncate w-full">{sessionLabel}</span>
+            <span className="text-[12px] xl:text-[13px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight truncate w-full">{typeLabel}</span>
           </div>
 
           {/* Stepper Pill */}
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-3.5 border border-[#e2e4e9] dark:border-gray-800">
+          <div className="flex items-center gap-1.5 xl:gap-2 bg-white dark:bg-gray-900 rounded-2xl px-3 xl:px-4 py-2.5 xl:py-3.5 border border-[#e2e4e9] dark:border-gray-800 shrink-0">
             {steps.map((step, index) => {
               const isActive = currentStep === step.id;
               const isCompleted = currentStep > step.id;
 
               return (
-                <div key={step.id} className="flex items-center gap-2">
+                <div key={step.id} className="flex items-center gap-1.5 xl:gap-2">
                   <div className="flex items-center gap-1.5">
                     {/* Step Circle */}
                     {isCompleted ? (
@@ -70,7 +70,7 @@ export function PaymentStepper({
                       </div>
                     ) : (
                       <div className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0",
+                        "w-5 h-5 rounded-full flex items-center justify-center text-[11px] xl:text-[12px] font-semibold shrink-0",
                         isActive
                           ? "bg-[#375dfb] dark:bg-[#2563EB] text-white"
                           : "bg-white dark:bg-gray-800 border border-[#e2e4e9] dark:border-gray-700 text-[#525866] dark:text-gray-400"
@@ -81,16 +81,24 @@ export function PaymentStepper({
                     
                     {/* Step Label */}
                     <span className={cn(
-                      "text-[13.5px] whitespace-nowrap",
+                      "text-[12px] xl:text-[13px] 2xl:text-[13.5px] whitespace-nowrap",
                       isActive ? "font-semibold text-[#0a0d14] dark:text-gray-100" : "font-normal text-[#525866] dark:text-gray-400"
                     )}>
-                      {step.title}
+                      {/* Active step shows its text everywhere but 2xl; Inactive steps show only on xl and above */}
+                      <span className={cn(
+                        "2xl:hidden",
+                        isActive ? "inline" : "hidden xl:inline"
+                      )}>
+                        {step.title}
+                      </span>
+                      {/* Full title only shows on 2xl */}
+                      <span className="hidden 2xl:inline">{step.fullTitle}</span>
                     </span>
                   </div>
 
                   {/* Separator */}
                   {index < steps.length - 1 && (
-                    <ChevronRight className="w-4 h-4 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
+                    <ChevronRight className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
                   )}
                 </div>
               );
@@ -99,8 +107,8 @@ export function PaymentStepper({
         </div>
 
         {/* Right-most: Cancel Progress Button */}
-        <div className="flex justify-end">
-          {hasProgress && onCancelProgress && (
+        <div className="flex justify-end min-w-[80px]">
+          {hasProgress && onCancelProgress ? (
             <button 
               type="button"
               onClick={() => setIsResetModalOpen(true)}
@@ -110,6 +118,8 @@ export function PaymentStepper({
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Cancel Progress</span>
             </button>
+          ) : (
+            <div className="w-[80px]" />
           )}
         </div>
       </div>
