@@ -26,6 +26,22 @@ interface RegistrationState {
   setIsFetchingSemesterInfo: (loading: boolean) => void;
   /** Clear on logout so stale data is not shown to the next user. */
   clearSemesterInfo: () => void;
+
+  // ── Worship Center Lock ────────────────────────────────────────────────────
+  /**
+   * The sabbath_class_id (as string) of the worship center the student last
+   * committed to. Null if no lock is in place.
+   */
+  lockedWorshipCenterId: string | null;
+  /**
+   * Unix timestamp (ms) after which the lock expires — exactly 2 years from
+   * the submission date. Null when no lock is active.
+   */
+  worshipCenterLockedUntil: number | null;
+  /** Write the lock immediately after a successful financial registration submission. */
+  setWorshipCenterLock: (id: string, until: number) => void;
+  /** Clear the lock (e.g. on logout or admin override). */
+  clearWorshipCenterLock: () => void;
 }
 
 export const useRegistrationStore = create<RegistrationState>()(
@@ -57,6 +73,14 @@ export const useRegistrationStore = create<RegistrationState>()(
           semesterInfoError: null,
           isFetchingSemesterInfo: false,
         }),
+
+      // ── Worship Center Lock ────────────────────────────────────────────────
+      lockedWorshipCenterId: null,
+      worshipCenterLockedUntil: null,
+      setWorshipCenterLock: (id, until) =>
+        set({ lockedWorshipCenterId: id, worshipCenterLockedUntil: until }),
+      clearWorshipCenterLock: () =>
+        set({ lockedWorshipCenterId: null, worshipCenterLockedUntil: null }),
     }),
     {
       name: "registration-status-storage",

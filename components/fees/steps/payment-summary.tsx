@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, UtensilsCrossed, Church, GraduationCap } from "lucide-react";
+import { Building2, UtensilsCrossed, Church, GraduationCap, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import type {
@@ -8,7 +8,7 @@ import type {
   FinanceGeneralCharges,
   FinanceMealType,
   FinanceWorshipCenter,
-} from "@/app/actions/registration";
+} from "@/app/actions/registration-finance";
 import { deriveHallType, getResidenceImages } from "./select-residence";
 import { getMealPlanPrice } from "./select-meal-plan";
 
@@ -22,6 +22,15 @@ function formatPrice(price: number): string {
   return `₦${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formatLockDate(ts: number | null | undefined): string {
+  if (!ts) return "";
+  return new Date(ts).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 interface PaymentSummaryProps {
   selectedResidence?: FinanceResidence | null;
   isOffCampus?: boolean;
@@ -29,6 +38,12 @@ interface PaymentSummaryProps {
   selectedMealType?: FinanceMealType | null;
   generalCharges?: FinanceGeneralCharges | null;
   onChangeStep: (step: number) => void;
+  /** True when the worship center was auto-assigned by the selected hall — no "Change" option. */
+  isWorshipAutoAssigned?: boolean;
+  /** True when the worship center is locked for 2 years — shows a lock badge instead of "Change". */
+  isWorshipLocked?: boolean;
+  /** Unix timestamp (ms) when the worship lock expires — displayed in the lock badge. */
+  worshipLockedUntil?: number | null;
 }
 
 export function PaymentSummary({
@@ -38,6 +53,9 @@ export function PaymentSummary({
   selectedMealType,
   generalCharges,
   onChangeStep,
+  isWorshipAutoAssigned = false,
+  isWorshipLocked = false,
+  worshipLockedUntil = null,
 }: PaymentSummaryProps) {
   // Mandatory basic fees directly from API
   const mandatoryTotal = generalCharges?.fees || 0;
@@ -58,15 +76,14 @@ export function PaymentSummary({
     ? getResidenceImages(selectedResidence.residenceid)
     : [];
 
-  // Meal plan cost
-  const mealPrice = selectedMealType
-    ? getMealPlanPrice(selectedMealType.mealtype, generalCharges)
-    : 0;
+  // Meal plan cost (0 for off-campus — they have no meal plan)
+  const mealPrice =
+    !isOffCampus && selectedMealType
+      ? getMealPlanPrice(selectedMealType.mealtype, generalCharges)
+      : 0;
 
-  // Total cost calculation: sum of all displayed fee cards
+  // Total cost
   const totalCost = mandatoryTotal + residencePrice + mealPrice;
-
-
 
   return (
     <div className="w-full max-w-[1200px] pb-32 flex flex-col gap-5">
@@ -101,7 +118,7 @@ export function PaymentSummary({
                     Mandatory Basic Fees
                   </span>
                   <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    Tuition & Institutional Fees
+                    Tuition &amp; Institutional Fees
                   </span>
                   <div className="flex items-center gap-1.5 text-[13px] text-[#525866] dark:text-gray-400 flex-wrap transition-colors">
                     <span>Base Fees: {formatPrice(mandatoryTotal)}</span>
@@ -167,7 +184,7 @@ export function PaymentSummary({
                 </div>
               </div>
 
-              {/* Residence Thumbnail (mobile below) */}
+              {/* Residence Thumbnail (mobile) */}
               {residenceImages[0] && (
                 <div className="mt-3 md:hidden">
                   <div className="relative w-full h-[120px] rounded-[8px] overflow-hidden">
@@ -227,66 +244,76 @@ export function PaymentSummary({
                   <span className="text-[14px] font-bold text-[#38c793] dark:text-[#4ade80] transition-colors">
                     Included
                   </span>
-                  <button
-                    onClick={() => onChangeStep(2)}
-                    className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
-                  >
-                    Change
-                  </button>
+                  {isWorshipLocked ? (
+                    /* 2-year lock in effect — show expiry date, no change allowed */
+                    <span className="flex items-center gap-1 text-[12px] font-medium text-amber-600 dark:text-amber-400">
+                      <Lock className="w-3 h-3" />
+                      Locked{worshipLockedUntil ? ` until ${formatLockDate(worshipLockedUntil)}` : ""}
+                    </span>
+                  ) : isWorshipAutoAssigned ? (
+                    /* Hall pre-assigned — student cannot change */
+                    <span className="text-[12px] font-medium text-[#525866] dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full transition-colors">
+                      Pre-assigned
+                    </span>
+                  ) : (
+                    /* Normal free-choice — student can change */
+                    <button
+                      onClick={() => onChangeStep(2)}
+                      className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
+                    >
+                      Change
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 4. Selected Meal Plan */}
-        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-[10px] bg-[#fff7ed] dark:bg-[#f97316]/10 flex items-center justify-center shrink-0 transition-colors">
-              <UtensilsCrossed className="w-5 h-5 text-[#f97316]" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
-                    Selected Meal Plan
-                  </span>
-                  <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {selectedMealType?.selection || "Not selected"}
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
-                    {formatPrice(mealPrice)}
-                  </span>
-                  <button
-                    onClick={() => onChangeStep(3)}
-                    className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
-                  >
-                    Change
-                  </button>
-                </div>
+        {/* 4. Selected Meal Plan — HIDDEN for off-campus students */}
+        {!isOffCampus && (
+          <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none p-5 md:p-6 transition-colors">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-[10px] bg-[#fff7ed] dark:bg-[#f97316]/10 flex items-center justify-center shrink-0 transition-colors">
+                <UtensilsCrossed className="w-5 h-5 text-[#f97316]" />
               </div>
 
-              {/* Meal icons */}
-              {selectedMealType && (
-                <div className="flex items-center gap-1.5 mt-2">
-                  {selectedMealType.mealtype.includes("B") && (
-                    <span className="text-[18px]">☀️</span>
-                  )}
-                  {selectedMealType.mealtype.includes("L") && (
-                    <span className="text-[18px]">🍽️</span>
-                  )}
-                  {selectedMealType.mealtype.includes("S") && (
-                    <span className="text-[18px]">🌙</span>
-                  )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold text-[#868c98] dark:text-gray-500 uppercase tracking-wider transition-colors">
+                      Selected Meal Plan
+                    </span>
+                    <span className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                      {selectedMealType?.selection || "Not selected"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
+                      {formatPrice(mealPrice)}
+                    </span>
+                    <button
+                      onClick={() => onChangeStep(3)}
+                      className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
+                    >
+                      Change
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {/* Meal icons */}
+                {selectedMealType && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    {selectedMealType.mealtype.includes("B") && <span className="text-[18px]">☀️</span>}
+                    {selectedMealType.mealtype.includes("L") && <span className="text-[18px]">🍽️</span>}
+                    {selectedMealType.mealtype.includes("S") && <span className="text-[18px]">🌙</span>}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Desktop: Total Cost Banner at bottom */}

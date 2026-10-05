@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useContext, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Lock, Church } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -19,12 +19,38 @@ export type { WorshipCenter } from "@/app/actions/registration";
 
 const ITEMS_PER_PAGE = 10;
 
+interface MappedWorshipCenter {
+  id: string;
+  name: string;
+  location: string;
+  pastor: string;
+  declaredCapacity: number;
+  spacesLeft: number;
+}
+
 interface SelectWorshipCenterProps {
   selectedId?: string | null;
   onSelect?: (id: string) => void;
-  worshipCenters?: import("@/app/actions/registration").WorshipCenter[];
+  worshipCenters?: MappedWorshipCenter[] | any[];
   isLoading?: boolean;
   error?: string | null;
+  /** If true, the user is locked into their previous choice for 2 years. */
+  isLocked?: boolean;
+  /** Unix timestamp (ms) when the lock expires. */
+  lockedUntil?: number | null;
+  /** Details of the locked center to display in the read-only UI. */
+  lockedCenter?: { name: string; location: string; pastor: string } | null;
+  /** ID of a worship center to hide from the list (e.g. the hall's chapel when off-campus). */
+  excludedId?: string | null;
+}
+
+function formatLockDate(ts: number | null | undefined): string {
+  if (!ts) return "";
+  return new Date(ts).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 /** Table row skeleton for the desktop loading state */
@@ -107,16 +133,18 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filtered = useMemo(
-    () =>
-      worshipCenters.filter(
-        (wc) =>
-          wc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          wc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          wc.pastor.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    [searchQuery, worshipCenters]
-  );
+  const filtered = useMemo(() => {
+    return worshipCenters.filter((wc) => {
+      // Exclude specific ID if provided (e.g. hiding the hall's pre-assigned chapel)
+      if (props.excludedId && wc.id === props.excludedId) return false;
+      
+      return (
+        wc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        wc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        wc.pastor.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [searchQuery, worshipCenters, props.excludedId]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedDesktop = filtered.slice(
@@ -129,6 +157,61 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
     setSearchQuery(value);
     setCurrentPage(1);
   };
+
+  // ── LOCKED STATE UI ────────────────────────────────────────────────────────
+  if (props.isLocked && props.lockedCenter) {
+    return (
+      <div className="w-full max-w-[1200px] pb-32 flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-[20px] md:text-[24px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight leading-[24px]">
+            Worship Center Locked
+          </h2>
+          <p className="text-[14px] text-[#525866] dark:text-gray-400">
+            You are currently bound to your chosen worship center for a period of 2 years.
+          </p>
+        </div>
+
+        <div className="rounded-[16px] bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-5 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+            <Lock className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[15px] font-semibold text-amber-900 dark:text-amber-200">
+              Selection Locked Until {formatLockDate(props.lockedUntil)}
+            </span>
+            <span className="text-[13px] text-amber-700 dark:text-amber-400/80">
+              University policy requires maintaining the same worship center for a minimum of 2 years after selection. You will be able to change it after the lock expires.
+            </span>
+          </div>
+        </div>
+
+        {/* Read-only locked card */}
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-sm p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-[12px] bg-[#fef3c7]/60 dark:bg-[#d97706]/10 flex items-center justify-center shrink-0">
+              <Church className="w-6 h-6 text-[#d97706]" />
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[18px] font-bold text-[#0a0d14] dark:text-gray-100">
+                  {props.lockedCenter.name}
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-[#eef3fd] dark:bg-[#003cbb]/10 text-[#003cbb] dark:text-[#4d82ff] font-bold text-[12px] px-2.5 py-1 rounded-[6px]">
+                  <Lock className="w-3.5 h-3.5" />
+                  Locked
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5 text-[14px] text-[#525866] dark:text-gray-400">
+                <span>📍 {props.lockedCenter.location}</span>
+                <span>👤 Pastor: {props.lockedCenter.pastor}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // ───────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="w-full max-w-[1200px] pb-32 flex flex-col gap-5">

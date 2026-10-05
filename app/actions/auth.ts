@@ -157,15 +157,20 @@ export async function requestPasswordResetAction(formData: FormData) {
 /**
  * Verifies the OTP and resets the student's password in one step.
  * Endpoint: POST /api/v1/entity/verify-otp
- * Body: { user_name, otp, new_password, new_password_confirmation }
+ * Body: { user_name, email, otp, new_password, new_password_confirmation }
+ *
+ * `email` is the address the student entered on the forgot-password form (captured at the
+ * send-otp step and re-submitted with this form).
  */
 export async function verifyOtpResetPasswordAction(formData: FormData) {
   const user_name = (formData.get("user_name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
   const otp = (formData.get("otp") as string)?.trim();
   const new_password = (formData.get("new_password") as string) || "";
   const new_password_confirmation = (formData.get("new_password_confirmation") as string) || "";
 
   if (!user_name) return { error: "Matric number is missing. Please go back and try again." };
+  if (!email) return { error: "Email is missing. Please go back and try again." };
   if (!otp || otp.length < 4) return { error: "Please enter the OTP sent to your email." };
   if (!new_password || !new_password_confirmation) return { error: "New password and confirmation are required." };
   if (new_password !== new_password_confirmation) return { error: "Passwords do not match." };
@@ -174,12 +179,12 @@ export async function verifyOtpResetPasswordAction(formData: FormData) {
   if (!apiUrl) {
     return { error: "Internal server error: Missing API configuration." };
   }
-
+  console.log("verifyOtpResetPasswordAction: Sending request to verify OTP and reset password for user:", user_name, "email:", email);
   try {
     const response = await loggedFetch(`${apiUrl}/api/v1/entity/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_name, otp, new_password, new_password_confirmation }),
+      body: JSON.stringify({ user_name, email, otp, new_password, new_password_confirmation }),
     });
 
     const json = await response.json().catch(() => null);
