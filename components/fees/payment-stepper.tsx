@@ -6,24 +6,24 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ResetProgressConfirmModal } from "@/components/registration/registration-status-modals";
 
+export interface StepDefinition {
+  id: number;
+  title: string;
+}
+
 interface PaymentStepperProps {
   currentStep: number;
+  steps: StepDefinition[];
   sessionLabel?: string;
   typeLabel?: string;
   hasProgress?: boolean;
   onCancelProgress?: () => void;
 }
 
-const steps = [
-  { id: 1, title: "Select Residence" },
-  { id: 2, title: "Select Worship Center" },
-  { id: 3, title: "Select Meal Plan" },
-  { id: 4, title: "Summary" }
-];
-
-export function PaymentStepper({ 
-  currentStep, 
-  sessionLabel = "2025/2026", 
+export function PaymentStepper({
+  currentStep,
+  steps,
+  sessionLabel = "2025/2026",
   typeLabel = "Full Session Registration",
   hasProgress = false,
   onCancelProgress,
@@ -36,7 +36,7 @@ export function PaymentStepper({
       <div className="hidden md:grid grid-cols-[130px_1fr_130px] items-center gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
         {/* Left: Back Button */}
         <div className="flex justify-start">
-          <button 
+          <button
             type="button"
             onClick={() => router.back()}
             className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0"
@@ -46,7 +46,7 @@ export function PaymentStepper({
           </button>
         </div>
 
-        {/* Center: Centered Pills Container */}
+        {/* Center: Pills */}
         <div className="flex items-center justify-center gap-3 md:gap-4 min-w-0">
           {/* Session Pill */}
           <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-4 py-2.5 flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 shrink-0 max-w-[220px]">
@@ -54,16 +54,17 @@ export function PaymentStepper({
             <span className="text-[13px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight truncate w-full">{typeLabel}</span>
           </div>
 
-          {/* Stepper Pill */}
+          {/* Step Pills */}
           <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-3.5 border border-[#e2e4e9] dark:border-gray-800">
             {steps.map((step, index) => {
               const isActive = currentStep === step.id;
               const isCompleted = currentStep > step.id;
+              // Display number is always positional (1, 2, 3…) regardless of skipped IDs
+              const displayNumber = index + 1;
 
               return (
                 <div key={step.id} className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
-                    {/* Step Circle */}
                     {isCompleted ? (
                       <div className="w-5 h-5 rounded-full bg-[#38c793] flex items-center justify-center shrink-0">
                         <Check className="w-3 h-3 text-white" strokeWidth={3} />
@@ -75,20 +76,18 @@ export function PaymentStepper({
                           ? "bg-[#375dfb] dark:bg-[#2563EB] text-white"
                           : "bg-white dark:bg-gray-800 border border-[#e2e4e9] dark:border-gray-700 text-[#525866] dark:text-gray-400"
                       )}>
-                        {step.id}
+                        {displayNumber}
                       </div>
                     )}
-                    
-                    {/* Step Label */}
                     <span className={cn(
                       "text-[13.5px] whitespace-nowrap",
-                      isActive ? "font-semibold text-[#0a0d14] dark:text-gray-100" : "font-normal text-[#525866] dark:text-gray-400"
+                      isActive
+                        ? "font-semibold text-[#0a0d14] dark:text-gray-100"
+                        : "font-normal text-[#525866] dark:text-gray-400"
                     )}>
                       {step.title}
                     </span>
                   </div>
-
-                  {/* Separator */}
                   {index < steps.length - 1 && (
                     <ChevronRight className="w-4 h-4 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
                   )}
@@ -98,14 +97,13 @@ export function PaymentStepper({
           </div>
         </div>
 
-        {/* Right-most: Cancel Progress Button */}
+        {/* Right: Cancel Progress */}
         <div className="flex justify-end">
           {hasProgress && onCancelProgress && (
-            <button 
+            <button
               type="button"
               onClick={() => setIsResetModalOpen(true)}
               className="flex items-center justify-center gap-1.5 px-3 h-10 rounded-xl border border-red-200 dark:border-red-900/50 bg-white dark:bg-gray-900 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors text-xs font-medium shrink-0"
-              title="Cancel progress & clear selections"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Cancel Progress</span>

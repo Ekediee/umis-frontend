@@ -351,6 +351,10 @@ export default function RegistrationPage() {
             // Re-fetch semester info and update the store so all pages stay in sync
             const statusResult = await getSemesterRegistrationStatusAction();
             if (statusResult.data) setSemesterInfo(statusResult.data);
+            
+            // Re-render server components to pull the updated user profile from the session cookie
+            router.refresh();
+
             setIsSemesterConfirmOpen(false);
             toast.success(result.message || "Successfully registered for the semester!");
           }

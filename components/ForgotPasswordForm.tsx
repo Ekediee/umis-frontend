@@ -97,7 +97,12 @@ function useResendCooldown() {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function ForgotPasswordForm() {
+interface ForgotPasswordFormProps {
+  /** Page header (logo, title, subtitle). Hidden once the reset has completed. */
+  header?: React.ReactNode;
+}
+
+export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
   const [step, setStep] = useState<"request" | "otp" | "success">("request");
   const [matricNo, setMatricNo] = useState("");
   const [email, setEmail] = useState("");
@@ -160,6 +165,7 @@ export function ForgotPasswordForm() {
     const formData = new FormData(event.currentTarget);
     formData.set("otp", otp);
     formData.set("user_name", matricNo);
+    formData.set("email", email);
 
     startTransition(async () => {
       const res = await verifyOtpResetPasswordAction(formData);
@@ -196,183 +202,189 @@ export function ForgotPasswordForm() {
   // ── Step 2: OTP + New Password ──
   if (step === "otp") {
     return (
-      <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4 lg:gap-5">
-        {/* Info banner */}
-        <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3.5 text-xs text-blue-900 leading-relaxed">
-          A one-time passcode has been sent to the email registered for{" "}
-          <strong>{matricNo}</strong>. Enter the 6-digit code below along with your new password.
-        </div>
+      <>
+        {header}
+        <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4 lg:gap-5">
+          {/* Info banner */}
+          <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3.5 text-xs text-blue-900 leading-relaxed">
+            A one-time passcode has been sent to the email registered for{" "}
+            <strong>{matricNo}</strong>. Enter the 6-digit code below along with your new password.
+          </div>
 
-        {/* 6-box OTP */}
-        <div>
-          <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-3">
-            One-Time Passcode <span className="text-blue-600">*</span>
-          </label>
-          <OtpInput value={otpDigits} onChange={setOtpDigits} />
-        </div>
+          {/* 6-box OTP */}
+          <div>
+            <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-3">
+              One-Time Passcode <span className="text-blue-600">*</span>
+            </label>
+            <OtpInput value={otpDigits} onChange={setOtpDigits} />
+          </div>
 
-        {/* New Password */}
-        <div>
-          <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
-            New Password <span className="text-blue-600">*</span>
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Lock className="h-[18px] w-[18px] text-gray-400" />
+          {/* New Password */}
+          <div>
+            <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
+              New Password <span className="text-blue-600">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-[18px] w-[18px] text-gray-400" />
+              </div>
+              <input
+                type={showNewPass ? "text" : "password"}
+                name="new_password"
+                required
+                placeholder="••••••••••"
+                className="block w-full pl-[42px] pr-[42px] py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPass(!showNewPass)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {showNewPass ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+              </button>
             </div>
-            <input
-              type={showNewPass ? "text" : "password"}
-              name="new_password"
-              required
-              placeholder="••••••••••"
-              className="block w-full pl-[42px] pr-[42px] py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
-            />
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
+              Confirm New Password <span className="text-blue-600">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-[18px] w-[18px] text-gray-400" />
+              </div>
+              <input
+                type={showConfirmPass ? "text" : "password"}
+                name="new_password_confirmation"
+                required
+                placeholder="••••••••••"
+                className="block w-full pl-[42px] pr-[42px] py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPass(!showConfirmPass)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPass ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Reset Password"
+            )}
+          </Button>
+
+          {/* Resend OTP + Back */}
+          <div className="flex items-center justify-between mt-1">
             <button
               type="button"
-              onClick={() => setShowNewPass(!showNewPass)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              onClick={() => setStep("request")}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
             >
-              {showNewPass ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+              <ArrowLeft className="w-3.5 h-3.5" /> Back
             </button>
-          </div>
-        </div>
 
-        {/* Confirm Password */}
-        <div>
-          <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
-            Confirm New Password <span className="text-blue-600">*</span>
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Lock className="h-[18px] w-[18px] text-gray-400" />
-            </div>
-            <input
-              type={showConfirmPass ? "text" : "password"}
-              name="new_password_confirmation"
-              required
-              placeholder="••••••••••"
-              className="block w-full pl-[42px] pr-[42px] py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
-            />
             <button
               type="button"
-              onClick={() => setShowConfirmPass(!showConfirmPass)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              onClick={handleResend}
+              disabled={!canResend || isPending}
+              className="flex items-center gap-1.5 text-xs font-medium text-[#1849D6] hover:text-[#133BB0] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {showConfirmPass ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+              <RefreshCw className={`w-3.5 h-3.5 ${isPending && canResend ? "animate-spin" : ""}`} />
+              {canResend ? "Resend OTP" : `Resend in ${seconds}s`}
             </button>
           </div>
-        </div>
-
-        {/* Submit */}
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Verifying...
-            </>
-          ) : (
-            "Reset Password"
-          )}
-        </Button>
-
-        {/* Resend OTP + Back */}
-        <div className="flex items-center justify-between mt-1">
-          <button
-            type="button"
-            onClick={() => setStep("request")}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back
-          </button>
-
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={!canResend || isPending}
-            className="flex items-center gap-1.5 text-xs font-medium text-[#1849D6] hover:text-[#133BB0] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isPending && canResend ? "animate-spin" : ""}`} />
-            {canResend ? "Resend OTP" : `Resend in ${seconds}s`}
-          </button>
-        </div>
-      </form>
+        </form>
+      </>
     );
   }
 
   // ── Step 1: Enter Matric + Email ──
   return (
-    <form onSubmit={handleRequestSubmit} className="flex flex-col gap-4 lg:gap-5">
-      {/* Matric Number */}
-      <div>
-        <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
-          Matric Number <span className="text-blue-600">*</span>
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <User className="h-[18px] w-[18px] text-gray-400" />
+    <>
+      {header}
+      <form onSubmit={handleRequestSubmit} className="flex flex-col gap-4 lg:gap-5">
+        {/* Matric Number */}
+        <div>
+          <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
+            Matric Number <span className="text-blue-600">*</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <User className="h-[18px] w-[18px] text-gray-400" />
+            </div>
+            <input
+              type="text"
+              name="user_name"
+              required
+              placeholder="e.g. 18/0654"
+              className="block w-full pl-[42px] pr-4 py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
+            />
           </div>
-          <input
-            type="text"
-            name="user_name"
-            required
-            placeholder="e.g. 18/0654"
-            className="block w-full pl-[42px] pr-4 py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
-          />
         </div>
-      </div>
 
-      {/* Babcock Student Email */}
-      <div>
-        <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
-          Babcock Student Email <span className="text-blue-600">*</span>
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Mail className="h-[18px] w-[18px] text-gray-400" />
+        {/* Babcock Student Email */}
+        <div>
+          <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
+            Babcock Student Email <span className="text-blue-600">*</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Mail className="h-[18px] w-[18px] text-gray-400" />
+            </div>
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="e.g. john.doe@student.babcock.edu.ng"
+              pattern="^[a-zA-Z0-9._%+\-]+@(student|pg)\.babcock\.edu\.ng$"
+              title="Please enter a valid Babcock email ending in @student.babcock.edu.ng or @pg.babcock.edu.ng"
+              className="block w-full pl-[42px] pr-4 py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
+            />
           </div>
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="e.g. john.doe@student.babcock.edu.ng"
-            pattern="^[a-zA-Z0-9._%+\-]+@(student|pg)\.babcock\.edu\.ng$"
-            title="Please enter a valid Babcock email ending in @student.babcock.edu.ng or @pg.babcock.edu.ng"
-            className="block w-full pl-[42px] pr-4 py-3 lg:py-3.5 text-[14px] lg:text-[15px] border border-gray-200 rounded-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white"
-          />
+          <p className="mt-1.5 text-[11px] text-gray-400 pl-1">
+            Must end in <span className="font-semibold text-gray-500">@student.babcock.edu.ng</span> or{" "}
+            <span className="font-semibold text-gray-500">@pg.babcock.edu.ng</span>
+          </p>
         </div>
-        <p className="mt-1.5 text-[11px] text-gray-400 pl-1">
-          Must end in <span className="font-semibold text-gray-500">@student.babcock.edu.ng</span> or{" "}
-          <span className="font-semibold text-gray-500">@pg.babcock.edu.ng</span>
-        </p>
-      </div>
 
-      <Button
-        type="submit"
-        disabled={isPending}
-        className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70 mt-2"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Sending OTP...
-          </>
-        ) : (
-          "Send OTP"
-        )}
-      </Button>
-
-      <div className="flex items-center justify-center mt-2">
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-[13px] lg:text-[14px] font-medium text-gray-600 hover:text-[#1849D6] transition-colors"
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70 mt-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Remember password? Back to Login
-        </Link>
-      </div>
-    </form>
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Sending OTP...
+            </>
+          ) : (
+            "Send OTP"
+          )}
+        </Button>
+
+        <div className="flex items-center justify-center mt-2">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-[13px] lg:text-[14px] font-medium text-gray-600 hover:text-[#1849D6] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Remember password? Back to Login
+          </Link>
+        </div>
+      </form>
+    </>
   );
 }
