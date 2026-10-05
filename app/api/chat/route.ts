@@ -75,7 +75,7 @@ export const POST = withLogging(async function POST(req: Request) {
       const handbookContext = getAIHandbookContext();
 
       const result = await streamText({
-        model: googleProvider('gemini-2.5-flash'),
+        model: googleProvider('gemini-3.5-flash-lite'),
         messages,
         system: `You are the Babcock University Student Portal AI Support Agent (Pulse).
 Your job is to assist students with 100% accuracy. Always prioritize the official portal knowledge base and university guidelines provided below. 
