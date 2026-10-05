@@ -310,6 +310,7 @@ describe("auth actions", () => {
     it("validates missing username or token", async () => {
       const result = await changePasswordWithTokenAction({
         username: "",
+        email: "test@example.com",
         reset_token: "token123",
         new_password: "password123",
         new_password_confirmation: "password123",
@@ -323,6 +324,7 @@ describe("auth actions", () => {
     it("validates matching passwords", async () => {
       const result = await changePasswordWithTokenAction({
         username: "18/0654",
+        email: "test@example.com",
         reset_token: "token123",
         new_password: "password123",
         new_password_confirmation: "password456",
@@ -345,6 +347,7 @@ describe("auth actions", () => {
 
       const result = await changePasswordWithTokenAction({
         username: "18/0654",
+        email: "test@example.com",
         reset_token: "mock-reset-token-20char",
         new_password: "newpassword123",
         new_password_confirmation: "newpassword123",
@@ -372,6 +375,7 @@ describe("auth actions", () => {
 
       const result = await changePasswordWithTokenAction({
         username: "18/0654",
+        email: "test@example.com",
         reset_token: "mock-reset-token-20char",
         new_password: "newpassword123",
         new_password_confirmation: "newpassword123",

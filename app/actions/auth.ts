@@ -154,55 +154,6 @@ export async function requestPasswordResetAction(formData: FormData) {
   }
 }
 
-/**
- * Verifies the OTP and resets the student's password in one step.
- * Endpoint: POST /api/v1/entity/verify-otp
- * Body: { user_name, email, otp, new_password, new_password_confirmation }
- *
- * `email` is the address the student entered on the forgot-password form (captured at the
- * send-otp step and re-submitted with this form).
- */
-export async function verifyOtpResetPasswordAction(formData: FormData) {
-  const user_name = (formData.get("user_name") as string)?.trim();
-  const email = (formData.get("email") as string)?.trim().toLowerCase();
-  const otp = (formData.get("otp") as string)?.trim();
-  const new_password = (formData.get("new_password") as string) || "";
-  const new_password_confirmation = (formData.get("new_password_confirmation") as string) || "";
-
-  if (!user_name) return { error: "Matric number is missing. Please go back and try again." };
-  if (!email) return { error: "Email is missing. Please go back and try again." };
-  if (!otp || otp.length < 4) return { error: "Please enter the OTP sent to your email." };
-  if (!new_password || !new_password_confirmation) return { error: "New password and confirmation are required." };
-  if (new_password !== new_password_confirmation) return { error: "Passwords do not match." };
-
-  const apiUrl = process.env.API_URL;
-  if (!apiUrl) {
-    return { error: "Internal server error: Missing API configuration." };
-  }
-  console.log("verifyOtpResetPasswordAction: Sending request to verify OTP and reset password for user:", user_name, "email:", email);
-  try {
-    const response = await loggedFetch(`${apiUrl}/api/v1/entity/verify-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_name, email, otp, new_password, new_password_confirmation }),
-    });
-
-    const json = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const errorMessage = json?.message || json?.error || "OTP verification failed. Please try again.";
-      return { error: getUserFriendlyErrorMessage(errorMessage, "OTP verification failed. Please try again.") };
-    }
-
-    return {
-      success: true,
-      message: json?.message || "Password reset successfully. You can now log in.",
-    };
-  } catch (e) {
-    console.error("Verify OTP API call failed:", e);
-    return { error: "Failed to connect to the server. Please try again." };
-  }
-}
 
 /**
  * Sends an OTP to the student's email for password change or verification.
@@ -310,11 +261,12 @@ export async function verifyOtpAction(payload: { otp: string; email: string }) {
  */
 export async function changePasswordWithTokenAction(payload: {
   username: string;
+  email: string;
   reset_token: string;
   new_password: string;
   new_password_confirmation: string;
 }) {
-  const { username, reset_token, new_password, new_password_confirmation } = payload;
+  const { username, email, reset_token, new_password, new_password_confirmation } = payload;
 
   if (!username) return { error: "Matric number is missing." };
   if (!reset_token) return { error: "Reset token is missing. Please verify your OTP again." };
@@ -349,6 +301,7 @@ export async function changePasswordWithTokenAction(payload: {
       body: JSON.stringify({
         username,
         user_name: username,
+        email,
         reset_token,
         new_password,
         new_password_confirmation,

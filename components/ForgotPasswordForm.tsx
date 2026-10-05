@@ -4,7 +4,7 @@ import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import { User, Lock, Eye, EyeOff, ArrowLeft, Loader2, CheckCircle2, Mail, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { requestPasswordResetAction, verifyOtpResetPasswordAction } from "@/app/actions/auth";
+import { requestPasswordResetAction, verifyOtpAction, changePasswordWithTokenAction } from "@/app/actions/auth";
 import { toast } from "sonner";
 
 // ─── 6-Box OTP Input ────────────────────────────────────────────────────────
@@ -103,7 +103,8 @@ interface ForgotPasswordFormProps {
 }
 
 export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
-  const [step, setStep] = useState<"request" | "otp" | "success">("request");
+  const [step, setStep] = useState<"request" | "otp" | "reset_password" | "success">("request");
+  const [resetToken, setResetToken] = useState("");
   const [matricNo, setMatricNo] = useState("");
   const [email, setEmail] = useState("");
   const [otpDigits, setOtpDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
@@ -154,25 +155,46 @@ export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
   };
 
   // ── Step 2: Verify OTP + Reset Password ──
-  const handleOtpSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const otp = otpDigits.join("");
-    if (otp.length < OTP_LENGTH) {
-      toast.error("Please fill in all 6 digits of the OTP.");
-      return;
-    }
+  const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    startTransition(async () => {
+      if (otpDigits.some((d) => !d)) {
+        toast.error("Please enter all 6 digits of the OTP.");
+        return;
+      }
 
-    const formData = new FormData(event.currentTarget);
-    formData.set("otp", otp);
-    formData.set("user_name", matricNo);
-    formData.set("email", email);
+      const otp = otpDigits.join("");
+      const res = await verifyOtpAction({ otp, email });
+
+      if (res?.error) {
+        toast.error(res.error);
+      } else if (res?.success) {
+        toast.success(res.message || "OTP verified successfully.");
+        setResetToken(res.reset_token as string);
+        setStep("reset_password");
+      }
+    });
+  };
+
+  const handlePasswordResetSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const new_password = formData.get("new_password") as string;
+    const new_password_confirmation = formData.get("new_password_confirmation") as string;
 
     startTransition(async () => {
-      const res = await verifyOtpResetPasswordAction(formData);
-      if (res.error) {
+      const res = await changePasswordWithTokenAction({
+        username: matricNo,
+        email,
+        reset_token: resetToken,
+        new_password,
+        new_password_confirmation,
+      });
+
+      if (res?.error) {
         toast.error(res.error);
-      } else {
-        toast.success(res.message || "Password reset successful!");
+      } else if (res?.success) {
+        toast.success(res.message || "Password reset successfully. You can now log in.");
         setStep("success");
       }
     });
@@ -190,7 +212,7 @@ export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
           Your password has been updated successfully. You can now log in to your account with your new password.
         </p>
         <Link
-          href="/"
+          href="/login"
           className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 rounded-[14px] text-[15px] font-medium text-center block"
         >
           Return to Login
@@ -199,7 +221,7 @@ export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
     );
   }
 
-  // ── Step 2: OTP + New Password ──
+  // ── Step 2: Verify OTP ──
   if (step === "otp") {
     return (
       <>
@@ -208,7 +230,7 @@ export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
           {/* Info banner */}
           <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3.5 text-xs text-blue-900 leading-relaxed">
             A one-time passcode has been sent to the email registered for{" "}
-            <strong>{matricNo}</strong>. Enter the 6-digit code below along with your new password.
+            <strong>{matricNo}</strong>. Enter the 6-digit code below.
           </div>
 
           {/* 6-box OTP */}
@@ -219,6 +241,53 @@ export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
             <OtpInput value={otpDigits} onChange={setOtpDigits} />
           </div>
 
+          {/* Submit */}
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="w-full bg-[#1849D6] hover:bg-[#133BB0] text-white py-3 lg:py-[14px] rounded-[14px] text-[15px] font-medium transition-all flex items-center justify-center h-auto disabled:opacity-70"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Verify OTP"
+            )}
+          </Button>
+
+          {/* Resend OTP + Back */}
+          <div className="flex items-center justify-between mt-1">
+            <button
+              type="button"
+              onClick={() => setStep("request")}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={!canResend || isPending}
+              className="flex items-center gap-1.5 text-xs font-medium text-[#1849D6] hover:text-[#133BB0] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isPending && canResend ? "animate-spin" : ""}`} />
+              {canResend ? "Resend OTP" : `Resend in ${seconds}s`}
+            </button>
+          </div>
+        </form>
+      </>
+    );
+  }
+
+  // ── Step 3: Reset Password ──
+  if (step === "reset_password") {
+    return (
+      <>
+        {header}
+        <form onSubmit={handlePasswordResetSubmit} className="flex flex-col gap-4 lg:gap-5">
           {/* New Password */}
           <div>
             <label className="block text-[13px] lg:text-[14px] font-medium text-gray-900 mb-2">
@@ -280,33 +349,12 @@ export function ForgotPasswordForm({ header }: ForgotPasswordFormProps) {
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
+                Resetting...
               </>
             ) : (
               "Reset Password"
             )}
           </Button>
-
-          {/* Resend OTP + Back */}
-          <div className="flex items-center justify-between mt-1">
-            <button
-              type="button"
-              onClick={() => setStep("request")}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={!canResend || isPending}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#1849D6] hover:text-[#133BB0] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isPending && canResend ? "animate-spin" : ""}`} />
-              {canResend ? "Resend OTP" : `Resend in ${seconds}s`}
-            </button>
-          </div>
         </form>
       </>
     );
