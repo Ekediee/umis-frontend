@@ -403,7 +403,7 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
                 className={cn(
                   "flex items-start gap-3 p-4 rounded-[16px] cursor-pointer transition-all border",
                   isSelected
-                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
+                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
                     : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
                 )}
               >
