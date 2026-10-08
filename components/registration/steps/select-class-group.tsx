@@ -55,7 +55,7 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
             Select Class Group
           </h3>
           <p className="text-[13px] text-[#6b7280] dark:text-gray-400">
-            You can select one or more class groups.
+            You can only select one class group.
           </p>
         </div>
 

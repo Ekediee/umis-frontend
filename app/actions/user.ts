@@ -209,3 +209,77 @@ export async function updateProfilePictureAction(
   }
 }
 
+export interface UpdateEmailResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Updates the student's email via /api/v1/student/update-email.
+ */
+export async function updateEmailAction(email: string): Promise<UpdateEmailResult> {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    return { success: false, error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken().catch(() => null);
+  if (!token) {
+    return { success: false, error: "You are not authenticated. Please log in again." };
+  }
+
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/student/update-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to update email address";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // use fallback
+      }
+      return { success: false, error: errorMessage };
+    }
+
+    const json = await response.json();
+    const message = json.message || "Email address updated successfully!";
+
+    // Update the session cookie with the new email
+    const currentUser = await getSessionUser();
+    if (currentUser && currentUser.user_data) {
+      const updatedUser: UMISResponse = {
+        ...currentUser,
+        user_data: {
+          ...currentUser.user_data,
+          contact_information: {
+            ...currentUser.user_data.contact_information,
+            email: email,
+          },
+        },
+      };
+      await updateSessionUser(updatedUser);
+    }
+
+    return {
+      success: true,
+      message,
+    };
+  } catch (error) {
+    console.error("updateEmailAction error:", error);
+    return {
+      success: false,
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+}
+

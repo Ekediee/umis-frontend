@@ -6,7 +6,7 @@ import {
   Phone, Mail, Home, Users, Calendar, X, CheckCircle2
 } from "lucide-react";
 import { StudentProfileBanner } from "@/components/shared/student-profile-banner";
-import { getUserData } from "@/app/actions/user";
+import { getUserData, updateEmailAction } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
 
 export default function ProfilePage() {
@@ -77,8 +77,30 @@ export default function ProfilePage() {
     }
   }, [userData]); 
 
-  const handleUpdateContact = (updatedInfo: typeof contactInfo) => {
-    setContactInfo(updatedInfo);
+  const handleUpdateContact = async (email: string) => {
+    const result = await updateEmailAction(email);
+    if (!result.success) {
+      throw new Error(result.error || "Failed to update email");
+    }
+
+    setContactInfo((prev) => ({
+      ...prev,
+      email: email,
+    }));
+    
+    setUserData((prev) => {
+      if (!prev || !prev.user_data) return prev;
+      return {
+        ...prev,
+        user_data: {
+          ...prev.user_data,
+          contact_information: {
+            ...prev.user_data.contact_information,
+            email: email,
+          },
+        },
+      } as UMISResponse;
+    });
     setIsContactModalOpen(false);
     setIsSuccessBannerOpen(true);
     
@@ -170,12 +192,6 @@ export default function ProfilePage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-5 md:p-6 flex flex-col gap-5 md:gap-6 transition-colors duration-200">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900 dark:text-gray-100">Next of Kin</h3>
-            <button 
-              onClick={() => setIsNokModalOpen(true)}
-              className="bg-white dark:bg-gray-900 border-[1.5px] border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 rounded-[12px] px-4 md:px-6 py-2 h-auto text-[12px] md:text-[13px] font-medium transition-colors active:scale-95 shrink-0"
-            >
-              Update
-            </button>
           </div>
           <div className="flex flex-col gap-5">
             <InfoRow icon={<User size={14} />} label="Name" value={nextOfKinInfo.name} />
@@ -193,7 +209,7 @@ export default function ProfilePage() {
         <UpdateContactModal 
           isOpen={isContactModalOpen} 
           onClose={() => setIsContactModalOpen(false)} 
-          initialData={contactInfo}
+          initialData={{ email: contactInfo.email }}
           onSave={handleUpdateContact}
         />
       )}
@@ -335,36 +351,45 @@ interface UpdateContactModalProps {
   onClose: () => void;
   initialData: {
     email: string;
-    phone: string;
-    address: string;
-    city: string;
-    country: string;
-    residencyStatus: string;
   };
-  onSave: (data: UpdateContactModalProps["initialData"]) => void;
+  onSave: (email: string) => Promise<void>;
 }
 
 function UpdateContactModal({ isOpen, onClose, initialData, onSave }: UpdateContactModalProps) {
-  const [formData, setFormData] = React.useState(initialData);
+  const [email, setEmail] = React.useState(initialData.email);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const isFormFilled = formData.email && formData.phone && formData.address && formData.city && formData.country;
+  const isFormFilled = !!email.trim();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleSubmit = async () => {
+    if (!isFormFilled) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await onSave(email);
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-t-[12px] md:rounded-[12px] w-full max-w-[488px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200 transition-colors duration-200">
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-t-[12px] md:rounded-[12px] w-full max-w-[488px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200 transition-colors">
         <div className="flex items-center justify-between p-5 md:p-6 border-b border-gray-100 dark:border-gray-800">
           <h3 className="text-[16px] md:text-[18px] font-semibold text-gray-900 dark:text-gray-100">Update Contact Information</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+          <button onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-5 md:p-6 flex flex-col gap-4 md:gap-5 max-h-[60vh] md:max-h-[70vh] overflow-y-auto">
+          {error && (
+            <div className="p-3 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 text-[13px] rounded-lg">
+              {error}
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300 flex gap-1">
               Email address <span className="text-blue-600 dark:text-blue-400">*</span>
@@ -372,97 +397,31 @@ function UpdateContactModal({ isOpen, onClose, initialData, onSave }: UpdateCont
             <input 
               type="email" 
               name="email"
-              value={formData.email}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="E.g alexrivera@example.com"
+              disabled={isSubmitting}
               className="w-full px-4 py-2 md:py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[12px] text-[14px] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300 flex gap-1">
-              Phone number <span className="text-blue-600 dark:text-blue-400">*</span>
-            </label>
-            <input 
-              type="tel" 
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="E.g 08120004444"
-              className="w-full px-4 py-2 md:py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[12px] text-[14px] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300 flex gap-1">
-              Residential Address <span className="text-blue-600 dark:text-blue-400">*</span>
-            </label>
-            <input 
-              type="text" 
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="E.g 5, alex rivera street"
-              className="w-full px-4 py-2 md:py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[12px] text-[14px] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300 flex gap-1">
-              Town/City <span className="text-blue-600 dark:text-blue-400">*</span>
-            </label>
-            <input 
-              type="text" 
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              placeholder="Enter city of residence"
-              className="w-full px-4 py-2 md:py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[12px] text-[14px] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300 flex gap-1">
-              Country <span className="text-blue-600 dark:text-blue-400">*</span>
-            </label>
-            <select 
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className="w-full px-4 py-2 md:py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[12px] text-[14px] text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[right_16px_center] bg-no-repeat dark:bg-none"
-            >
-              <option value="Nigeria" className="dark:bg-gray-900">Nigeria</option>
-              <option value="Ghana" className="dark:bg-gray-900">Ghana</option>
-              <option value="United Kingdom" className="dark:bg-gray-900">United Kingdom</option>
-              <option value="United States" className="dark:bg-gray-900">United States</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300">Residency Status</label>
-            <input 
-              type="text" 
-              name="residencyStatus"
-              value={formData.residencyStatus}
-              onChange={handleChange}
-              placeholder="E.g Neal Wilson B205"
-              className="w-full px-4 py-2 md:py-2.5 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-[12px] text-[14px] text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed"
-              readOnly
             />
           </div>
         </div>
 
         <div className="p-5 md:p-6 pt-2">
           <button 
-            disabled={!isFormFilled}
-            onClick={() => onSave(formData)}
-            className={`w-full py-3 rounded-[12px] text-[15px] font-semibold transition-all ${
-              isFormFilled 
+            disabled={!isFormFilled || isSubmitting}
+            onClick={handleSubmit}
+            className={`w-full py-3 rounded-[12px] text-[15px] font-semibold transition-all flex items-center justify-center ${
+              (isFormFilled && !isSubmitting)
                 ? "bg-[#003cbb] dark:bg-[#4d82ff] text-white hover:bg-[#003095] dark:hover:bg-[#3b6ee0] active:scale-[0.98]" 
                 : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
             }`}
           >
-            Submit
+            {isSubmitting ? (
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : "Submit"}
           </button>
         </div>
       </div>

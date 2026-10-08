@@ -309,7 +309,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
 
   const toggleGroup = (id: string) => {
     setSelectedGroups(prev =>
-      prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
+      prev.includes(id) ? [] : [id]
     );
   };
 
