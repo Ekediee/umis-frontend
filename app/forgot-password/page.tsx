@@ -39,25 +39,29 @@ export default function ForgotPasswordPage() {
       {/* Left Panel (Form) */}
       <div className="w-full lg:w-1/2 flex flex-col p-6 sm:p-8 lg:p-12 relative z-20 bg-white rounded-t-[32px] lg:rounded-none -mt-8 lg:mt-0 flex-1 order-2 lg:order-1">
         <div className="w-full max-w-[400px] mx-auto my-auto flex flex-col pb-8 lg:pb-0">
-          <div className="w-[64px] h-[64px] lg:w-[72px] lg:h-[72px] rounded-full bg-[#F8F9FB] border border-gray-100 shadow-sm flex items-center justify-center mx-auto mb-6 lg:mb-8">
-            <Image
-              src="/images/bu_logo.png"
-              alt="Pulse Logo"
-              width={32}
-              height={32}
-              unoptimized
-              className="object-contain lg:w-[40px] lg:h-[40px]"
-            />
-          </div>
+          <ForgotPasswordForm
+            header={
+              <>
+                <div className="w-[64px] h-[64px] lg:w-[72px] lg:h-[72px] rounded-full bg-[#F8F9FB] border border-gray-100 shadow-sm flex items-center justify-center mx-auto mb-6 lg:mb-8">
+                  <Image
+                    src="/images/bu_logo.png"
+                    alt="Pulse Logo"
+                    width={32}
+                    height={32}
+                    unoptimized
+                    className="object-contain lg:w-[40px] lg:h-[40px]"
+                  />
+                </div>
 
-          <h1 className="text-[22px] lg:text-[26px] font-bold text-center text-gray-900 mb-2 tracking-tight">
-            Forgot Password
-          </h1>
-          <p className="text-[14px] lg:text-[15px] text-gray-500 text-center mb-8 lg:mb-10">
-            Follow the steps below to reset your password.
-          </p>
-
-          <ForgotPasswordForm />
+                <h1 className="text-[22px] lg:text-[26px] font-bold text-center text-gray-900 mb-2 tracking-tight">
+                  Forgot Password
+                </h1>
+                <p className="text-[14px] lg:text-[15px] text-gray-500 text-center mb-8 lg:mb-10">
+                  Follow the steps below to reset your password.
+                </p>
+              </>
+            }
+          />
         </div>
 
         <div className="w-full flex items-center justify-center text-[12px] lg:text-[13px] text-gray-500 font-medium mt-auto pt-8">

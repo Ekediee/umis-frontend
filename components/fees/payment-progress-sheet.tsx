@@ -2,34 +2,25 @@
 
 import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { StepDefinition } from "@/components/fees/payment-stepper";
 
 interface PaymentProgressSheetProps {
   isOpen: boolean;
   onClose: () => void;
   currentStep: number;
+  steps: StepDefinition[];
 }
 
-export function PaymentProgressSheet({ isOpen, onClose, currentStep }: PaymentProgressSheetProps) {
+export function PaymentProgressSheet({ isOpen, onClose, currentStep, steps }: PaymentProgressSheetProps) {
   if (!isOpen) return null;
-
-  const steps = [
-    { id: 1, title: "Select Residence" },
-    { id: 2, title: "Select Worship Center" },
-    { id: 3, title: "Select Meal Plan" },
-    { id: 4, title: "Summary" }
-  ];
 
   return (
     <>
-      {/* Backdrop — click to dismiss */}
       <div
         className="fixed inset-0 bg-black/40 z-50 transition-opacity"
         onClick={onClose}
       />
-
-      {/* Bottom Sheet */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#f8f9fb] dark:bg-gray-900 border-t dark:border-gray-800 rounded-t-[24px] z-50 flex flex-col pt-3 pb-8 px-4 md:hidden animate-in slide-in-from-bottom-full duration-300 transition-colors">
-        {/* Handle */}
         <div className="w-10 h-1.5 bg-[#e2e4e9] dark:bg-gray-800 rounded-full mx-auto mb-6" />
 
         <div className="flex items-center justify-between mb-6">
@@ -38,10 +29,10 @@ export function PaymentProgressSheet({ isOpen, onClose, currentStep }: PaymentPr
 
         <div className="flex flex-col gap-2">
           <h3 className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] mb-1 transition-colors">Steps</h3>
-
           <div className="flex flex-col gap-2">
-            {steps.map((step) => {
+            {steps.map((step, index) => {
               const isCompleted = currentStep >= step.id;
+              const displayNumber = index + 1;
 
               return (
                 <div
@@ -51,9 +42,19 @@ export function PaymentProgressSheet({ isOpen, onClose, currentStep }: PaymentPr
                     isCompleted ? "bg-[#eef3fd] dark:bg-[#003cbb]/10" : "bg-transparent"
                   )}
                 >
-                  <span className="text-[15px] font-medium text-[#4e5155] dark:text-gray-300 transition-colors">
-                    {step.title}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0",
+                      isCompleted
+                        ? "bg-[#003cbb] dark:bg-[#4d82ff] text-white"
+                        : "bg-[#e2e4e9] dark:bg-gray-800 text-[#525866] dark:text-gray-400"
+                    )}>
+                      {displayNumber}
+                    </span>
+                    <span className="text-[15px] font-medium text-[#4e5155] dark:text-gray-300 transition-colors">
+                      {step.title}
+                    </span>
+                  </div>
                   {isCompleted ? (
                     <CheckCircle2 className="w-5 h-5 text-[#10b981] fill-white dark:fill-gray-900 transition-colors" />
                   ) : (

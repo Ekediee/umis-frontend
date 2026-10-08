@@ -270,6 +270,7 @@ export function ChangePasswordModal({ isOpen, onClose, matricNo, email }: Change
 
     const result = await changePasswordWithTokenAction({
       username: matricNo,
+      email,
       reset_token: resetToken,
       new_password: newPassword,
       new_password_confirmation: confirmPassword,

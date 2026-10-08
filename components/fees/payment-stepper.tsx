@@ -6,24 +6,25 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ResetProgressConfirmModal } from "@/components/registration/registration-status-modals";
 
+export interface StepDefinition {
+  id: number;
+  title: string;
+  fullTitle?: string;
+}
+
 interface PaymentStepperProps {
   currentStep: number;
+  steps: StepDefinition[];
   sessionLabel?: string;
   typeLabel?: string;
   hasProgress?: boolean;
   onCancelProgress?: () => void;
 }
 
-const steps = [
-  { id: 1, title: "Residence", fullTitle: "Select Residence" },
-  { id: 2, title: "Worship Center", fullTitle: "Select Worship Center" },
-  { id: 3, title: "Meal Plan", fullTitle: "Select Meal Plan" },
-  { id: 4, title: "Summary", fullTitle: "Summary" }
-];
-
-export function PaymentStepper({ 
-  currentStep, 
-  sessionLabel = "2025/2026", 
+export function PaymentStepper({
+  currentStep,
+  steps,
+  sessionLabel = "2025/2026",
   typeLabel = "Full Session Registration",
   hasProgress = false,
   onCancelProgress,
@@ -36,7 +37,7 @@ export function PaymentStepper({
       <div className="hidden md:flex items-center justify-between gap-2 xl:gap-4 w-full pt-3 pb-2 px-2 md:px-4 xl:px-8 bg-transparent">
         {/* Left: Back Button */}
         <div className="flex justify-start">
-          <button 
+          <button
             type="button"
             onClick={() => router.back()}
             className="flex items-center justify-center gap-1.5 w-[80px] h-10 rounded-xl border border-[#ccdaf9] dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-[#f8faff] dark:hover:bg-gray-800 transition-colors shrink-0"
@@ -59,11 +60,12 @@ export function PaymentStepper({
             {steps.map((step, index) => {
               const isActive = currentStep === step.id;
               const isCompleted = currentStep > step.id;
+              // Display number is always positional (1, 2, 3…) regardless of skipped IDs
+              const displayNumber = index + 1;
 
               return (
                 <div key={step.id} className="flex items-center gap-1.5 xl:gap-2">
                   <div className="flex items-center gap-1.5">
-                    {/* Step Circle */}
                     {isCompleted ? (
                       <div className="w-5 h-5 rounded-full bg-[#38c793] flex items-center justify-center shrink-0">
                         <Check className="w-3 h-3 text-white" strokeWidth={3} />
@@ -75,11 +77,9 @@ export function PaymentStepper({
                           ? "bg-[#375dfb] dark:bg-[#2563EB] text-white"
                           : "bg-white dark:bg-gray-800 border border-[#e2e4e9] dark:border-gray-700 text-[#525866] dark:text-gray-400"
                       )}>
-                        {step.id}
+                        {displayNumber}
                       </div>
                     )}
-                    
-                    {/* Step Label */}
                     <span className={cn(
                       "text-[12px] xl:text-[13px] 2xl:text-[13.5px] whitespace-nowrap",
                       isActive ? "font-semibold text-[#0a0d14] dark:text-gray-100" : "font-normal text-[#525866] dark:text-gray-400"
@@ -92,11 +92,9 @@ export function PaymentStepper({
                         {step.title}
                       </span>
                       {/* Full title only shows on 2xl */}
-                      <span className="hidden 2xl:inline">{step.fullTitle}</span>
+                      <span className="hidden 2xl:inline">{step.fullTitle || step.title}</span>
                     </span>
                   </div>
-
-                  {/* Separator */}
                   {index < steps.length - 1 && (
                     <ChevronRight className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
                   )}
@@ -113,7 +111,6 @@ export function PaymentStepper({
               type="button"
               onClick={() => setIsResetModalOpen(true)}
               className="flex items-center justify-center gap-1.5 px-3 h-10 rounded-xl border border-red-200 dark:border-red-900/50 bg-white dark:bg-gray-900 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors text-xs font-medium shrink-0"
-              title="Cancel progress & clear selections"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Cancel Progress</span>
