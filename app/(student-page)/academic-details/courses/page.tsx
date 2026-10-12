@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 
 function SkeletonRow({ showInstructor = true }: { showInstructor?: boolean }) {
   return (
-    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900">
+    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900">
       <CardContent className="p-0">
         {/* Desktop skeleton */}
         <div className={cn(
@@ -60,7 +60,7 @@ function SkeletonRow({ showInstructor = true }: { showInstructor?: boolean }) {
 
 function CarryoverSkeletonRow() {
   return (
-    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900">
+    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900">
       <CardContent className="p-0">
         {/* Desktop skeleton */}
         <div className="hidden md:grid items-center px-6 py-4 gap-4 animate-pulse grid-cols-[1.5fr_3fr_0.8fr_0.8fr_1fr]">
@@ -130,7 +130,7 @@ function renderTable(data: RegisteredCourse[], showInstructorAndGroup = true) {
       {data.map((course, idx) => (
         <Card
           key={`${course.courseId}-${idx}`}
-          className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+          className="rounded-[16px] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
         >
           <CardContent className="p-0">
             {/* DESKTOP VIEW */}
@@ -226,7 +226,7 @@ function renderCarryoverTable(data: CarryOverCourse[]) {
       {data.map((course, idx) => (
         <Card
           key={`${course.courseId}-${idx}`}
-          className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+          className="rounded-[16px] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
         >
           <CardContent className="p-0">
             {/* DESKTOP VIEW */}

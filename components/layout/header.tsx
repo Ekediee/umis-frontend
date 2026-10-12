@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles, KeyRound } from "lucide-react";
+import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles, KeyRound, ClipboardCheck, ChartNoAxesColumn, Map as MapIcon, BellRing, Library } from "lucide-react";
+import { isFeatureEnabled, type PreviewFeature } from "@/lib/features";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,7 +66,12 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
     if (pathname?.includes('/academic-details')) return "Academic Details";
     if (pathname?.includes('/registration')) return "Registration";
     if (pathname?.includes('/profile')) return "Profile";
+    if (pathname?.includes('/notifications/settings')) return "Notification Settings";
     if (pathname?.includes('/notifications')) return "Notifications";
+    if (pathname?.startsWith('/courses')) return "My Courses";
+    if (pathname?.startsWith('/attendance')) return "Attendance";
+    if (pathname?.startsWith('/insights')) return "Personal Study Insights";
+    if (pathname?.startsWith('/campus-map')) return "Campus Map";
     if (pathname?.includes('/timetable')) return "My Timetable";
     return "Dashboard";
   };
@@ -292,8 +298,46 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                     Change Password
                   </button>
 
+                  {/* Coming soon: preview features, each shown only while its flag is on (lib/features.ts) */}
+                  {(() => {
+                    const items = ([
+                      { href: "/courses", label: "My courses", icon: Library, feature: "courses" },
+                      { href: "/attendance", label: "Attendance", icon: ClipboardCheck, feature: "attendance" },
+                      { href: "/insights", label: "Personal study insights", icon: ChartNoAxesColumn, feature: "insights" },
+                      { href: "/notifications/settings", label: "Notification settings", icon: BellRing, feature: "notifications" },
+                    ] as { href: string; label: string; icon: typeof Library; feature: PreviewFeature }[]).filter((i) => isFeatureEnabled(i.feature));
+                    if (!items.length) return null;
+                    return (
+                      <>
+                  <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
+                  <p className="flex items-center gap-2 px-6 pt-2 pb-1 text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase">
+                    Coming soon
+                    <span className="normal-case tracking-normal text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]">Preview</span>
+                  </p>
+                  {items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsBottomSheetOpen(false)}
+                      className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+                    >
+                      <item.icon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      {item.label}
+                    </Link>
+                  ))}
+                      </>
+                    );
+                  })()}
                   <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
 
+                  <Link
+                    href="/campus-map"
+                    onClick={() => setIsBottomSheetOpen(false)}
+                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+                  >
+                    <MapIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    Campus map
+                  </Link>
                   <Link 
                     href="#" 
                     onClick={() => setIsBottomSheetOpen(false)}

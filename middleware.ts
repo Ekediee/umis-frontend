@@ -2,7 +2,34 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { decodeJwt } from 'jose'
 
+function lecturerSessionValid(value: string | undefined) {
+  if (!value) return false
+  try {
+    const { exp } = JSON.parse(atob(value.replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof exp === 'number' && exp > Date.now()
+  } catch {
+    return false
+  }
+}
+
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Lecturer portal (BU Pulse for staff) has its own session, separate from students.
+  if (pathname === '/lecturer' || pathname.startsWith('/lecturer/')) {
+    const isLecturerAuthPage = pathname.startsWith('/lecturer/sign-in')
+    const hasSession = lecturerSessionValid(request.cookies.get('lecturer_session')?.value)
+    if (!hasSession && !isLecturerAuthPage) {
+      const url = new URL('/lecturer/sign-in', request.url)
+      if (request.cookies.get('lecturer_session')) url.searchParams.set('reason', 'expired')
+      return NextResponse.redirect(url)
+    }
+    if (hasSession && isLecturerAuthPage) {
+      return NextResponse.redirect(new URL('/lecturer', request.url))
+    }
+    return NextResponse.next()
+  }
+
   const token = request.cookies.get('token')?.value
 
   // Both the landing page, login page, and forgot-password pages are accessible without authentication
@@ -10,7 +37,12 @@ export function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to the login page if they try to access protected routes
   if (!token && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const login = new URL('/login', request.url)
+    // A check-in QR scanned while signed out should land back on check-in after login.
+    if (pathname.startsWith('/attendance/check-in')) {
+      login.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+    }
+    return NextResponse.redirect(login)
   }
 
   // Validate token expiry for authenticated requests to protected routes.

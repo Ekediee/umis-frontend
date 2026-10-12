@@ -17,8 +17,8 @@ import {
   Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CalendarView } from "./components/calendar-view";
-import { ListView } from "./components/list-view";
+import { CalendarView } from "@/components/timetable/calendar-view";
+import { ListView } from "@/components/timetable/list-view";
 import { SessionDetailModal } from "./components/session-detail-modal";
 import { TimetableEmptyState } from "./components/timetable-empty-state";
 import { TIMETABLE_SESSIONS, TimetableSession } from "./data/mock-data";

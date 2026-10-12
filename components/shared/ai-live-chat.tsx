@@ -140,7 +140,7 @@ export function AILiveChat() {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-28 right-6 md:bottom-24 md:right-8 w-14 h-14 bg-[#003cbb] text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50",
+          "ai-live-chat-fab fixed bottom-28 right-6 md:bottom-24 md:right-8 w-14 h-14 bg-[#003cbb] text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50",
           isOpen && "scale-0 opacity-0 pointer-events-none"
         )}
       >

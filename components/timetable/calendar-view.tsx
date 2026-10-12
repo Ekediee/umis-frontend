@@ -1,10 +1,14 @@
-import { TimetableSession } from "../data/mock-data";
+import type { TimetableSession } from "./types";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 interface CalendarViewProps {
   sessions: TimetableSession[];
   onSessionClick: (session: TimetableSession) => void;
+  /** Optional: sessions to outline in red (e.g. timetable clashes). */
+  flaggedIds?: Set<string>;
+  /** Optional: place overlapping sessions side by side instead of on top of each other. */
+  laneOf?: (session: TimetableSession) => { lane: number; lanes: number };
 }
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] as const;
@@ -24,7 +28,7 @@ function getGridRowSpan(startTime: string, endTime: string): number {
   return endRow - startRow;
 }
 
-export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
+export function CalendarView({ sessions, onSessionClick, flaggedIds, laneOf }: CalendarViewProps) {
   // Generate time slots for the left column (hourly)
   const timeSlots = [];
   for (let i = START_HOUR; i <= END_HOUR; i++) {
@@ -35,10 +39,10 @@ export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
   const totalRows = (END_HOUR - START_HOUR + 1) * 2 + 1; // +1 for header
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-b-2xl  border border-t-0 border-gray-100 dark:border-gray-800 overflow-x-auto p-4 min-h-[600px]">
-      <div 
+    <div className="bg-white dark:bg-gray-900 rounded-b-2xl border border-t-0 border-gray-100 dark:border-gray-800 overflow-x-auto p-4 min-h-[600px]">
+      <div
         className="min-w-[800px] grid gap-x-2 gap-y-1"
-        style={{ 
+        style={{
           gridTemplateColumns: '60px repeat(5, 1fr)',
           gridTemplateRows: `40px repeat(${totalRows - 1}, 30px)`
         }}
@@ -48,8 +52,8 @@ export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
 
         {/* Days Header */}
         {DAYS.map((day, i) => (
-          <div 
-            key={day} 
+          <div
+            key={day}
             className="sticky top-0 z-10 bg-[#F5F6F8]/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700"
             style={{ gridColumn: i + 2, gridRow: 1 }}
           >
@@ -62,8 +66,8 @@ export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
           const row = timeToGridRow(time);
           // Only show hourly labels to avoid clutter
           return (
-            <div 
-              key={time} 
+            <div
+              key={time}
               className="flex items-start justify-end pr-3 pt-1 border-t border-gray-100 dark:border-gray-800/50 -mt-[1px]"
               style={{ gridColumn: 1, gridRow: `${row} / span 2` }}
             >
@@ -74,7 +78,7 @@ export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
 
         {/* Background Grid Lines */}
         {Array.from({ length: totalRows - 1 }).map((_, i) => (
-          <div 
+          <div
             key={`grid-line-${i}`}
             className="border-t border-gray-100 dark:border-gray-800/50 -mt-[1px] pointer-events-none"
             style={{ gridColumn: '2 / -1', gridRow: i + 2 }}
@@ -87,15 +91,21 @@ export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
           const rowSpan = getGridRowSpan(session.startTime, session.endTime);
           const isBreak = session.type === 'break';
           const col = isBreak ? '2 / span 5' : DAYS.indexOf(session.day as any) + 2;
+          const flagged = flaggedIds?.has(session.id) ?? false;
+          const { lane, lanes } = laneOf?.(session) ?? { lane: 0, lanes: 1 };
 
           // Different styling based on session type
-          const bgClass = isBreak 
+          const bgClass = flagged
+            ? 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 ring-2 ring-red-100 dark:ring-red-950'
+            : isBreak
             ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50'
-            : session.type === 'lab' 
+            : session.type === 'lab'
               ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/50 hover:border-blue-300 dark:hover:border-blue-700'
               : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 hover:border-emerald-300 dark:hover:border-emerald-700';
 
-          const textClass = isBreak
+          const textClass = flagged
+            ? 'text-red-700 dark:text-red-300'
+            : isBreak
             ? 'text-amber-800 dark:text-amber-300'
             : session.type === 'lab'
               ? 'text-[#003cbb] dark:text-blue-300'
@@ -114,7 +124,11 @@ export function CalendarView({ sessions, onSessionClick }: CalendarViewProps) {
                 gridColumn: col,
                 gridRow: `${startRow} / span ${rowSpan}`,
                 zIndex: 5,
-                margin: '2px 4px'
+                margin: '2px 4px',
+                ...(lanes > 1 && {
+                  marginLeft: `calc(${(lane / lanes) * 100}% + 4px)`,
+                  width: `calc(${100 / lanes}% - 8px)`,
+                }),
               }}
             >
               {isBreak ? (

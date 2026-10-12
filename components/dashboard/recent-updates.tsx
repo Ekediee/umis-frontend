@@ -33,7 +33,7 @@ const updates = [
 
 export function RecentUpdates() {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
+    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
       <div className="flex items-center justify-between mb-4 md:mb-6">
         <h3 className="text-[16px] md:text-[18px] font-bold text-gray-900 dark:text-gray-100">Recent Updates</h3>
         <Link href="/notifications" className="text-[13px] md:text-[14px] font-medium text-[#3159d1] dark:text-[#4d82ff] hover:text-[#003095] dark:hover:text-[#8ba7ff]">View all</Link>

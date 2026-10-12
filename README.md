@@ -74,6 +74,12 @@ npx tsc --noEmit
 
 ---
 
+## 👩🏽‍🏫 Lecturer portal
+
+The lecturer side of BU Pulse lives under `/lecturer` (sign in at `/lecturer/sign-in`; demo staff ID `NIYI`). See [docs/lecturer-portal.md](docs/lecturer-portal.md) for screens, demo login and how to connect the API.
+
+---
+
 ## 🔒 Key Security Features
 
 - **HTTP-Only Cookies**: JWT tokens and student data are stored securely in HTTP-only cookies — inaccessible to client JavaScript.
