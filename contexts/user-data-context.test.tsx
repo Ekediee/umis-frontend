@@ -22,6 +22,7 @@ const mockUserData: UMISResponse = {
     contact_information: {
       country: null,
       email: "test@example.com",
+      babcock_email: null,
       phone: null,
       residency_status: null,
       residential_address: null,

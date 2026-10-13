@@ -206,7 +206,7 @@ export function StudentProfileBanner({
   const rawName = userData?.entity_name ?? "—";
   const displayName = toTitleCase(rawName);
   const displayMatric = userData?.user_data?.personal_information?.matric_number ?? "—";
-  const displayEmail = userData?.user_data?.contact_information?.email ?? "—";
+  const displayEmail = userData?.user_data?.contact_information?.babcock_email ?? "—";
 
   let displayProgramme = userData?.user_data?.degree_name ?? "";
   const department = userData?.user_data?.department ?? "";

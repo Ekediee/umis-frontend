@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [isSuccessBannerOpen, setIsSuccessBannerOpen] = useState(false);
   const [contactInfo, setContactInfo] = useState({
     email: '-',
+    babcockEmail: '-',
     phone: "-",
     address: "-",
     city: "-",
@@ -57,6 +58,7 @@ export default function ProfilePage() {
       setContactInfo((prev) => ({
         ...prev,
         email: userData.user_data.contact_information.email ?? '-',
+        babcockEmail: userData.user_data.contact_information.babcock_email ?? '-',
         phone: userData.user_data.contact_information.phone ?? '-',
         address: userData.user_data.contact_information.residential_address ?? '-',
         city: userData.user_data.contact_information.town ?? '-',
@@ -90,9 +92,10 @@ export default function ProfilePage() {
       throw new Error(result.error || "Failed to update email");
     }
 
+    // The form edits the Babcock (student) email, the one on the profile cards
     setContactInfo((prev) => ({
       ...prev,
-      email: email,
+      babcockEmail: email,
     }));
     
     const withEmail = (prev: UMISResponse | null) => {
@@ -103,7 +106,7 @@ export default function ProfilePage() {
           ...prev.user_data,
           contact_information: {
             ...prev.user_data.contact_information,
-            email: email,
+            babcock_email: email,
           },
         },
       } as UMISResponse;
@@ -197,6 +200,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex flex-col gap-5">
             <InfoRow icon={<Mail size={14} />} label="Email" value={contactInfo.email} />
+            <InfoRow icon={<Mail size={14} />} label="Babcock Email" value={contactInfo.babcockEmail} />
             <InfoRow icon={<Phone size={14} />} label="Phone" value={contactInfo.phone} />
             <InfoRow icon={<MapPin size={14} />} label="Residential Address" value={contactInfo.address} />
             <InfoRow icon={<Home size={14} />} label="Town/City" value={contactInfo.city} />
@@ -226,7 +230,7 @@ export default function ProfilePage() {
         <UpdateContactModal 
           isOpen={isContactModalOpen} 
           onClose={() => setIsContactModalOpen(false)} 
-          initialData={{ email: contactInfo.email }}
+          initialData={{ email: contactInfo.babcockEmail }}
           onSave={handleUpdateContact}
         />
       )}
@@ -407,6 +411,9 @@ function UpdateContactModal({ isOpen, onClose, initialData, onSave }: UpdateCont
               {error}
             </div>
           )}
+          <p className="text-[13px] text-gray-500 dark:text-gray-400">
+            You can only update your student email address. Other contact details cannot be changed here. To update other details, visit the registry.
+          </p>
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] md:text-[14px] font-medium text-gray-700 dark:text-gray-300 flex gap-1">
               Email address <span className="text-blue-600 dark:text-blue-400">*</span>

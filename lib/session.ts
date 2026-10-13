@@ -25,6 +25,7 @@ const USER_DATA_COOKIE_NAME = "user_data";
 export interface ContactInformation {
   country: string | null;
   email: string;
+  babcock_email: string | null;
   phone: string | null; // Set to null in the image
   residency_status: string | null;
   residential_address: string | null;

@@ -263,7 +263,8 @@ export async function updateEmailAction(email: string): Promise<UpdateEmailResul
           ...currentUser.user_data,
           contact_information: {
             ...currentUser.user_data.contact_information,
-            email: email,
+            // update-email changes the Babcock (student) email, the one on the profile cards
+            babcock_email: email,
           },
         },
       };

@@ -48,8 +48,11 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   // Derive user fields for the change password modal
   const contextUserData = useUserData();
   const userData = contextUserData ?? initialUserData;
+  // Same address the profile cards show (Babcock email, else personal email)
   const studentEmail =
-    userData?.user_data?.contact_information?.email ?? "";
+    userData?.user_data?.contact_information?.babcock_email ||
+    userData?.user_data?.contact_information?.email ||
+    "";
   const matricNo =
     userData?.entity_id?.toString() ??
     userData?.user_data?.matric_number ??

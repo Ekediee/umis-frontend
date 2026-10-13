@@ -89,8 +89,12 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
     "Yakubu Onome Joy";
   const studentName = toTitleCase(rawName);
 
-  // The real address (what the change-password code is sent to) and a display fallback
-  const accountEmail = userData?.user_data?.contact_information?.email ?? "";
+  // The address on the profile cards (Babcock email; personal email if there is none) is
+  // what the change-password code is sent to. The placeholder is for display only.
+  const accountEmail =
+    userData?.user_data?.contact_information?.babcock_email ||
+    userData?.user_data?.contact_information?.email ||
+    "";
   const studentEmail = accountEmail || "yakubu.onome@univ.edu";
 
   const matricNo =
