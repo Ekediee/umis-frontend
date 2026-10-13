@@ -159,7 +159,7 @@ export function CGPAProgressionChart() {
       : "";
 
   return (
-    <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 overflow-hidden transition-colors duration-200">
+    <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-colors duration-200">
       <CardContent className="p-6">
 
         {/* Header */}

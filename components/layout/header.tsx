@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles, KeyRound } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Search, Bell, MoreVertical, X, BookOpen, Headphones, Sun, Moon, Sparkles, KeyRound, LogOut, Download, ClipboardCheck, ChartNoAxesColumn, Map as MapIcon, BellRing, Library } from "lucide-react";
+import { isFeatureEnabled, type PreviewFeature } from "@/lib/features";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +19,8 @@ import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
+import { performClientLogout } from "@/lib/auth-cleanup";
+import { openInstallApp, useCanInstallApp } from "@/components/pwa/install-app";
 
 interface HeaderProps {
   initialUserData?: UMISResponse | null;
@@ -30,6 +34,13 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const canInstallApp = useCanInstallApp();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await performClientLogout("manual", true);
+  };
 
   // Single source of truth for avatar — no more copy-pasted logic
   const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
@@ -37,8 +48,11 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   // Derive user fields for the change password modal
   const contextUserData = useUserData();
   const userData = contextUserData ?? initialUserData;
+  // Same address the profile cards show (Babcock email, else personal email)
   const studentEmail =
-    userData?.user_data?.contact_information?.email ?? "";
+    userData?.user_data?.contact_information?.babcock_email ||
+    userData?.user_data?.contact_information?.email ||
+    "";
   const matricNo =
     userData?.entity_id?.toString() ??
     userData?.user_data?.matric_number ??
@@ -65,7 +79,12 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
     if (pathname?.includes('/academic-details')) return "Academic Details";
     if (pathname?.includes('/registration')) return "Registration";
     if (pathname?.includes('/profile')) return "Profile";
+    if (pathname?.includes('/notifications/settings')) return "Notification Settings";
     if (pathname?.includes('/notifications')) return "Notifications";
+    if (pathname?.startsWith('/courses')) return "My Courses";
+    if (pathname?.startsWith('/attendance')) return "Attendance";
+    if (pathname?.startsWith('/insights')) return "Personal Study Insights";
+    if (pathname?.startsWith('/campus-map')) return "Campus Map";
     if (pathname?.includes('/timetable')) return "My Timetable";
     return "Dashboard";
   };
@@ -207,8 +226,8 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
       </header>
       )}
 
-      {/* Mobile Bottom Sheet Modal */}
-      {isBottomSheetOpen && (
+      {/* Mobile Bottom Sheet Modal: portalled to <body> so it sits above the AI assistant button and the nav */}
+      {isBottomSheetOpen && createPortal(
         <div className="md:hidden fixed inset-0 z-[200]">
           {/* Overlay */}
           <div 
@@ -217,14 +236,14 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
           />
           
           {/* Bottom Sheet */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-[24px] animate-in slide-in-from-bottom duration-300 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.5)]">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[88dvh] flex flex-col bg-white dark:bg-gray-900 rounded-t-[24px] animate-in slide-in-from-bottom duration-300 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.5)]">
             {/* Drag Handle */}
-            <div className="flex justify-center pt-3 pb-1">
+            <div className="flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
             </div>
             
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3">
+            <div className="flex items-center justify-between px-5 py-3 shrink-0">
               <h3 className="text-[17px] font-semibold text-gray-900 dark:text-gray-100">{pathname?.includes('/academic-details') ? 'Quick Actions' : 'Options'}</h3>
               <button 
                 onClick={() => setIsBottomSheetOpen(false)}
@@ -235,7 +254,7 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
             </div>
             
             {/* Menu Items */}
-            <div className="px-1 pb-8 flex flex-col gap-1">
+            <div className="px-1 pb-8 flex flex-col gap-1 min-h-0 overflow-y-auto overscroll-contain">
               {/* Theme Toggle Item */}
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -292,8 +311,46 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                     Change Password
                   </button>
 
+                  {/* Coming soon: preview features, each shown only while its flag is on (lib/features.ts) */}
+                  {(() => {
+                    const items = ([
+                      { href: "/courses", label: "My courses", icon: Library, feature: "courses" },
+                      { href: "/attendance", label: "Attendance", icon: ClipboardCheck, feature: "attendance" },
+                      { href: "/insights", label: "Personal study insights", icon: ChartNoAxesColumn, feature: "insights" },
+                      { href: "/notifications/settings", label: "Notification settings", icon: BellRing, feature: "notifications" },
+                    ] as { href: string; label: string; icon: typeof Library; feature: PreviewFeature }[]).filter((i) => isFeatureEnabled(i.feature));
+                    if (!items.length) return null;
+                    return (
+                      <>
+                  <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
+                  <p className="flex items-center gap-2 px-6 pt-2 pb-1 text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase">
+                    Coming soon
+                    <span className="normal-case tracking-normal text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]">Preview</span>
+                  </p>
+                  {items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsBottomSheetOpen(false)}
+                      className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+                    >
+                      <item.icon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      {item.label}
+                    </Link>
+                  ))}
+                      </>
+                    );
+                  })()}
                   <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
 
+                  <Link
+                    href="/campus-map"
+                    onClick={() => setIsBottomSheetOpen(false)}
+                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+                  >
+                    <MapIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    Campus map
+                  </Link>
                   <Link 
                     href="#" 
                     onClick={() => setIsBottomSheetOpen(false)}
@@ -313,9 +370,35 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                   </Link>
                 </>
               )}
+
+              {/* Log out lives on every page's sheet, same as the desktop sidebar menu */}
+              <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
+              {canInstallApp && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBottomSheetOpen(false);
+                    openInstallApp();
+                  }}
+                  className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1 w-full text-left"
+                >
+                  <Download className="w-5 h-5 text-[#003cbb] dark:text-[#4d82ff]" />
+                  Install Pulse app
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-red-600 dark:text-red-400 active:bg-red-50 dark:active:bg-red-950/40 transition-colors rounded-xl mx-1 w-full text-left disabled:opacity-50"
+              >
+                <LogOut className="w-5 h-5" />
+                {isLoggingOut ? "Logging out…" : "Log Out"}
+              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       <OnboardingGuideSheet

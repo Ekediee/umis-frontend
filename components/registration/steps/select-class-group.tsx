@@ -15,11 +15,11 @@ interface SelectClassGroupProps {
 /** Pill-shaped loading skeleton */
 function GroupSkeleton() {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="h-[48px] w-[120px] rounded-[36px] bg-gray-100 animate-pulse"
+          className="h-[48px] w-full rounded-[36px] bg-gray-100 dark:bg-gray-800 animate-pulse"
         />
       ))}
     </div>
@@ -64,16 +64,17 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
 
         {/* Error State */}
         {!isLoading && error && (
-          <div className="rounded-[12px] bg-red-50 border border-red-100 px-4 py-3 text-[14px] text-red-600">
+          <div className="rounded-[12px] bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 px-4 py-3 text-[14px] text-red-600 dark:text-red-400">
             {error}
           </div>
         )}
 
         {/* Groups */}
         {!isLoading && !error && (
-          <div className="flex flex-wrap gap-3">
+          // Fills the card: one per row on phones, then as many equal columns as fit (min 200px), chips stretch to their column
+          <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
             {classGroups.length === 0 ? (
-              <p className="text-[14px] text-[#4e5155]">
+              <p className="col-span-full text-[14px] text-[#4e5155] dark:text-gray-400">
                 No class groups available.
               </p>
             ) : (
@@ -85,10 +86,10 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
                     key={group.id}
                     onClick={() => onToggleGroup(String(group.id))}
                     className={cn(
-                      "flex items-center gap-2 px-5 py-3 rounded-[36px] text-[15px] font-medium transition-all",
+                      "flex items-center gap-2 w-full min-w-0 px-5 py-3 rounded-[36px] text-[15px] font-medium text-left transition-all",
                       isSelected
-                        ? "bg-[#f8faff] border border-[#003cbb] text-[#003cbb] shadow-[0px_1px_2px_0px_rgba(55,93,251,0.08)]"
-                        : "bg-[#f6f8fa] border border-transparent text-[#4e5155] hover:bg-[#e2e4e9]"
+                        ? "bg-[#f8faff] dark:bg-[#4d82ff]/15 border border-[#003cbb] dark:border-[#4d82ff] text-[#003cbb] dark:text-[#8ba7ff] shadow-[0px_1px_2px_0px_rgba(55,93,251,0.08)] dark:shadow-none"
+                        : "bg-[#f6f8fa] dark:bg-gray-800 border border-transparent dark:border-gray-700/60 text-[#4e5155] dark:text-gray-300 hover:bg-[#e2e4e9] dark:hover:bg-gray-700"
                     )}
                   >
                     {/* Checkmark indicator */}
@@ -96,8 +97,8 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
                       className={cn(
                         "flex items-center justify-center w-[18px] h-[18px] rounded-full border transition-all flex-shrink-0",
                         isSelected
-                          ? "bg-[#003cbb] border-[#003cbb]"
-                          : "bg-transparent border-[#c5c7cd]"
+                          ? "bg-[#003cbb] dark:bg-[#4d82ff] border-[#003cbb] dark:border-[#4d82ff]"
+                          : "bg-transparent border-[#c5c7cd] dark:border-gray-500"
                       )}
                     >
                       {isSelected && (
@@ -118,7 +119,7 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
                         </svg>
                       )}
                     </span>
-                    {group.name}
+                    <span className="truncate" title={group.name}>{group.name}</span>
                   </button>
                 );
               })

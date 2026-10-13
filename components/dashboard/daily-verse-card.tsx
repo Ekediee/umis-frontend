@@ -78,7 +78,7 @@ export function DailyVerseCard() {
   if (!verse) return null;
 
   return (
-    <div className="relative w-full rounded-[24px] bg-gradient-to-br from-[#f3f6ff] via-[#e6edff] to-[#f7f9ff] dark:from-[#0d163d] dark:via-[#090e28] dark:to-[#06081a] border border-[#dce3f6] dark:border-[#1a2353]/35 shadow-[0px_4px_20px_rgba(37,62,167,0.02)] dark:shadow-none p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden mb-6 group transition-all duration-300">
+    <div className="relative w-full rounded-[24px] bg-gradient-to-br from-[#f3f6ff] via-[#e6edff] to-[#f7f9ff] dark:from-[#0d163d] dark:via-[#090e28] dark:to-[#06081a] border border-[#dce3f6] dark:border-[#1a2353]/35 dark:shadow-none p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden mb-6 group transition-all duration-300">
       
       {/* Decorative Blur Orbs */}
       <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-blue-400/10 blur-[40px] pointer-events-none" />

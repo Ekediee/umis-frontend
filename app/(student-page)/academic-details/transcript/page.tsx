@@ -194,7 +194,7 @@ export default function TranscriptPage() {
         <div 
           id="printable-transcript" 
           ref={documentRef} 
-          className="min-w-[900px] w-full max-w-[1000px] mx-auto bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 rounded-[24px] relative overflow-hidden print:shadow-none print:border-none print:rounded-none print:p-0 transition-colors duration-200"
+          className="min-w-[900px] w-full max-w-[1000px] mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[24px] relative overflow-hidden print:shadow-none print:border-none print:rounded-none print:p-0 transition-colors duration-200"
         >
           {/* Watermark Logo inside document */}
           <div className="absolute inset-0 flex justify-center items-center opacity-[0.03] dark:opacity-[0.02] pointer-events-none overflow-hidden">

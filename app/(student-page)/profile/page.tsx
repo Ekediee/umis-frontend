@@ -8,13 +8,20 @@ import {
 import { StudentProfileBanner } from "@/components/shared/student-profile-banner";
 import { getUserData, updateEmailAction } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
+import { actionKey, notify } from "@/lib/notifications/bus";
+import { useUpdateUserData, useUserData } from "@/contexts/user-data-context";
 
 export default function ProfilePage() {
-  const [userData, setUserData] = useState<UMISResponse | null>(null);
+  // The layout's shared user data is the single source of truth, so an email
+  // change here also reaches the header, sidebar and change-password modal.
+  const contextUserData = useUserData();
+  const setSharedUserData = useUpdateUserData();
+  const [fallbackUserData, setFallbackUserData] = useState<UMISResponse | null>(null);
+  const userData = contextUserData ?? fallbackUserData;
 
   useEffect(() => {
-    getUserData().then(setUserData);
-  }, []);
+    if (!contextUserData) getUserData().then(setFallbackUserData);
+  }, [contextUserData]);
 
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isNokModalOpen, setIsNokModalOpen] = useState(false);
@@ -90,7 +97,7 @@ export default function ProfilePage() {
       email: email,
     }));
     
-    setUserData((prev) => {
+    const withEmail = (prev: UMISResponse | null) => {
       if (!prev || !prev.user_data) return prev;
       return {
         ...prev,
@@ -102,7 +109,17 @@ export default function ProfilePage() {
           },
         },
       } as UMISResponse;
+    };
+    setSharedUserData(withEmail);
+    notify({
+      key: actionKey("email-changed", email),
+      type: "SECURITY_EMAIL_CHANGED",
+      title: "Email address updated",
+      message: `Codes and updates now go to ${email}. If you didn't make this change, contact support.`,
+      href: "/profile",
+      silent: true,
     });
+    setFallbackUserData(withEmail);
     setIsContactModalOpen(false);
     setIsSuccessBannerOpen(true);
     
