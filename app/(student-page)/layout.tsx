@@ -5,6 +5,9 @@ import { MainContent } from "@/components/layout/main-content";
 import { UserDataProvider } from "@/contexts/user-data-context";
 import { SessionTimeoutProvider } from "@/components/providers/session-timeout-provider";
 import { getUserData, getStudentProfileAction } from "@/app/actions/user";
+import { StudyTimerHost } from "@/components/student/study-timer";
+import { isFeatureEnabled } from "@/lib/features";
+import { InstallAppHost } from "@/components/pwa/install-app";
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +34,10 @@ export default async function DashboardLayout({
              </MainContent>
              <MobileNav />
           </div>
+          {/* Study timer sheet + floating pill, available on every student page */}
+          {isFeatureEnabled("insights") && <StudyTimerHost />}
+          {/* "Install Pulse" prompt + iPhone walkthrough */}
+          <InstallAppHost />
         </div>
       </SessionTimeoutProvider>
     </UserDataProvider>

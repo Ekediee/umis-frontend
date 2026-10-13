@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
+import { actionKey, notify } from "@/lib/notifications/bus";
 import { 
   getClassGroupsAction, 
   getCoursesAction, 
@@ -373,6 +374,14 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     } else {
       await clearOfflineDraft(OFFLINE_COURSE_CART_KEY);
       toast.success(result.message ?? "Registration submitted successfully");
+      notify({
+        key: actionKey("reg-submitted"),
+        type: "REGISTRATION_SUBMITTED",
+        title: "Course registration submitted",
+        message: "Your course registration has been sent for approval. We'll let you know as soon as your adviser reviews it.",
+        href: "/registration",
+        silent: true,
+      });
       useRegistrationStore.getState().setRegState("completed");
       setIsSuccessModalOpen(true);
     }

@@ -14,6 +14,7 @@ import { fundWalletAction, getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
 import { toast } from "sonner";
+import { actionKey, notify } from "@/lib/notifications/bus";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
   getWalletFundingHistory, 
@@ -160,6 +161,15 @@ function FinancePageContent() {
             setSuccessAmount(undefined);
           }
           setSuccessMessage(displayMsg);
+          notify({
+            // Keyed on the transaction, so a reloaded callback URL never posts it twice
+            key: `wallet-funded:${txRef}`,
+            type: "PAYMENT_RECEIVED",
+            title: "Payment received",
+            message: callbackAmount && callbackAmount > 0 ? `₦${callbackAmount.toLocaleString()} was added to your wallet. Ref ${txRef}.` : `Your wallet top-up was confirmed. Ref ${txRef}.`,
+            href: "/dashboard/finance",
+            silent: true,
+          });
           setFundWalletStep("success");
           setIsFundWalletModalOpen(true);
           // Refetch fresh balance from backend
@@ -310,13 +320,15 @@ function FinancePageContent() {
 
       {/* Stats Row */}
       <div className="bg-white dark:bg-gray-900 rounded-[24px] flex flex-col justify-between p-6 gap-6 border border-gray-100 dark:border-gray-800 transition-colors">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+        {/* The wallet keeps a minimum width so the balance is always readable; the fee summary takes the rest */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] gap-6 items-stretch">
 
-          {/* Left: Fees Summary (takes 3 columns) */}
-          <div className="lg:col-span-3 flex flex-col md:flex-row md:items-center justify-between gap-6 py-2">
+          {/* Left: Fees Summary — stacks when its own column gets narrow (container query) */}
+          <div className="@container min-w-0">
+          <div className="flex flex-col @[30rem]:flex-row @[30rem]:items-center justify-between gap-6 py-2 h-full">
 
             {/* Estimated Full Session Fee */}
-            <div className="flex-1 md:border-r border-gray-100 dark:border-gray-800 md:pr-4">
+            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 pr-4">
               <div className="flex items-center">
                 <span className="text-gray-500 dark:text-gray-400 font-medium text-[13px] mb-2">Estimated Full Session Fee</span>
                 <button
@@ -338,7 +350,7 @@ function FinancePageContent() {
             </div>
 
             {/* Estimated Semester Fee */}
-            <div className="flex-1 md:border-r border-gray-100 dark:border-gray-800 md:pr-4">
+            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 @[30rem]:pr-4">
               <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Estimated Semester Fee</p>
               {mounted && !showFullfee ? (
                 <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
@@ -350,7 +362,7 @@ function FinancePageContent() {
             </div>
 
             {/* Amount Paid For Semester */}
-            <div className="flex-1 md:border-r border-gray-100 dark:border-gray-800 md:pr-4">
+            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 @[30rem]:pr-4">
               <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Amount Paid For Semester</p>
               {mounted && !showFullfee ? (
                 <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
@@ -362,7 +374,7 @@ function FinancePageContent() {
             </div>
 
             {/* Outstanding Payment */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 px-0">
               <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Outstanding Payment</p>
               {mounted && !showFullfee ? (
                 <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
@@ -373,9 +385,10 @@ function FinancePageContent() {
               )}
             </div>
           </div>
+          </div>
 
-          {/* Right: Wallet Card (takes 1 column) */}
-          <div className="lg:col-span-1 bg-gradient-to-tr from-[#003cbb] via-[#3b82f6] to-[#bc78ec] rounded-[20px] p-4 relative overflow-hidden flex flex-col justify-between min-h-[108px] text-white shadow-sm transition-all">
+          {/* Right: Wallet Card */}
+          <div className="@container min-w-0 bg-gradient-to-tr from-[#003cbb] via-[#3b82f6] to-[#bc78ec] rounded-[20px] p-4 relative overflow-hidden flex flex-col justify-between min-h-[120px] text-white transition-all">
             {/* Watermark Logo */}
             <div className="absolute left-[-15px] bottom-[-72px] w-32 h-56 opacity-[100%] pointer-events-none mix-blend-overlay">
               <Image
@@ -399,8 +412,9 @@ function FinancePageContent() {
 
             <div className="relative z-10 flex flex-col gap-1">
               <span className="text-[12px] font-medium text-white/80">Wallet Balance</span>
-              <div className="flex items-center gap-2">
-                <span className="text-[22px] font-bold tracking-tight">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {/* Scales with the card's width (cqi) so any balance fits on one line */}
+                <span className="text-[clamp(18px,8.5cqi,26px)] leading-tight font-bold tracking-tight tabular-nums whitespace-nowrap">
                   {!showWalletBalance
                     ? "****"
                     : isWalletLoading && balance === null
@@ -411,7 +425,7 @@ function FinancePageContent() {
                 </span>
                 <button
                   onClick={() => setShowWalletBalance(!showWalletBalance)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                   aria-label={showWalletBalance ? "Hide wallet balance" : "Show wallet balance"}
                 >
                   {showWalletBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -419,7 +433,7 @@ function FinancePageContent() {
               </div>
             </div>
 
-            <div className="relative z-10 flex items-end justify-between mt-4">
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 mt-4">
               <span className="text-[12px] font-mono text-white/80 tracking-wider">
                 S{userData?.user_data?.personal_information?.matric_number || "S190087"}
               </span>
@@ -574,7 +588,7 @@ function FinancePageContent() {
                 {/* Table Rows */}
                 <div className="flex flex-col gap-2 mt-2">
                   {paymentHistoryData.map((row) => (
-                    <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                    <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 transition-colors">
                       <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
                         {row.year}<span className="text-orange-500">.{row.semesterId}</span>
                       </div>
@@ -604,7 +618,7 @@ function FinancePageContent() {
             {/* Mobile View: Cards */}
             <div className="md:hidden flex flex-col gap-4">
               {paymentHistoryData.map((row) => (
-                <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 shadow-sm transition-colors">
+                <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-1">{row.title}</h4>
@@ -674,7 +688,7 @@ function FinancePageContent() {
                     </div>
                   ) : (
                     walletFundingHistory.map((row) => (
-                      <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                      <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 transition-colors">
                         <div className="font-mono text-[13.5px] font-bold text-gray-900 dark:text-gray-100 truncate">
                           {row.reference}
                         </div>
@@ -726,7 +740,7 @@ function FinancePageContent() {
                 </div>
               ) : (
                 walletFundingHistory.map((row) => (
-                  <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 shadow-sm transition-colors">
+                  <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 transition-colors">
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Top-up Ref</span>

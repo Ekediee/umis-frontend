@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/auth";
 import { getUserFriendlyErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
+import { actionKey, notify } from "@/lib/notifications/bus";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -283,6 +284,14 @@ export function ChangePasswordModal({ isOpen, onClose, matricNo, email }: Change
     }
 
     toast.success(result?.message || "Password changed successfully!");
+    notify({
+      key: actionKey("password-changed"),
+      type: "SECURITY_PASSWORD_CHANGED",
+      title: "Your password was changed",
+      message: "If this wasn't you, contact support right away so we can secure your account.",
+      href: "https://support.babcock.edu.ng/",
+      silent: true,
+    });
     onClose();
   };
 

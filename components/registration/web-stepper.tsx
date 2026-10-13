@@ -25,9 +25,10 @@ export function WebStepper(props: WebStepperProps) {
 
   return (
     <>
-      <div className="hidden md:grid grid-cols-[130px_1fr_130px] items-center gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
+      {/* Flex, not a fixed grid: the centre can never spill over the Back button, it shrinks instead */}
+      <div className="hidden md:flex items-center gap-3 lg:gap-4 w-full pt-3 pb-2 px-6 md:px-8 bg-transparent">
         {/* Left: Back Button */}
-        <div className="flex justify-start">
+        <div className="flex justify-start shrink-0">
           <button 
             type="button"
             onClick={() => router.back()}
@@ -39,22 +40,22 @@ export function WebStepper(props: WebStepperProps) {
         </div>
 
         {/* Center: Centered Pills Container */}
-        <div className="flex items-center justify-center gap-3 md:gap-4 min-w-0">
+        <div className="flex flex-1 items-center justify-center gap-3 lg:gap-4 min-w-0">
           {/* Session Pill */}
-          <div className="bg-[#eaf0ff] dark:bg-[#003cbb]/15 rounded-2xl px-4 py-2.5 flex flex-col justify-center border border-[#ccdaf9] dark:border-[#ccdaf9]/25 shrink-0">
+          <div className="bg-[#eaf0ff] dark:bg-[#4d82ff]/10 rounded-2xl px-4 h-[52px] flex flex-col justify-center border border-[#ccdaf9] dark:border-[#4d82ff]/25 shrink-0">
             <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">2025/2026</span>
-            <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] leading-tight">First Semester</span>
+            <span className="text-[13px] font-medium text-[#003cbb]/80 dark:text-[#8ba7ff] leading-tight whitespace-nowrap">First Semester</span>
           </div>
 
           {/* Stepper Pill */}
-          <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl px-6 py-3.5 border border-gray-100 dark:border-gray-800 shrink-0">
+          <div className="flex items-center gap-3 lg:gap-6 bg-white dark:bg-gray-900 rounded-2xl px-4 lg:px-6 h-[52px] border border-gray-100 dark:border-gray-800 min-w-0">
             {steps.map((step, index) => {
               const isActive = currentStep === step.id;
               const isCompleted = currentStep > step.id;
 
               return (
-                <div key={step.id} className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
+                <div key={step.id} className="flex items-center gap-3 lg:gap-4 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0" title={step.title}>
                     <div className={cn(
                       "w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 transition-colors",
                       isActive ? "bg-[#003cbb] dark:bg-[#4d82ff] text-white dark:text-gray-900" : 
@@ -63,8 +64,10 @@ export function WebStepper(props: WebStepperProps) {
                     )}>
                       {step.id}
                     </div>
+                    {/* On narrower screens only the current step keeps its label */}
                     <span className={cn(
-                      "text-[14px] font-medium",
+                      "text-[14px] font-medium whitespace-nowrap",
+                      !isActive && "hidden lg:inline",
                       isActive ? "text-[#0a0d14] dark:text-gray-100" : "text-[#525866] dark:text-gray-400"
                     )}>
                       {step.title}
@@ -73,7 +76,7 @@ export function WebStepper(props: WebStepperProps) {
                   
                   {/* Separator */}
                   {index < steps.length - 1 && (
-                    <ChevronRight className="w-4 h-4 text-[#cdd0d5] dark:text-gray-650" />
+                    <ChevronRight className="w-4 h-4 shrink-0 text-[#cdd0d5] dark:text-gray-600" />
                   )}
                 </div>
               );
@@ -81,8 +84,8 @@ export function WebStepper(props: WebStepperProps) {
           </div>
         </div>
 
-        {/* Right-most: Cancel Progress Button */}
-        <div className="flex justify-end">
+        {/* Right-most: Cancel Progress Button (same width as Back when empty, so the centre stays centred) */}
+        <div className="flex justify-end shrink-0 min-w-[80px]">
           {context?.hasProgress && (
             <button 
               type="button"
