@@ -136,10 +136,10 @@ describe("auth actions", () => {
   });
 
   describe("logoutAction", () => {
-    it("calls deleteSession and redirects to / when no reason is given", async () => {
+    it("calls deleteSession and redirects to /login when no reason is given", async () => {
       await expect(logoutAction()).rejects.toThrow("NEXT_REDIRECT");
       expect(deleteSessionMock).toHaveBeenCalledTimes(1);
-      expect(redirectMock).toHaveBeenCalledWith("/");
+      expect(redirectMock).toHaveBeenCalledWith("/login");
     });
 
     it("calls deleteSession and redirects with encoded reason query param", async () => {
@@ -147,7 +147,7 @@ describe("auth actions", () => {
         "NEXT_REDIRECT"
       );
       expect(deleteSessionMock).toHaveBeenCalledTimes(1);
-      expect(redirectMock).toHaveBeenCalledWith("/?reason=session_expired");
+      expect(redirectMock).toHaveBeenCalledWith("/login?reason=session_expired");
     });
   });
 

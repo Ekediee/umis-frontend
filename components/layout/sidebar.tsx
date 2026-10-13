@@ -69,7 +69,7 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
   const studentName = toTitleCase(rawName);
 
   const studentEmail =
-    userData?.user_data?.contact_information?.email ??
+    userData?.user_data?.contact_information?.babcock_email ??
     "yakubu.onome@univ.edu";
 
   const matricNo =

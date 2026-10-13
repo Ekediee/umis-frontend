@@ -68,15 +68,15 @@ export async function loginAction(formData: FormData) {
 }
 
 /**
- * Destroys current student session and redirects to login/home page with optional reason.
+ * Destroys current student session and redirects to the login page with optional reason.
  */
 export async function logoutAction(reason?: string) {
   const { deleteSession } = await import("@/lib/session");
   await deleteSession();
   if (reason) {
-    redirect(`/?reason=${encodeURIComponent(reason)}`);
+    redirect(`/login?reason=${encodeURIComponent(reason)}`);
   }
-  redirect("/");
+  redirect("/login");
 }
 
 /**

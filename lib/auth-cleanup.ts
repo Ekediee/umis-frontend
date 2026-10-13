@@ -95,7 +95,7 @@ export async function performClientLogout(
     console.error("Failed to clear server session on logout:", err);
   } finally {
     if (typeof window !== "undefined") {
-      window.location.replace(`/?reason=${encodeURIComponent(reason)}`);
+      window.location.replace(`/login?reason=${encodeURIComponent(reason)}`);
     }
   }
 }
