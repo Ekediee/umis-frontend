@@ -40,7 +40,7 @@ export function AcademicProgress({cgpa, semester_gpa, current_level}: AcademicPr
   const displayLevel = current_level ?? "—";
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
+    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
       <div className="flex items-center gap-2 mb-5 justify-between md:mb-6">
         <h3 className="text-[16px] md:text-[18px] font-bold text-gray-900 dark:text-gray-100">Academic Progress</h3>
         <TrendingUp className="w-5 h-5 text-gray-500 dark:text-gray-400" />

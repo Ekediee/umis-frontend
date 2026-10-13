@@ -1,0 +1,462 @@
+"use client";
+
+/**
+ * 3D campus view: every building in Babcock University stood up from its
+ * OpenStreetMap footprint, with roofs, roads, pitches and trees, in a scene the
+ * student can pan, rotate and zoom. Click a building to open its place card,
+ * press L (or the Labels button) to show or hide place names.
+ *
+ * Implements the same MapViewHandle as the 2D engines, so the shell's search,
+ * chips, place cards, "locate me" and "whole campus" buttons work unchanged.
+ * Loaded on demand (Three.js is large) and only offered on WebGL devices.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { MapControls } from "@react-three/drei";
+import * as THREE from "three";
+import type { MapControls as MapControlsImpl } from "three-stdlib";
+import type { FeatureCollection, Polygon as GeoPolygon } from "geojson";
+import { CATEGORY, footprintFor, type Place } from "@/lib/student/campus";
+import { buildCampusScene, buildingAtTriangle, buildingGeometry, DAY, distanceToZoom, NIGHT, toLngLat, toMeters, zoomToDistance, type CampusScene } from "@/lib/campus/scene3d";
+import { cn } from "@/lib/utils";
+import type { MapViewProps } from "./map-view";
+
+/** Metres from a point to the nearest wall of a footprint (big halls have far-off centres) */
+function distanceToRing([x, y]: [number, number], ring: [number, number][]) {
+  let best = Infinity;
+  for (let i = 0; i < ring.length - 1; i++) {
+    const [ax, ay] = ring[i];
+    const [bx, by] = ring[i + 1];
+    const dx = bx - ax, dy = by - ay;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
+    best = Math.min(best, Math.hypot(x - (ax + t * dx), y - (ay + t * dy)));
+  }
+  return best;
+}
+
+/** Roads, ground areas and known heights; optional (the scene still works without it) */
+async function loadSceneExtras(): Promise<FeatureCollection | null> {
+  try {
+    const res = await fetch("/campus/scene.geojson", { cache: "no-cache" });
+    return res.ok ? ((await res.json()) as FeatureCollection) : null;
+  } catch {
+    return null;
+  }
+}
+
+const HOME = { target: new THREE.Vector3(-40, 0, 20), offset: new THREE.Vector3(380, 520, 640) };
+
+export default function Campus3DView(props: MapViewProps) {
+  const { places, outline, dark } = props;
+  const [extras, setExtras] = useState<FeatureCollection | null | undefined>(undefined);
+  const [labels, setLabels] = useState(true);
+
+  useEffect(() => {
+    loadSceneExtras().then(setExtras);
+  }, []);
+
+  // L toggles place names, like most 3D campus explorers
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== "l" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      setLabels((v) => !v);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Place ↔ building. A pin that sits just outside its footprint (courtyards, entrances)
+  // still claims the building whose walls are within 25 m, so it highlights and is clickable.
+  const { placeForBuilding, buildingForPlace } = useMemo(() => {
+    const pb = new Map<string, Place>();
+    const bp = new Map<string, string>();
+    if (!outline || !places) return { placeForBuilding: pb, buildingForPlace: bp };
+    const centers = outline.features
+      .filter((f) => f.properties?.kind === "building" && f.geometry.type === "Polygon")
+      .map((f) => {
+        const ring = (f.geometry as GeoPolygon).coordinates[0] as [number, number][];
+        return { id: String(f.properties!.id), ring: ring.map(toMeters) };
+      });
+    for (const p of places) {
+      let id = footprintFor(outline, p);
+      if (!id) {
+        const [x, n] = toMeters(p.coordinates);
+        let best = 25;
+        for (const b of centers) {
+          const d = distanceToRing([x, n], b.ring);
+          if (d < best && !pb.has(b.id)) [best, id] = [d, b.id];
+        }
+      }
+      if (id && !pb.has(id)) {
+        pb.set(id, p);
+        bp.set(p.id, id);
+      }
+    }
+    return { placeForBuilding: pb, buildingForPlace: bp };
+  }, [places, outline]);
+
+  const palette = dark ? NIGHT : DAY;
+  const scene = useMemo<CampusScene | null>(
+    () => (outline && extras !== undefined ? buildCampusScene(outline, extras, placeForBuilding, palette) : null),
+    [outline, extras, placeForBuilding, palette],
+  );
+  useEffect(
+    () => () => {
+      scene?.buildings.dispose();
+      scene?.ground.dispose();
+    },
+    [scene],
+  );
+
+  // Where each place label floats: above its building's roof, or 4 m up for open-air places
+  const anchors = useMemo<LabelAnchor[]>(() => {
+    if (!scene) return [];
+    const byId = new Map(scene.list.filter((b) => b.place).map((b) => [b.place!.id, b]));
+    return (places ?? []).map((p) => {
+      const [x, n] = toMeters(p.coordinates);
+      return { place: p, pos: new THREE.Vector3(x, (byId.get(p.id)?.top ?? 2) + 5, -n) };
+    });
+  }, [places, scene]);
+  const labelEls = useRef(new Map<string, HTMLButtonElement>());
+
+  // Low-power devices skip shadows and render at 1x
+  const capable = typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 4) >= 6;
+
+  return (
+    <div className="relative h-full w-full" style={{ background: palette.sky }}>
+      {scene ? (
+        <Canvas
+          shadows={capable ? "soft" : false}
+          dpr={capable ? [1, 2] : [1, 1.25]}
+          camera={{ fov: 42, near: 2, far: 6000, position: HOME.target.clone().add(HOME.offset).toArray() }}
+          gl={{ antialias: true, powerPreference: "high-performance" }}
+          onPointerMissed={() => props.onBackground(props.me ?? toLngLat(0, 0), null)}
+          aria-label="3D campus view"
+        >
+          <World {...props} highlightBuildingId={(props.selectedId && buildingForPlace.get(props.selectedId)) || props.highlightBuildingId} scene={scene} palette={palette} shadows={capable} labels={labels} anchors={anchors} labelEls={labelEls} />
+        </Canvas>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-gray-900/90 text-[13px] font-semibold text-gray-600 dark:text-gray-300 shadow">Building the campus…</span>
+        </div>
+      )}
+
+      {/*
+        Place labels: one DOM layer positioned from the 3D scene every frame (see World).
+        Nearest and selected labels win; others shrink to an icon or hide instead of overlapping.
+      */}
+      <div className={cn("absolute inset-0 overflow-hidden pointer-events-none", !labels && "hidden")} aria-hidden={!labels}>
+        {anchors.map(({ place }) => {
+          const c = CATEGORY[place.category];
+          const selected = place.id === props.selectedId;
+          return (
+            <button
+              key={place.id}
+              ref={(el) => {
+                if (el) labelEls.current.set(place.id, el);
+                else labelEls.current.delete(place.id);
+              }}
+              type="button"
+              data-mode="hidden"
+              onClick={() => props.onPin(place)}
+              title={place.name}
+              className={cn(
+                "group absolute left-0 top-0 flex items-center gap-1.5 max-w-[190px] p-0.5 data-[mode=full]:pr-2.5 rounded-full whitespace-nowrap text-[11.5px] font-semibold border select-none will-change-transform",
+                "data-[mode=hidden]:invisible pointer-events-auto transition-[opacity] duration-150",
+                selected ? "bg-[#003cbb] text-white border-[#003cbb] shadow-lg z-20" : "bg-white/95 dark:bg-gray-900/95 text-gray-800 dark:text-gray-100 border-white/70 dark:border-gray-700 shadow-md z-10 hover:z-30",
+              )}
+            >
+              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: selected ? "rgba(255,255,255,0.22)" : c.color }}>
+                <c.icon className="w-3 h-3 text-white" />
+              </span>
+              <span className="truncate group-data-[mode=icon]:hidden">{place.name}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Labels toggle (L) */}
+      <button
+        type="button"
+        onClick={() => setLabels((v) => !v)}
+        aria-pressed={labels}
+        title="Show or hide place names (L)"
+        className="absolute z-20 left-3 bottom-3 md:left-4 md:bottom-4 h-9 px-3.5 rounded-full bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-800 text-[13px] font-semibold text-gray-700 dark:text-gray-200 shadow-md inline-flex items-center gap-2"
+      >
+        <span className={cn("w-2 h-2 rounded-full", labels ? "bg-[#003cbb] dark:bg-[#4d82ff]" : "bg-gray-300 dark:bg-gray-600")} />
+        Labels
+        <kbd className="hidden md:inline text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">L</kbd>
+      </button>
+      <Hint />
+      <p className="absolute z-10 right-2 bottom-1 text-[10px] text-gray-700/70 dark:text-gray-300/60 pointer-events-none">© OpenStreetMap contributors</p>
+    </div>
+  );
+}
+
+/** How to move around; fades after a few seconds */
+function Hint() {
+  const [show, setShow] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(false), 7000);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className={cn("hidden md:flex absolute z-20 left-4 bottom-16 gap-3 px-4 py-2 rounded-full bg-black/60 text-white text-[12px] font-medium whitespace-nowrap backdrop-blur transition-opacity duration-700 pointer-events-none", show ? "opacity-100" : "opacity-0")}>
+      <span>Drag to pan</span>
+      <span className="opacity-50">·</span>
+      <span>Right-drag to rotate</span>
+      <span className="opacity-50">·</span>
+      <span>Scroll to zoom</span>
+      <span className="opacity-50">·</span>
+      <span>Click a building</span>
+    </div>
+  );
+}
+
+interface LabelAnchor {
+  place: Place;
+  pos: THREE.Vector3;
+}
+
+type WorldProps = MapViewProps & { scene: CampusScene; palette: typeof DAY; shadows: boolean; labels: boolean; anchors: LabelAnchor[]; labelEls: React.RefObject<Map<string, HTMLButtonElement>> };
+
+/** Label sizes by camera distance (metres) */
+const FULL_UNDER = 650;
+const ICON_UNDER = 1500;
+
+function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handleRef, selectedId, visibleIds, me, highlightBuildingId, onPin, onBackground }: WorldProps) {
+  const controls = useRef<MapControlsImpl>(null);
+  const { camera, size } = useThree();
+  const widths = useRef(new Map<string, number>());
+  const v = useMemo(() => new THREE.Vector3(), []);
+  const flight = useRef<{ fromT: THREE.Vector3; toT: THREE.Vector3; fromP: THREE.Vector3; toP: THREE.Vector3; t: number } | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+
+  const flyTo = useCallback(
+    (target: THREE.Vector3, distance: number) => {
+      const c = controls.current;
+      if (!c) return;
+      const dir = camera.position.clone().sub(c.target).normalize();
+      // Keep the current heading, but never flatter than ~35° so buildings read well
+      if (dir.y < 0.55) dir.setY(0.55).normalize();
+      flight.current = { fromT: c.target.clone(), toT: target.clone(), fromP: camera.position.clone(), toP: target.clone().add(dir.multiplyScalar(distance)), t: 0 };
+    },
+    [camera],
+  );
+
+  // The shell talks to every engine through this handle
+  useEffect(() => {
+    handleRef.current = {
+      flyTo: ([lng, lat], zoom) => {
+        const [x, n] = toMeters([lng, lat]);
+        flyTo(new THREE.Vector3(x, 0, -n), zoomToDistance(zoom));
+      },
+      fit: () => {
+        const c = controls.current;
+        if (!c) return;
+        flight.current = { fromT: c.target.clone(), toT: HOME.target.clone(), fromP: camera.position.clone(), toP: HOME.target.clone().add(HOME.offset), t: 0 };
+      },
+      getZoom: () => distanceToZoom(controls.current ? camera.position.distanceTo(controls.current.target) : 800),
+    };
+    return () => {
+      handleRef.current = null;
+    };
+  }, [handleRef, camera, flyTo]);
+
+  // The scene takes a moment to build: a place chosen before it was ready (deep link,
+  // switching from the map with a card open) gets its fly-in once the scene is up.
+  const arrived = useRef(false);
+  useEffect(() => {
+    if (arrived.current) return;
+    arrived.current = true;
+    const a = anchors.find((x) => x.place.id === selectedId);
+    if (a) setTimeout(() => flyTo(new THREE.Vector3(a.pos.x, 0, a.pos.z), zoomToDistance(17.5)), 150);
+  }, [anchors, selectedId, flyTo]);
+
+  /**
+   * Projects every label to the screen and declutters: selected first, then nearest.
+   * A label that would overlap one already placed shrinks to its icon, or hides.
+   */
+  const placeLabels = () => {
+    const els = labelEls.current;
+    if (!els) return;
+    const items = anchors
+      .map((a) => ({ a, d: camera.position.distanceTo(a.pos), sel: a.place.id === selectedId }))
+      .sort((x, y) => (x.sel === y.sel ? x.d - y.d : x.sel ? -1 : 1));
+    const placed: [number, number, number, number][] = [];
+    const hits = (x: number, y: number, w: number, h: number) => placed.some(([px, py, pw, ph]) => x < px + pw + 4 && x + w + 4 > px && y < py + ph + 3 && y + h + 3 > py);
+    for (const { a, d, sel } of items) {
+      const el = els.get(a.place.id);
+      if (!el) continue;
+      v.copy(a.pos).project(camera);
+      const offscreen = v.z > 1 || v.x < -1.1 || v.x > 1.1 || v.y < -1.1 || v.y > 1.1;
+      let mode: "full" | "icon" | "hidden" = offscreen || (!sel && !visibleIds.has(a.place.id)) ? "hidden" : sel || d < FULL_UNDER ? "full" : d < ICON_UNDER ? "icon" : "hidden";
+      const x = ((v.x + 1) / 2) * size.width;
+      const y = ((1 - v.y) / 2) * size.height;
+      if (mode !== "hidden") {
+        if (!widths.current.has(a.place.id) && el.dataset.mode === "full") widths.current.set(a.place.id, el.offsetWidth);
+        const fullW = widths.current.get(a.place.id) ?? 140;
+        if (mode === "full" && !sel && hits(x - fullW / 2, y - 12, fullW, 24)) mode = "icon";
+        if (mode === "icon" && hits(x - 13, y - 12, 26, 24)) mode = "hidden";
+        const w = mode === "full" ? fullW : 26;
+        placed.push([x - w / 2, y - 12, w, 24]);
+        el.style.transform = `translate(${Math.round(x - w / 2)}px, ${Math.round(y - 12)}px)`;
+      }
+      if (el.dataset.mode !== mode) el.dataset.mode = mode;
+    }
+  };
+
+  useFrame((_, dt) => {
+    const c = controls.current;
+    const f = flight.current;
+    if (c && f) {
+      f.t = Math.min(1, f.t + dt / 0.9);
+      const k = 1 - Math.pow(1 - f.t, 3); // ease out
+      c.target.lerpVectors(f.fromT, f.toT, k);
+      camera.position.lerpVectors(f.fromP, f.toP, k);
+      if (f.t >= 1) flight.current = null;
+    }
+    if (c) {
+      // Keep the view on campus
+      const e = scene.extent;
+      const clamped = c.target.clone().set(THREE.MathUtils.clamp(c.target.x, e.minX, e.maxX), 0, THREE.MathUtils.clamp(c.target.z, e.minZ, e.maxZ));
+      if (!clamped.equals(c.target)) {
+        camera.position.add(clamped.clone().sub(c.target));
+        c.target.copy(clamped);
+      }
+      c.update();
+    }
+    if (labels) placeLabels();
+  });
+
+  // Materials: one for all buildings (vertex colours), one for the ground
+  const buildingMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide }), []);
+  const groundMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }), []);
+  useEffect(() => () => (buildingMat.dispose(), groundMat.dispose()), [buildingMat, groundMat]);
+
+  // Selected (or hovered) building, redrawn on top in the brand colour
+  const highlightIndex = useMemo(() => (highlightBuildingId ? scene.list.findIndex((b) => b.id === highlightBuildingId) : -1), [scene, highlightBuildingId]);
+  const highlightGeo = useMemo(() => {
+    if (highlightIndex < 0) return null;
+    const b = scene.list[highlightIndex];
+    return buildingGeometry(b, new THREE.Color(dark ? "#6f95ff" : "#3d6ff0"), new THREE.Color(dark ? "#9db6ff" : "#1f4fd1"));
+  }, [scene, highlightIndex, dark]);
+  const hoverGeo = useMemo(() => {
+    if (hover === null || hover === highlightIndex) return null;
+    const b = scene.list[hover];
+    return buildingGeometry(b, new THREE.Color(dark ? "#5b6476" : "#fff8ea"), new THREE.Color(dark ? "#6f7d93" : "#d77a5c"));
+  }, [scene, hover, highlightIndex, dark]);
+  useEffect(() => () => highlightGeo?.dispose(), [highlightGeo]);
+  useEffect(() => () => hoverGeo?.dispose(), [hoverGeo]);
+
+  const indexAt = (e: ThreeEvent<PointerEvent | MouseEvent>) => (e.faceIndex == null ? null : buildingAtTriangle(scene.triStart, e.faceIndex));
+
+  const onBuildingClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    const i = indexAt(e);
+    if (i === null) return;
+    const b = scene.list[i];
+    if (b.place) onPin(b.place);
+    else onBackground(toLngLat(b.center[0], -b.center[1]), null);
+  };
+
+  // Tree instances
+  const trunks = useRef<THREE.InstancedMesh>(null);
+  const crowns = useRef<THREE.InstancedMesh>(null);
+  useEffect(() => {
+    const { matrices, colors } = scene.trees;
+    const tr = trunks.current, cr = crowns.current;
+    if (!tr || !cr) return;
+    matrices.forEach((m, i) => {
+      tr.setMatrixAt(i, m);
+      cr.setMatrixAt(i, m);
+      cr.setColorAt(i, colors[i]);
+    });
+    tr.instanceMatrix.needsUpdate = true;
+    cr.instanceMatrix.needsUpdate = true;
+    if (cr.instanceColor) cr.instanceColor.needsUpdate = true;
+    cr.computeBoundingSphere();
+  }, [scene]);
+  const trunkGeo = useMemo(() => new THREE.CylinderGeometry(0.28, 0.4, 3, 5).translate(0, 1.5, 0), []);
+  const crownGeo = useMemo(() => new THREE.IcosahedronGeometry(3, 0).scale(1, 1.15, 1).translate(0, 5.2, 0), []);
+
+  const meXZ = me ? toMeters(me) : null;
+  return (
+    <>
+      <MapControls
+        ref={controls}
+        makeDefault
+        target={HOME.target.toArray()}
+        enableDamping
+        dampingFactor={0.12}
+        screenSpacePanning={false}
+        minDistance={45}
+        maxDistance={2400}
+        maxPolarAngle={1.32}
+        zoomSpeed={0.9}
+        onStart={() => (flight.current = null)}
+      />
+
+      {/* Sky colour and distance haze */}
+      <color attach="background" args={[palette.sky]} />
+      <fog attach="fog" args={[palette.sky, dark ? 900 : 1100, dark ? 2800 : 3200]} />
+
+      <hemisphereLight args={[dark ? "#8ea3d6" : "#e3f0ff", dark ? "#2a3324" : "#7c8c55", dark ? 1.1 : 1.15]} />
+      <directionalLight
+        position={dark ? [-300, 600, 200] : [-420, 620, 260]}
+        intensity={dark ? 1.3 : 2.4}
+        color={dark ? "#9fb4ff" : "#fff0d4"}
+        castShadow={shadows}
+        shadow-mapSize={[4096, 4096]}
+        shadow-camera-left={-1100}
+        shadow-camera-right={1100}
+        shadow-camera-top={1100}
+        shadow-camera-bottom={-1100}
+        shadow-camera-near={10}
+        shadow-camera-far={2400}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.6}
+      />
+
+      <mesh geometry={scene.ground} material={groundMat} receiveShadow onClick={(e) => (e.stopPropagation(), onBackground(toLngLat(e.point.x, e.point.z), null))} />
+
+      <mesh
+        geometry={scene.buildings}
+        material={buildingMat}
+        castShadow
+        receiveShadow
+        onClick={onBuildingClick}
+        onPointerMove={(e) => {
+          e.stopPropagation();
+          const i = indexAt(e);
+          if (i !== hover) setHover(i);
+          document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={() => {
+          setHover(null);
+          document.body.style.cursor = "";
+        }}
+      />
+      {hoverGeo && <mesh geometry={hoverGeo} material={buildingMat} raycast={() => null} />}
+      {highlightGeo && <mesh geometry={highlightGeo} material={buildingMat} castShadow raycast={() => null} />}
+
+      <instancedMesh ref={trunks} args={[trunkGeo, undefined, scene.trees.matrices.length]} castShadow raycast={() => null}>
+        <meshStandardMaterial color={palette.trunk} roughness={1} />
+      </instancedMesh>
+      <instancedMesh ref={crowns} args={[crownGeo, undefined, scene.trees.matrices.length]} castShadow receiveShadow raycast={() => null}>
+        <meshStandardMaterial roughness={0.95} flatShading />
+      </instancedMesh>
+
+      {meXZ && (
+        <mesh position={[meXZ[0], 3, -meXZ[1]]}>
+          <sphereGeometry args={[4, 20, 20]} />
+          <meshStandardMaterial color="#2563eb" emissive="#2563eb" emissiveIntensity={0.6} />
+        </mesh>
+      )}
+
+    </>
+  );
+}

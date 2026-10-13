@@ -1002,7 +1002,12 @@ export function AcademicAlerts() {
     userData?.user_data?.department ?? 
     profile?.user_data?.department ?? 
     "Software Engineering";
-  const programme = rawDegree || department;
+  // The API's degree name can stop at "B.A (Hons) Bachelor of"; append the department like the
+  // profile banner does, so the career engine matches the real programme (e.g. Software Engineering).
+  const programme =
+    rawDegree && department && !rawDegree.toLowerCase().includes(department.toLowerCase())
+      ? `${rawDegree} ${department}`.replace(/\s+/g, " ").trim()
+      : rawDegree || department;
 
   const getCgpaStatus = () => {
     if (cgpa >= 4.5) {
@@ -1070,7 +1075,7 @@ export function AcademicAlerts() {
 
   return (
     <>
-      <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
+      <Card className="@container rounded-[20px] border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
         <CardContent className="p-5 md:p-6 flex flex-col gap-5">
           {/* Card Header */}
           <div>
@@ -1103,18 +1108,18 @@ export function AcademicAlerts() {
           {/* AI Recommended Career Paths Section */}
           <div className="flex flex-col gap-3 pt-1">
             {/* Header with AI indicator & Simulator trigger */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-[12px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2.5 pb-1">
+              <div className="min-w-0 flex-1 basis-[220px]">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <p className="text-[12px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
                     Recommended Career Paths
                   </p>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] border border-[#ccdaf9] dark:border-[#ccdaf9]/25">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff] border border-[#ccdaf9] dark:border-[#ccdaf9]/25">
                     <Sparkles className="w-2.5 h-2.5" />
                     AI-Matched
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed text-pretty">
                   Tailored to your <span className="font-semibold text-gray-800 dark:text-gray-200">{cgpa.toFixed(2)} CGPA</span> &amp; {programme}
                 </p>
               </div>
@@ -1123,7 +1128,7 @@ export function AcademicAlerts() {
               <button
                 type="button"
                 onClick={() => setIsGpaSimulatorOpen(true)}
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#003cbb] dark:text-[#4d82ff] hover:text-[#002e8f] dark:hover:text-[#6da0ff] bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 px-2.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40 transition-colors self-start sm:self-auto shrink-0"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold whitespace-nowrap text-[#003cbb] dark:text-[#4d82ff] hover:text-[#002e8f] dark:hover:text-[#6da0ff] bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 px-2.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40 transition-colors shrink-0"
                 title="Simulate how raising your CGPA affects career matches"
               >
                 <Target className="w-3.5 h-3.5" />
@@ -1132,7 +1137,7 @@ export function AcademicAlerts() {
             </div>
 
             {/* Perspective Filter Tabs */}
-            <div className="flex items-center gap-1.5 bg-gray-100/70 dark:bg-gray-800/60 p-1 rounded-xl w-fit">
+            <div className="flex items-center gap-1.5 bg-gray-100/70 dark:bg-gray-800/60 p-1 rounded-xl w-fit max-w-full overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setActiveFilter("tailored")}
@@ -1177,30 +1182,32 @@ export function AcademicAlerts() {
                 <div
                   key={path.id}
                   onClick={() => setSelectedCareer(path)}
-                  className="group flex items-center justify-between gap-3 rounded-[14px] border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3 hover:border-[#003cbb]/40 dark:hover:border-[#4d82ff]/40 hover:bg-white dark:hover:bg-gray-800/80 hover:shadow-xs transition-all cursor-pointer select-none"
+                  className="group flex items-center justify-between gap-3 rounded-[14px] border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3 hover:border-[#003cbb]/40 dark:hover:border-[#4d82ff]/40 hover:bg-white dark:hover:bg-gray-800/80 transition-all cursor-pointer select-none"
                   title="Click to view AI career dossier and roadmap"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${path.color} flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform`}>
                       <BriefcaseBusiness className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-[#003cbb] dark:group-hover:text-[#4d82ff] transition-colors">
-                          {path.title}
+                      <span className="text-[13px] font-semibold leading-snug text-gray-900 dark:text-gray-100 line-clamp-2 text-pretty group-hover:text-[#003cbb] dark:group-hover:text-[#4d82ff] transition-colors">
+                        {path.title}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                        <span className="whitespace-nowrap">{path.avgSalary}</span>
+                        <span aria-hidden>•</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap">{path.growth}</span>
+                        {/* Narrow card: the match pill sits with the details instead of squeezing the title */}
+                        <span className={cn("@[30rem]:hidden text-[10px] font-extrabold px-2 py-0.5 rounded-full border whitespace-nowrap", matchColors[path.match])}>
+                          {path.matchScore}% Match
                         </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                        <span>{path.avgSalary}</span>
-                        <span>•</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">{path.growth}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={cn(
-                      "text-[10px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 transition-colors",
+                      "hidden @[30rem]:inline-flex text-[10px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 whitespace-nowrap transition-colors",
                       matchColors[path.match]
                     )}>
                       {path.matchScore}% Match

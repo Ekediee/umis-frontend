@@ -17,6 +17,11 @@ import {
   MoreVertical,
   KeyRound,
   CalendarCheck,
+  Library,
+  ClipboardCheck,
+  ChartNoAxesColumn,
+  Map as MapIcon,
+  Download,
 } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,9 +31,11 @@ import { performClientLogout } from "@/lib/auth-cleanup";
 import { toTitleCase } from "@/lib/utils";
 import type { UMISResponse } from "@/lib/session";
 import { useState, useEffect, useRef } from "react";
+import { isFeatureEnabled, type PreviewFeature } from "@/lib/features";
 
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
+import { openInstallApp, useCanInstallApp } from "@/components/pwa/install-app";
 
 
 const mainNavItems = [
@@ -37,8 +44,21 @@ const mainNavItems = [
   { title: "Registration", href: "/registration", icon: ListTodo },
   { title: "Finance", href: "/dashboard/finance", icon: Wallet },
   { title: "Timetable", href: "/dashboard/timetable", icon: CalendarCheck },
+  { title: "Campus Map", href: "/campus-map", icon: MapIcon },
   { title: "My Profile", href: "/profile", icon: User },
 ];
+
+/**
+ * Features still in development. Each one shows only while its preview flag is on
+ * (lib/features.ts), so a V1 build ships without them and without code changes.
+ */
+const comingSoonNavItems = (
+  [
+    { title: "My Courses", href: "/courses", icon: Library, feature: "courses" },
+    { title: "Attendance", href: "/attendance", icon: ClipboardCheck, feature: "attendance" },
+    { title: "Personal Study Insights", href: "/insights", icon: ChartNoAxesColumn, feature: "insights" },
+  ] satisfies { title: string; href: string; icon: typeof LayoutDashboard; feature: PreviewFeature }[]
+).filter((item) => isFeatureEnabled(item.feature));
 
 const otherNavItems = [
   { title: "Online Exam", href: "#", icon: MonitorPlay },
@@ -56,6 +76,7 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const canInstallApp = useCanInstallApp();
 
   // Single source of truth for avatar — no more copy-pasted logic
   const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
@@ -68,9 +89,9 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
     "Yakubu Onome Joy";
   const studentName = toTitleCase(rawName);
 
-  const studentEmail =
-    userData?.user_data?.contact_information?.email ??
-    "yakubu.onome@univ.edu";
+  // The real address (what the change-password code is sent to) and a display fallback
+  const accountEmail = userData?.user_data?.contact_information?.email ?? "";
+  const studentEmail = accountEmail || "yakubu.onome@univ.edu";
 
   const matricNo =
     userData?.entity_id?.toString() ??
@@ -147,6 +168,35 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
           </nav>
         </div>
 
+        {comingSoonNavItems.length > 0 && (
+        <div>
+          <p className="flex items-center gap-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider mb-3 px-3 uppercase">
+            COMING SOON
+            <span className="normal-case tracking-normal text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]">Preview</span>
+          </p>
+          <nav className="flex flex-col gap-1">
+            {comingSoonNavItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-[#f5f8fe]/80 dark:bg-gray-800 text-[#003cbb] dark:text-[#4d82ff]"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5", isActive ? "text-[#003cbb] dark:text-[#4d82ff]" : "text-gray-400 dark:text-gray-500")} />
+                  {item.title}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+        )}
+
         <div>
           <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 tracking-wider mb-3 px-3 uppercase">
             OTHER
@@ -221,6 +271,19 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
                   Change Password
                 </button>
 
+                {canInstallApp && (
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      openInstallApp();
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-xl mx-0"
+                  >
+                    <Download className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    Install Pulse app
+                  </button>
+                )}
+
                 <div className="h-px bg-gray-100 dark:bg-gray-800 mx-3 my-1" />
 
                 <button
@@ -243,7 +306,7 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}
         matricNo={matricNo}
-        email={studentEmail}
+        email={accountEmail}
       />
     </>
   );

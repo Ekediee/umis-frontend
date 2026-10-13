@@ -8,7 +8,7 @@ export function FinanceOverview() {
   const mounted = mountedFullfee;
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
+    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <div className="flex items-center gap-2">

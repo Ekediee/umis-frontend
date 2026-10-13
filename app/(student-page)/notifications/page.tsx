@@ -1,9 +1,26 @@
 "use client";
 
-import { ChevronLeft, CheckCheck, BellOff, Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, CheckCheck, BellOff, Info, AlertTriangle, CheckCircle, Settings2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { Notification } from "@/components/providers/notification-provider";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { cn } from "@/lib/utils";
+import { categoryOf } from "@/lib/student/rules";
+import { FilterChip } from "@/components/student/ui";
+import { isFeatureEnabled } from "@/lib/features";
+import type { NotificationCategory } from "@/lib/student/types";
+
+const FILTERS: { id: NotificationCategory | "all"; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "courses", label: "Courses" },
+  { id: "attendance", label: "Attendance" },
+  { id: "fees", label: "Fees" },
+  { id: "registration", label: "Registration" },
+  { id: "events", label: "Events" },
+  { id: "system", label: "Updates" },
+];
 
 // Custom time formatter to prevent crashes if date-fns is not installed
 const formatRelativeTime = (date: Date) => {
@@ -20,7 +37,24 @@ const formatRelativeTime = (date: Date) => {
 };
 
 export default function NotificationsPage() {
-  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotifications();
+  const { notifications: allNotifications, markAsRead, markAllAsRead, unreadCount } = useNotifications();
+  const [filter, setFilter] = useState<NotificationCategory | "all">("all");
+  const router = useRouter();
+
+  // Tapping a notice marks it read and takes the student where they can act on it
+  const open = (n: Notification) => {
+    markAsRead(n.id);
+    if (!n.href) return;
+    if (/^https?:\/\//.test(n.href)) window.open(n.href, "_blank", "noopener,noreferrer");
+    else router.push(n.href);
+  };
+  const counts = allNotifications.reduce<Record<string, number>>((acc, n) => {
+    const c = categoryOf(n.type);
+    acc[c] = (acc[c] ?? 0) + (n.read ? 0 : 1);
+    return acc;
+  }, {});
+  const present = new Set(allNotifications.map((n) => categoryOf(n.type)));
+  const notifications = filter === "all" ? allNotifications : allNotifications.filter((n) => categoryOf(n.type) === filter);
 
   const isToday = (date: Date) => {
     const today = new Date();
@@ -55,6 +89,14 @@ export default function NotificationsPage() {
           <ChevronLeft className="w-4 h-4" />
           Back
         </Link>
+        <div className="flex items-center gap-4">
+        {isFeatureEnabled("notifications") && <Link
+          href="/notifications/settings"
+          className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500 dark:text-gray-400 hover:text-[#003cbb] dark:hover:text-[#4d82ff] transition-colors"
+        >
+          <Settings2 className="w-4 h-4" />
+          Settings
+        </Link>}
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
@@ -64,6 +106,7 @@ export default function NotificationsPage() {
             Mark all as read
           </button>
         )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between mb-8">
@@ -75,8 +118,19 @@ export default function NotificationsPage() {
         )}
       </div>
 
+      {/* Category filters: only categories that have notifications are shown */}
+      {isFeatureEnabled("notifications") && present.size > 1 && (
+        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 mb-6">
+          {FILTERS.filter((f) => f.id === "all" || present.has(f.id as NotificationCategory)).map((f) => (
+            <FilterChip key={f.id} active={filter === f.id} onClick={() => setFilter(f.id)} count={f.id === "all" ? unreadCount : counts[f.id]}>
+              {f.label}
+            </FilterChip>
+          ))}
+        </div>
+      )}
+
       {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] text-center shadow-sm">
+        <div className="flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] text-center ">
           <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
             <BellOff className="w-8 h-8 text-gray-400" />
           </div>
@@ -95,9 +149,9 @@ export default function NotificationsPage() {
                 {todayNotifications.map((notification) => (
                   <div 
                     key={notification.id} 
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => open(notification)}
                     className={cn(
-                      "border border-gray-100 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-4 md:p-5 flex items-start gap-4 transition-all hover:bg-gray-50/50 dark:hover:bg-gray-800/40 cursor-pointer relative overflow-hidden rounded-[20px]",
+                      "border border-gray-100 dark:border-gray-800 p-4 md:p-5 flex items-start gap-4 transition-all hover:bg-gray-50/50 dark:hover:bg-gray-800/40 cursor-pointer relative overflow-hidden rounded-[20px]",
                       notification.read 
                         ? "bg-white dark:bg-gray-900" 
                         : "bg-blue-50/30 dark:bg-[#4d82ff]/[0.03]"
@@ -109,7 +163,7 @@ export default function NotificationsPage() {
                         "text-[14px] md:text-[15px] leading-tight mb-1",
                         notification.read ? "font-semibold text-gray-700 dark:text-gray-300" : "font-extrabold text-gray-950 dark:text-gray-50"
                       )}>
-                        {notification.type.replace(/_/g, ' ')}
+                        {notification.title ?? notification.type.replace(/_/g, ' ')}
                       </h4>
                       <p className="text-[13px] md:text-[14px] text-gray-500 dark:text-gray-400 leading-relaxed mb-2">
                         {notification.message}
@@ -135,9 +189,9 @@ export default function NotificationsPage() {
                 {earlierNotifications.map((notification) => (
                   <div 
                     key={notification.id} 
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => open(notification)}
                     className={cn(
-                      "border border-gray-100 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-4 md:p-5 flex items-start gap-4 transition-all hover:bg-gray-50/50 dark:hover:bg-gray-800/40 cursor-pointer relative overflow-hidden rounded-[20px]",
+                      "border border-gray-100 dark:border-gray-800 p-4 md:p-5 flex items-start gap-4 transition-all hover:bg-gray-50/50 dark:hover:bg-gray-800/40 cursor-pointer relative overflow-hidden rounded-[20px]",
                       notification.read 
                         ? "bg-white dark:bg-gray-900" 
                         : "bg-blue-50/30 dark:bg-[#4d82ff]/[0.03]"
@@ -149,7 +203,7 @@ export default function NotificationsPage() {
                         "text-[14px] md:text-[15px] leading-tight mb-1",
                         notification.read ? "font-semibold text-gray-700 dark:text-gray-300" : "font-extrabold text-gray-950 dark:text-gray-50"
                       )}>
-                        {notification.type.replace(/_/g, ' ')}
+                        {notification.title ?? notification.type.replace(/_/g, ' ')}
                       </h4>
                       <p className="text-[13px] md:text-[14px] text-gray-500 dark:text-gray-400 leading-relaxed mb-2">
                         {notification.message}

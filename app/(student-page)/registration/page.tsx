@@ -17,6 +17,7 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { actionKey, notify } from "@/lib/notifications/bus";
 import { getSemesterRegistrationStatusAction, registerSemesterAction } from "@/app/actions/registration";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
@@ -162,7 +163,7 @@ export default function RegistrationPage() {
     <div className="p-4 md:p-6 lg:p-8">
       <div className="flex flex-col gap-6 md:gap-8 pb-10 max-w-7xl mx-auto">
       {/* Summary Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 md:gap-6">
         <SummaryCard 
           title="Session" 
           value={semesterInfo?.semester ? semesterInfo.semester.split(".")[0] : "—"}
@@ -357,6 +358,14 @@ export default function RegistrationPage() {
 
             setIsSemesterConfirmOpen(false);
             toast.success(result.message || "Successfully registered for the semester!");
+            notify({
+              key: `reg-started:${statusResult.data?.semester ?? actionKey("sem")}`,
+              type: "REGISTRATION_STARTED",
+              title: "Semester registration started",
+              message: "You're registered for the semester. Next, complete your finance registration and choose your courses.",
+              href: "/registration",
+              silent: true,
+            });
           }
         }}
         isLoading={isRegistering}
@@ -368,6 +377,14 @@ export default function RegistrationPage() {
         onSuccess={(amount) => {
           setWalletBalance(prev => prev + amount);
           toast.success(`Successfully funded wallet with ₦${amount.toLocaleString()}`);
+          notify({
+            key: actionKey("wallet-funded"),
+            type: "PAYMENT_RECEIVED",
+            title: "Wallet funded",
+            message: `₦${amount.toLocaleString()} was added to your wallet.`,
+            href: "/dashboard/finance",
+            silent: true,
+          });
         }}
       />
       </div>

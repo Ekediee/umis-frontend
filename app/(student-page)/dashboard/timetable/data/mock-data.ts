@@ -1,16 +1,6 @@
-export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri';
+import type { TimetableSession } from "@/components/timetable/types";
 
-export interface TimetableSession {
-  id: string;
-  code: string;
-  title: string;
-  lecturer: string;
-  venue: string;
-  day: DayOfWeek;
-  startTime: string; // Format: "HH:mm" (24-hour)
-  endTime: string;
-  type: 'lecture' | 'lab' | 'break';
-}
+export type { DayOfWeek, TimetableSession } from "@/components/timetable/types";
 
 export const TIMETABLE_SESSIONS: TimetableSession[] = [
   {

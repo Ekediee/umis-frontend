@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
+import { actionKey, notify } from "@/lib/notifications/bus";
 import { 
   getClassGroupsAction, 
   getCoursesAction, 
@@ -205,14 +206,25 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     const loadDraft = async () => {
       const draft = await getOfflineDraft<CourseRegistrationDraft>(OFFLINE_COURSE_CART_KEY);
       if (draft) {
-        if (draft.groups && draft.groups.length > 0) setSelectedGroups(draft.groups);
-        if (draft.courses && draft.courses.length > 0) setSelectedCourseIds(draft.courses);
+        // Only one class group is allowed. Drafts saved under the old multi-select rule may
+        // hold several: keep the first, and drop their saved courses (they may belong to the
+        // other groups) so the student re-picks courses for that one group from step 1.
+        const legacyMultiGroup = (draft.groups?.length ?? 0) > 1;
+        const groups = draft.groups?.slice(0, 1) ?? [];
+
+        if (groups.length > 0) setSelectedGroups(groups);
+        if (!legacyMultiGroup && draft.courses && draft.courses.length > 0) setSelectedCourseIds(draft.courses);
         if (draft.worshipCenter) setSelectedWorshipCenterId(draft.worshipCenter);
 
+        if (legacyMultiGroup) {
+          toast.info("Draft updated", { description: "You can now select only one class group. We kept your first group; please re-select your courses." });
+          return;
+        }
+
         // If user stopped at Step 2 or Step 3, load courses and advance step
-        if (draft.currentStep && draft.currentStep > 1 && draft.groups && draft.groups.length > 0) {
+        if (draft.currentStep && draft.currentStep > 1 && groups.length > 0) {
           setCoursesLoading(true);
-          const coursesResult = await getCoursesAction(draft.groups);
+          const coursesResult = await getCoursesAction(groups);
           if (!coursesResult.error && coursesResult.data?.courses) {
             setCourses(coursesResult.data.courses);
             setRawCourses(coursesResult.data.rawCourses ?? []);
@@ -361,6 +373,14 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     } else {
       await clearOfflineDraft(OFFLINE_COURSE_CART_KEY);
       toast.success(result.message ?? "Registration submitted successfully");
+      notify({
+        key: actionKey("reg-submitted"),
+        type: "REGISTRATION_SUBMITTED",
+        title: "Course registration submitted",
+        message: "Your course registration has been sent for approval. We'll let you know as soon as your adviser reviews it.",
+        href: "/registration",
+        silent: true,
+      });
       useRegistrationStore.getState().setRegState("completed");
       setIsSuccessModalOpen(true);
     }

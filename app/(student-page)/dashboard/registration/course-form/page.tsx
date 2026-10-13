@@ -182,7 +182,7 @@ function CourseFormContent() {
 
       <div className="max-w-4xl mx-auto flex flex-col gap-4 pb-12 print:max-w-none print:px-0 print:pb-0">
         {/* Course Form Card */}
-        <div id="printable-form" ref={formRef} className="bg-white border border-gray-200 rounded-[12px] shadow-sm p-6 md:p-12 print:p-8 relative overflow-hidden print:shadow-none print:border-none">
+        <div id="printable-form" ref={formRef} className="bg-white border border-gray-200 rounded-[12px] p-6 md:p-12 print:p-8 relative overflow-hidden print:shadow-none print:border-none">
           
           {/* Watermark */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] z-0">

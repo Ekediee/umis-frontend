@@ -131,7 +131,7 @@ describe('RegistrationProvider', () => {
     expect(screen.getByTestId('is-next-disabled').textContent).toBe('yes');
   });
 
-  it('allows selecting multiple class groups simultaneously', async () => {
+  it('allows only one class group: selecting another replaces the current one', async () => {
     render(
       <RegistrationProvider>
         <TestConsumer />
@@ -141,26 +141,26 @@ describe('RegistrationProvider', () => {
     fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
     fireEvent.click(screen.getByTestId('toggle-group-2-btn'));
 
-    expect(screen.getByTestId('selected-groups').textContent).toBe('group-1,group-2');
+    expect(screen.getByTestId('selected-groups').textContent).toBe('group-2');
     expect(screen.getByTestId('is-next-disabled').textContent).toBe('no');
   });
 
-  it('fetches courses for all selected groups when Next is clicked on step 1', async () => {
+  it('fetches courses for the selected group only when Next is clicked on step 1', async () => {
     render(
       <RegistrationProvider>
         <TestConsumer />
       </RegistrationProvider>
     );
 
-    // Select two groups
+    // Pick group 1, then switch to group 2 (single-select: group 2 replaces group 1)
     fireEvent.click(screen.getByTestId('toggle-group-1-btn'));
     fireEvent.click(screen.getByTestId('toggle-group-2-btn'));
 
-    // Click Next — should trigger course fetch with both IDs
+    // Click Next — should fetch courses for the one selected group
     fireEvent.click(screen.getByTestId('next-btn'));
 
     await waitFor(() => {
-      expect(getCoursesAction).toHaveBeenCalledWith(['group-1', 'group-2']);
+      expect(getCoursesAction).toHaveBeenCalledWith(['group-2']);
       expect(screen.getByTestId('current-step').textContent).toBe('2');
     });
   });
@@ -220,9 +220,9 @@ describe('RegistrationProvider', () => {
     expect(screen.getByTestId('current-step').textContent).toBe('1');
   });
 
-  it('restores draft state (multiple groups) from offline storage', async () => {
+  it('restores a single-group draft from offline storage', async () => {
     vi.mocked(getOfflineDraft).mockResolvedValue({
-      groups: ['group-1', 'group-2'],
+      groups: ['group-1'],
       courses: ['course-2'],
     });
 
@@ -233,9 +233,31 @@ describe('RegistrationProvider', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('selected-groups').textContent).toBe('group-1,group-2');
+      expect(screen.getByTestId('selected-groups').textContent).toBe('group-1');
       expect(screen.getByTestId('selected-courses').textContent).toBe('course-2');
     });
+  });
+
+  it('reduces a legacy multi-group draft to its first group and drops its courses', async () => {
+    vi.mocked(getOfflineDraft).mockResolvedValue({
+      groups: ['group-1', 'group-2'],
+      courses: ['course-2'],
+      currentStep: 2,
+    });
+
+    render(
+      <RegistrationProvider>
+        <TestConsumer />
+      </RegistrationProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('selected-groups').textContent).toBe('group-1');
+    });
+    // Courses from the old draft may belong to the other group, so the student re-picks them from step 1
+    expect(screen.getByTestId('selected-courses').textContent).toBe('');
+    expect(screen.getByTestId('current-step').textContent).toBe('1');
+    expect(getCoursesAction).not.toHaveBeenCalled();
   });
 
   it('prevents advancing to step 3 if duplicate course codes are selected', async () => {
