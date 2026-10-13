@@ -49,7 +49,7 @@ function buildPdfFilename(semesterId: string): string {
 
 function DocumentSkeleton() {
   return (
-    <div className="min-w-[900px] w-full max-w-5xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[24px] p-8 md:p-14 animate-pulse">
+    <div className="min-w-[900px] w-full max-w-5xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-[0_2px_15px_rgba(0,0,0,0.04)] rounded-[24px] p-8 md:p-14 animate-pulse">
       {/* Header skeleton */}
       <div className="flex flex-col items-center gap-3 mb-10">
         <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-64" />
@@ -235,7 +235,7 @@ export default function DocumentPreviewPage() {
           <div
             id="printable-document"
             ref={documentRef}
-            className="min-w-[900px] w-full max-w-5xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[24px] relative overflow-hidden flex flex-col p-8 md:p-14 min-h-[800px] print:shadow-none print:border-none print:p-0 print:m-0 print:min-w-0 print:overflow-visible transition-colors duration-200"
+            className="min-w-[900px] w-full max-w-5xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-[0_2px_15px_rgba(0,0,0,0.04)] rounded-[24px] relative overflow-hidden flex flex-col p-8 md:p-14 min-h-[800px] print:shadow-none print:border-none print:p-0 print:m-0 print:min-w-0 print:overflow-visible transition-colors duration-200"
           >
             {/* Faint Watermark */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] dark:opacity-[0.04] z-0 print:opacity-[0.06]">

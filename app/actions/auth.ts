@@ -63,15 +63,8 @@ export async function loginAction(formData: FormData) {
   // Called OUTSIDE the try-catch so its internal NEXT_REDIRECT throw is never
   // caught and mistaken for a real error.
   if (shouldRedirect) {
-    redirect(safeNextPath(formData.get("next")) ?? "/dashboard?login=success");
+    redirect("/dashboard?login=success");
   }
-}
-
-/** Only same-site check-in links are honoured, so `next` can't become an open redirect. */
-function safeNextPath(value: FormDataEntryValue | null): string | null {
-  if (typeof value !== "string") return null;
-  if (!value.startsWith("/attendance/check-in") || value.startsWith("//")) return null;
-  return value;
 }
 
 /**

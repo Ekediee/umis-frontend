@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function CurrentSemesterRegistration() {
   return (
-    <Card className="rounded-[24px] border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
+    <Card className="rounded-[24px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
       <CardContent className="p-5 md:p-6">
         <h3 className="text-[18px] font-bold text-[#0a0a0a] dark:text-gray-100 mb-8">Current Semester Registration</h3>
 

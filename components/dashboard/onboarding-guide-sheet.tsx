@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { createPortal } from "react-dom";
 import { X, Sparkles } from "lucide-react";
 import { OnboardingGuideCard } from "./onboarding-guide-card";
 
@@ -31,12 +30,10 @@ export function OnboardingGuideSheet({ isOpen, onClose }: OnboardingGuideSheetPr
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || typeof document === "undefined") return null;
+  if (!isOpen) return null;
 
-  // Portalled to <body> at the top layer: inside the layout's content column it shared a
-  // stacking context with the fixed mobile nav and AI button, which covered its last steps.
-  return createPortal(
-    <div className="fixed inset-0 z-[200] flex justify-end">
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -44,7 +41,7 @@ export function OnboardingGuideSheet({ isOpen, onClose }: OnboardingGuideSheetPr
       />
 
       {/* Side Sheet Panel */}
-      <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 h-full max-h-dvh shadow-2xl z-10 overflow-y-auto overscroll-contain flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 h-full shadow-2xl z-10 overflow-y-auto flex flex-col animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -64,11 +61,10 @@ export function OnboardingGuideSheet({ isOpen, onClose }: OnboardingGuideSheetPr
         </div>
 
         {/* Content */}
-        <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1">
+        <div className="p-6 flex-1">
           <OnboardingGuideCard isSheet={true} className="shadow-none border-none bg-transparent p-0" />
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }

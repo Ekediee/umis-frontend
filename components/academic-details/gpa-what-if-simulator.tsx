@@ -268,7 +268,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
             
             {/* 1. Set Target Semester GPA */}
-            <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col justify-between relative overflow-hidden group">
+            <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between relative overflow-hidden group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                   <Target className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff]" />
@@ -309,7 +309,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
             </div>
 
             {/* 2. Simulated Semester GPA */}
-            <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col justify-between relative overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between relative overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Simulated Semester GPA
@@ -345,7 +345,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
             </div>
 
             {/* 3. Projected Cumulative CGPA */}
-            <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col justify-between relative overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between relative overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Projected CGPA
@@ -380,7 +380,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
           </div>
 
           {/* Action Header & Target Auto-Fill Button */}
-          <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#003cbb] dark:text-[#4d82ff] flex items-center justify-center shrink-0 mt-0.5">
                 <Sparkles className="w-5 h-5" />
@@ -405,7 +405,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
           </div>
 
           {/* Course Sandbox Table */}
-          <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200/80 dark:border-gray-800 overflow-hidden flex flex-col shrink-0">
+          <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col shrink-0">
             <div className="px-5 py-4 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
               <span className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
                 Simulated Courses ({courses.length})
@@ -506,7 +506,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
 
           {/* Goal Summary & Impact Callout */}
           <div className={cn(
-            "p-5 rounded-[20px] border flex items-start gap-4 transition-colors shrink-0",
+            "p-5 rounded-[20px] border flex items-start gap-4 transition-colors shadow-sm shrink-0",
             isTargetMet 
               ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200"
               : isTargetClose

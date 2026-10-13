@@ -11,8 +11,6 @@ import { OnboardingGuideCard } from "@/components/dashboard/onboarding-guide-car
 import { OnboardingGuideSheet } from "@/components/dashboard/onboarding-guide-sheet";
 import { useUserData } from "@/contexts/user-data-context";
 import { DailyVerseCard } from "@/components/dashboard/daily-verse-card";
-import { TodayStrip } from "@/components/dashboard/today-strip";
-import { isFeatureEnabled } from "@/lib/features";
 
 export default function DashboardPage() {
   const userData = useUserData();
@@ -43,9 +41,6 @@ export default function DashboardPage() {
         showGuideButton={!is100L}
         onOpenGuide={() => setIsGuideSheetOpen(true)}
       />
-
-      {/* Personalised Today: check-in, deadlines, attendance and study time */}
-      {isFeatureEnabled("today") && <TodayStrip />}
 
       {/* Bible Verse Encouragement Card */}
       <DailyVerseCard />

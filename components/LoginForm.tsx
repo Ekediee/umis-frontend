@@ -68,8 +68,6 @@ function LoginFormInner({ ssoEnabled = false }: LoginFormProps) {
     event.preventDefault();
     if (isSsoRedirecting) return;
     const formData = new FormData(event.currentTarget);
-    const next = searchParams.get("next");
-    if (next) formData.set("next", next);
 
     startTransition(async () => {
       const result = await loginAction(formData);

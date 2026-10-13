@@ -23,7 +23,7 @@ const CourseCard = ({ course, selected, onToggle }: CourseCardProps) => {
         "flex items-start gap-3 p-4 rounded-[16px] cursor-pointer transition-all duration-200 border",
         selected
           ? "bg-[#f8faff] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff] shadow-[0_4px_16px_rgba(0,60,187,0.06)] dark:shadow-[0_0_15px_rgba(77,130,255,0.15)] scale-[1.01]"
-          : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 "
+          : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 shadow-sm"
       )}
     >
       <div className="pt-1">

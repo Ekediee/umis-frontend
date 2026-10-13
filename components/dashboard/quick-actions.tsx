@@ -10,7 +10,7 @@ const actions = [
 
 export function QuickActions() {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
+    <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
       <h3 className="text-[16px] md:text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-4 md:mb-6">Quick Actions</h3>
 
       <div className="grid grid-cols-2 gap-3 md:gap-4 flex-1">
@@ -18,7 +18,7 @@ export function QuickActions() {
           <Link 
             href={action.href} 
             key={action.id}
-            className="bg-[#f9fafb] dark:bg-gray-800 border border-transparent hover:border-gray-100 dark:hover:border-gray-700 rounded-[20px] p-4 md:p-5 flex flex-col items-center justify-center gap-3 transition-all active:scale-[0.98]"
+            className="bg-[#f9fafb] dark:bg-gray-800 border border-transparent hover:border-gray-100 dark:hover:border-gray-700 rounded-[20px] p-4 md:p-5 flex flex-col items-center justify-center gap-3 transition-all hover:shadow-sm active:scale-[0.98]"
           >
             <div className={`w-10 h-10 rounded-full ${action.iconBg} flex items-center justify-center`}>
               <action.icon className={`w-5 h-5 ${action.iconColor}`} strokeWidth={2} />

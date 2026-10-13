@@ -136,24 +136,31 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm, isLoading }: Mod
 
 export function SuccessModal({ isOpen, onClose }: ModalProps) {
   const router = useRouter();
-  // Courses are locked in, so there is nothing left to do on the course page:
-  // dismissing the modal (tapping outside it, or the close button on mobile) goes to registration home.
-  const closeToRegistration = () => {
-    onClose?.();
-    router.push("/registration");
-  };
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={closeToRegistration}
+      onClose={onClose}
       icon={CheckCircle}
       iconBgClass="bg-[#EFFAF6] dark:bg-[#38C793]/20"
       iconColorClass="text-[#38C793] dark:text-[#4ade80]"
       title="Course Registration Locked In"
       description={
-        <p className="text-[13px] text-[#525866] dark:text-gray-300">
-          Your course selection has been locked in for the semester. Please proceed to complete your financial registration and fee payment.
-        </p>
+        <div className="flex flex-col gap-3 text-center">
+          <p className="text-[13px] text-[#525866] dark:text-gray-300">
+            Your course selection has been locked in for the semester. Please proceed to complete your financial registration and fee payment.
+          </p>
+          <div className="bg-[#f8faff] dark:bg-gray-800/80 border border-[#dbe5ff] dark:border-gray-700 rounded-[12px] p-3.5 flex flex-col items-center gap-1 my-1">
+            <span className="text-[11px] font-bold text-[#525866] dark:text-gray-400 uppercase tracking-wider">
+              Total Payment Required
+            </span>
+            <span className="text-[20px] font-bold text-[#003cbb] dark:text-[#4d82ff]">
+              ₦185,000
+            </span>
+            <span className="text-[11px] text-[#868c98] dark:text-gray-400">
+              Includes mandatory tuition, lab & institutional fees
+            </span>
+          </div>
+        </div>
       }
       primaryActionText="Fund Wallet & Pay"
       secondaryActionText="Return to Dashboard"

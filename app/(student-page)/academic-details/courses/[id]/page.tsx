@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 function SkeletonRow({ showInstructor = true }: { showInstructor?: boolean }) {
   return (
-    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900">
+    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900">
       <CardContent className="p-0">
         {/* Desktop skeleton */}
         <div className={cn(
@@ -65,7 +65,7 @@ function renderTable(data: RegisteredCourse[], showInstructorAndGroup = true) {
   return (
     <>
       {/* DESKTOP VIEW */}
-      <div className="hidden md:block rounded-[16px] border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900 ">
+      <div className="hidden md:block rounded-[16px] border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
         <Table>
           <TableHeader className="bg-[#f2f4f7] dark:bg-gray-800">
             <TableRow className="hover:bg-[#f2f4f7] dark:hover:bg-gray-800 border-0">
@@ -112,7 +112,7 @@ function renderTable(data: RegisteredCourse[], showInstructorAndGroup = true) {
         {data.map((course, idx) => (
           <Card
             key={`${course.courseId}-${idx}-mobile`}
-            className="rounded-[16px] border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+            className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
           >
             <CardContent className="p-5 flex flex-col gap-3">
               <div className="flex justify-between items-center">
@@ -299,7 +299,7 @@ function CoursesContent() {
       </div>
 
       {/* Header Container */}
-      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200 relative">
+      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200 relative">
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <h2 className="font-bold text-[18px] text-gray-900 dark:text-gray-100">Registered Courses</h2>
           

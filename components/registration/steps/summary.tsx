@@ -116,7 +116,7 @@ export function Summary(props: SummaryProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         
         {/* Total Units Selected */}
-        <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 ">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="w-12 h-12 rounded-full bg-[#eef3fd] dark:bg-[#003cbb]/15 flex items-center justify-center shrink-0">
             <Box className="w-6 h-6 text-[#003cbb] dark:text-[#4d82ff]" />
           </div>
@@ -127,7 +127,7 @@ export function Summary(props: SummaryProps) {
         </div>
 
         {/* Number of Courses */}
-        <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 ">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="w-12 h-12 rounded-full bg-[#e9f8f2] dark:bg-emerald-950/20 flex items-center justify-center shrink-0">
             <BookOpen className="w-6 h-6 text-[#10b981] dark:text-[#38c793]" />
           </div>
@@ -138,7 +138,7 @@ export function Summary(props: SummaryProps) {
         </div>
 
         {/* Classification */}
-        <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 ">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="w-12 h-12 rounded-full bg-[#f4eefe] dark:bg-purple-950/20 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-6 h-6 text-[#7c3aed] dark:text-[#a78bfa]" />
           </div>
@@ -153,7 +153,7 @@ export function Summary(props: SummaryProps) {
 
         {/* Worship Center */}
         {worshipCenter && (
-          <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 ">
+          <div className="bg-white dark:bg-gray-900 rounded-[16px] md:rounded-[24px] p-6 border border-gray-100 dark:border-gray-800 flex items-center gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
             <div className="w-12 h-12 rounded-full bg-[#faf5ff] dark:bg-[#a855f7]/15 flex items-center justify-center shrink-0">
               <Church className="w-6 h-6 text-[#a855f7]" />
             </div>

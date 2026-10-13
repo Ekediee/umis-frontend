@@ -2,13 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { categoryOf, inQuietHours, isUrgent } from "@/lib/student/rules";
-import { readCachedPrefs } from "@/lib/student/notification-prefs";
-import { isFeatureEnabled } from "@/lib/features";
-import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/student/rules";
-
-/** With the notifications preview off, behave exactly as before: every category on, no quiet hours. */
-const PREFS_OFF = { ...DEFAULT_NOTIFICATION_PREFS, quietHours: { ...DEFAULT_NOTIFICATION_PREFS.quietHours, enabled: false } };
 
 interface Notification {
   id: string;
@@ -64,6 +57,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // 3. Connect to SSE
   useEffect(() => {
     if (!mounted) return;
+
     // The student notification stream is not for the lecturer portal.
     if (window.location.pathname.startsWith('/lecturer')) return;
 
@@ -84,10 +78,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           }, 0)
           .toString(36);
 
-        // Respect the student's notification settings: a switched-off category is dropped entirely.
-        const prefs = isFeatureEnabled("notifications") ? readCachedPrefs() : PREFS_OFF;
-        if (!prefs.categories[categoryOf(data.type)]) return;
-
         setNotifications((prev) => {
           // Check if notification already exists
           if (prev.some(n => n.id === stableId)) {
@@ -102,10 +92,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             timestamp: new Date(),
           };
 
-          // Trigger toast with rate limiting; quiet hours hold non-urgent toasts (inbox only)
-          if (isUrgent(data.type, data.message) || !inQuietHours(prefs, new Date())) {
-            triggerRateLimitedToast(data.type, data.message);
-          }
+          // Trigger toast with rate limiting
+          triggerRateLimitedToast(data.type, data.message);
 
           return [newNotification, ...prev];
         });

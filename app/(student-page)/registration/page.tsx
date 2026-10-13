@@ -162,7 +162,7 @@ export default function RegistrationPage() {
     <div className="p-4 md:p-6 lg:p-8">
       <div className="flex flex-col gap-6 md:gap-8 pb-10 max-w-7xl mx-auto">
       {/* Summary Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
         <SummaryCard 
           title="Session" 
           value={semesterInfo?.semester ? semesterInfo.semester.split(".")[0] : "—"}

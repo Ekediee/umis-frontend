@@ -82,7 +82,7 @@ function CourseRow({ course }: { course: ResultCourse }) {
   const isNG = course.grade === "NG" || course.score === null;
 
   return (
-    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200">
+    <Card className="rounded-[16px] border border-transparent dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200">
       <CardContent className="p-0">
         {/* DESKTOP VIEW */}
         <div className="hidden md:grid grid-cols-[1.2fr_2fr_1fr_1fr_1fr] items-center px-6 py-2">
@@ -237,7 +237,7 @@ export default function SemesterResultDetailPage() {
       </div>
 
       {/* Header Container */}
-      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200 overflow-visible">
+      <Card className="rounded-[24px] bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200 overflow-visible">
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <h2 className="font-bold text-[18px] text-gray-900 dark:text-gray-100">
             Semester Result

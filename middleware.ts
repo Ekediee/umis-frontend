@@ -37,12 +37,7 @@ export function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to the login page if they try to access protected routes
   if (!token && !isAuthPage) {
-    const login = new URL('/login', request.url)
-    // A check-in QR scanned while signed out should land back on check-in after login.
-    if (pathname.startsWith('/attendance/check-in')) {
-      login.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
-    }
-    return NextResponse.redirect(login)
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Validate token expiry for authenticated requests to protected routes.

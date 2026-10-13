@@ -14,7 +14,7 @@ export default function LoginPage() {
 
       {/* Right Panel (Graphic + Text) - Order 1 on Mobile (Top), Order 2 on Desktop (Right) */}
       <div className="w-full lg:w-1/2 h-[45vh] lg:h-auto p-0 lg:p-4 lg:pl-0 relative order-1 lg:order-2 flex-shrink-0">
-        <div className="w-full h-full bg-gradient-to-b from-[#EFF3FF] to-[#DFE6FF] lg:rounded-[32px] overflow-hidden relative flex flex-col ">
+        <div className="w-full h-full bg-gradient-to-b from-[#EFF3FF] to-[#DFE6FF] lg:rounded-[32px] overflow-hidden relative flex flex-col shadow-sm">
 
           {/* Top Image Section */}
           <div className="flex-1 relative flex items-center justify-center w-full h-full">

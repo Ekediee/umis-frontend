@@ -186,7 +186,7 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
         </div>
 
         {/* Read-only locked card */}
-        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-sm p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-[12px] bg-[#fef3c7]/60 dark:bg-[#d97706]/10 flex items-center justify-center shrink-0">
               <Church className="w-6 h-6 text-[#d97706]" />

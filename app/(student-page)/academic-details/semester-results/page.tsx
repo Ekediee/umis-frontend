@@ -122,7 +122,7 @@ export default function SemesterResultsPage() {
       </div>
 
       {/* Top Cards Wrapper */}
-      <Card className="rounded-[24px] md:mx-auto w-full bg-white dark:bg-gray-900 border-0 p-4 md:mb-0 transition-colors duration-200">
+      <Card className="rounded-[24px] md:mx-auto w-full bg-white dark:bg-gray-900 border-0 shadow-sm p-4 md:mb-0 transition-colors duration-200">
         <GPAMetric
           cgpa={cgpa}
           semester_gpa={latestSemesterGpa}
@@ -134,7 +134,7 @@ export default function SemesterResultsPage() {
       <div className="flex flex-col md:mx-auto w-full gap-4 text-gray-900">
 
         {/* Mobile Header Box */}
-        <div className="bg-white dark:bg-gray-800 rounded-[16px] px-5 py-3.5 md:hidden flex items-center justify-between transition-colors duration-200">
+        <div className="bg-white dark:bg-gray-800 rounded-[16px] px-5 py-3.5 shadow-sm md:hidden flex items-center justify-between transition-colors duration-200">
           <span className="font-bold text-[15px] text-gray-900 dark:text-gray-100">Semester Result</span>
           <button onClick={() => setIsMobileMenuOpen(true)} className="p-1 -mr-1">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0a0d14] dark:text-gray-100">
@@ -176,7 +176,7 @@ export default function SemesterResultsPage() {
                 return (
                   <Card
                     key={idx}
-                    className="rounded-[16px] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
+                    className="rounded-[16px] border border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] bg-white dark:bg-gray-900 hover:shadow-md transition-all duration-200"
                   >
                     <CardContent className="p-0">
                       {/* DESKTOP VIEW */}

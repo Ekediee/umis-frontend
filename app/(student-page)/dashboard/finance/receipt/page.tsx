@@ -145,7 +145,7 @@ function ReceiptContent() {
 
       <div className="max-w-3xl mx-auto  md:px-8 flex flex-col gap-4 pb-12 print:max-w-none print:px-0 print:pb-0">
         {/* Receipt Card */}
-        <div id="printable-receipt" ref={receiptRef} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[24px] px-2 py-4 md:p-10 print:p-4 print:pt-2 relative overflow-hidden print:shadow-none print:border-none print:rounded-none transition-colors">
+        <div id="printable-receipt" ref={receiptRef} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[24px] shadow-sm dark:shadow-none px-2 py-4 md:p-10 print:p-4 print:pt-2 relative overflow-hidden print:shadow-none print:border-none print:rounded-none transition-colors">
           {/* Background Watermark Image */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-100 z-0 transition-opacity">
             <Image src="/images/BU Torch.png" alt="BU Torch Watermark" width={400} height={400} className="w-[80%] md:w-[60%] object-contain" priority />

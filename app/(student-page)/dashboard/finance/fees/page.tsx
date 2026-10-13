@@ -43,7 +43,7 @@ export default function FeesPage() {
       </div>
 
       <div className="flex justify-center w-[100%] mx-auto">
-        <div className="bg-white dark:bg-gray-900 md:border md:border-[#E2E4E9] dark:md:border-gray-800 rounded-[24px] p-6 md:p-8 flex flex-col gap-8 w-full max-w-[560px] transition-colors">
+        <div className="bg-white dark:bg-gray-900 md:border md:border-[#E2E4E9] dark:md:border-gray-800 rounded-[24px] p-6 md:p-8 flex flex-col gap-8 w-full max-w-[560px] shadow-sm md:shadow-none transition-colors">
           
           <h2 className="text-[24px] font-bold text-[#0A0D14] dark:text-gray-100 tracking-tight text-center md:text-left">
             How would you like to register?
