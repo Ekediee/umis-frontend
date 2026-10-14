@@ -5,41 +5,51 @@ import { GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUserData } from "@/contexts/user-data-context";
 import { getStudentProfileAction } from "@/app/actions/user";
+import {
+  getSchoolOfficerAction,
+  type SchoolOfficerData,
+} from "@/app/actions/academic-details";
 import type { UMISResponse } from "@/lib/session";
 
 export function QuickInfo() {
   const contextUserData = useUserData();
   const [profileData, setProfileData] = useState<UMISResponse | null>(contextUserData);
+  const [officerData, setOfficerData] = useState<SchoolOfficerData | null>(null);
 
   useEffect(() => {
     getStudentProfileAction().then((res) => {
       if (res) setProfileData(res);
     });
+    getSchoolOfficerAction().then((res) => {
+      if (res.data) setOfficerData(res.data);
+    });
   }, []);
 
   const userData = profileData ?? contextUserData;
-  const department = userData?.user_data?.department ?? "Computer Science";
-  const degree = userData?.user_data?.degree_name ?? "B.Sc. Computer Science";
+  const department = userData?.user_data?.department ?? "N/A";
+  const degree = userData?.user_data?.degree_name ?? "N/A";
   const matricNo = userData?.user_data?.matric_number ?? userData?.user_data?.personal_information?.matric_number ?? "N/A";
-  const school = userData?.user_data?.school_name ?? "School of Computing";
+  const school = officerData?.school ?? userData?.user_data?.school_name ?? "N/A";
 
-  // Dynamic calculations & Connected API checks
-  const currentLevelNum = Number(userData?.user_data?.current_level ?? userData?.user_data?.academic_information?.study_level ?? 200);
-  const yearsRemaining = Math.max(0, Math.ceil((400 - currentLevelNum) / 100));
-  const currentYear = new Date().getFullYear();
-  const expectedGradYear = currentYear + yearsRemaining;
+  // TODO: Uncomment once the expected graduation API is ready
+  // const currentLevelNum = Number(userData?.user_data?.current_level ?? userData?.user_data?.academic_information?.study_level ?? 200);
+  // const yearsRemaining = Math.max(0, Math.ceil((400 - currentLevelNum) / 100));
+  // const currentYear = new Date().getFullYear();
+  // const expectedGradYear = currentYear + yearsRemaining;
 
-  const schoolOfficer = userData?.user_data?.school_officer ?? 
+  const schoolOfficer = officerData?.schoolOfficer ??
+                        userData?.user_data?.school_officer ?? 
                         userData?.user_data?.academic_information?.school_officer ?? 
-                        "Mrs. Grace Adebayo";
+                        "N/A";
   const courseAdviser = userData?.user_data?.course_advisor ?? 
                         userData?.user_data?.course_adviser ?? 
                         userData?.user_data?.academic_information?.course_advisor ?? 
                         userData?.user_data?.academic_information?.course_adviser ?? 
-                        "Dr. Adeyemi Olumide";
-  const expectedGraduation = userData?.user_data?.expected_graduation ?? 
-                             userData?.user_data?.academic_information?.expected_graduation ?? 
-                             `June ${expectedGradYear}`;
+                        "N/A";
+  // TODO: Uncomment once the expected graduation API is ready
+  // const expectedGraduation = userData?.user_data?.expected_graduation ?? 
+  //                            userData?.user_data?.academic_information?.expected_graduation ?? 
+  //                            `June ${expectedGradYear}`;
 
   return (
     <Card className="rounded-[20px] border-gray-100 dark:border-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
@@ -74,10 +84,12 @@ export function QuickInfo() {
             <span className="text-[14px] font-medium text-[#4a5565] dark:text-gray-400">Course Adviser:</span>
             <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100 text-right">{courseAdviser}</span>
           </div>
+          {/* TODO: Uncomment once the expected graduation API is ready
           <div className="flex items-center justify-between">
             <span className="text-[14px] font-medium text-[#4a5565] dark:text-gray-400">Expected Graduation:</span>
             <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100 text-right">{expectedGraduation}</span>
           </div>
+          */}
         </div>
       </CardContent>
     </Card>
