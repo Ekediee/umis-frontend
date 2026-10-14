@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { AlertCircle, CheckCircle, XCircle, X, type LucideIcon } from "lucide-react";
+import { createPortal } from "react-dom";
+import { AlertCircle, CheckCircle, ChevronRight, KeyRound, XCircle, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -17,14 +18,18 @@ const Overlay = ({ children, onClose }: { children: React.ReactNode, onClose?: (
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  return (
+  if (typeof document === "undefined") return null;
+  // Portalled to <body>: the page column is its own stacking context, so a modal
+  // rendered inside it sat under fixed elements like the AI assistant button
+  return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center md:p-4">
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-200"
         onClick={onClose}
       />
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 };
 
@@ -41,6 +46,8 @@ interface BaseModalProps {
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
   isLoading?: boolean;
+  /** Optional block between the description and the buttons (e.g. a helpful notice) */
+  aside?: React.ReactNode;
 }
 
 function BaseModal({
@@ -55,7 +62,8 @@ function BaseModal({
   secondaryActionText,
   onPrimaryAction,
   onSecondaryAction,
-  isLoading = false
+  isLoading = false,
+  aside,
 }: BaseModalProps) {
   if (!isOpen) return null;
 
@@ -85,6 +93,7 @@ function BaseModal({
               {description}
             </div>
           </div>
+          {aside && <div className="w-full">{aside}</div>}
         </div>
         
         <div className=" max-md:border-t-0 md:border-t border-[#E2E4E9] dark:border-gray-800 px-[20px] py-[20px] flex w-full">
@@ -183,7 +192,7 @@ export function FailureModal({ isOpen, onClose, onConfirm }: ModalProps) {
   );
 }
 
-export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, isLoading }: ModalProps) {
+export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, isLoading, onChangePassword }: ModalProps & { onChangePassword?: () => void }) {
   return (
     <BaseModal
       isOpen={isOpen}
@@ -202,6 +211,33 @@ export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, i
       onPrimaryAction={onConfirm}
       onSecondaryAction={onClose}
       isLoading={isLoading}
+      aside={
+        onChangePassword && (
+          // Students still on their default password can't commence registration:
+          // offer the fix here, before they hit the error
+          <button
+            type="button"
+            onClick={onChangePassword}
+            disabled={isLoading}
+            className="group w-full flex flex-col sm:flex-row sm:items-center gap-3 rounded-[12px] border border-[#FDE6CF] dark:border-[#F97316]/25 bg-[#FFF8F1] dark:bg-[#F97316]/10 px-3.5 py-3 text-left transition-colors hover:bg-[#FFF1E3] dark:hover:bg-[#F97316]/15 disabled:opacity-50"
+          >
+            <span className="flex items-center gap-3 flex-1 min-w-0">
+              <span className="w-9 h-9 shrink-0 rounded-full bg-white dark:bg-gray-900 border border-[#FDE6CF] dark:border-[#F97316]/25 flex items-center justify-center">
+                <KeyRound className="w-4 h-4 text-[#F97316]" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[13px] font-semibold text-[#0A0D14] dark:text-gray-100">Still using your default password?</span>
+                <span className="block text-[12px] leading-snug text-[#525866] dark:text-gray-400">Change it first. Registration may not go through until you do.</span>
+              </span>
+            </span>
+            <span className="shrink-0 inline-flex items-center justify-center gap-1 rounded-[8px] bg-white dark:bg-gray-900 border border-[#E2E4E9] dark:border-gray-700 px-3 h-9 sm:h-8 text-[13px] sm:text-[12px] font-semibold text-[#003399] dark:text-[#8FB0FF] group-hover:border-[#003399]/30 w-full sm:w-auto">
+              <KeyRound className="w-3.5 h-3.5 sm:hidden" />
+              Change password
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </button>
+        )
+      }
     />
   );
 }
