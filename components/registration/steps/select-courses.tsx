@@ -144,9 +144,10 @@ export function SelectCourses(props: SelectCoursesProps) {
   const [pageSize, setPageSize] = useState<typeof PAGE_SIZE_OPTIONS[number]>(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Current semester courses come from the API; carry-over is a future endpoint.
-  const currentCourses = courses;
-  const carryOverCourses: CourseItem[] = []; // placeholder until carry-over endpoint is wired
+  // Split by the API's `is_carry_over` flag: false → Current Semester, true → Carry Over.
+  const currentCourses = courses.filter(c => !c.isCarryOver);
+  const carryOverCourses = courses.filter(c => c.isCarryOver);
+
 
   const displayedCourses = activeTab === "carry_over" ? carryOverCourses : currentCourses;
 
@@ -244,7 +245,7 @@ export function SelectCourses(props: SelectCoursesProps) {
             <div
               className={cn(
                 "flex items-center gap-4 transition-opacity",
-                isLoading || activeTab === "carry_over" ? "opacity-40 pointer-events-none" : "cursor-pointer hover:opacity-80"
+                isLoading ? "opacity-40 pointer-events-none" : "cursor-pointer hover:opacity-80"
               )}
               onClick={handleSelectAllPage}
             >
@@ -272,8 +273,8 @@ export function SelectCourses(props: SelectCoursesProps) {
               <EmptyState
                 message={
                   activeTab === "carry_over"
-                    ? "Carry-over courses will appear here once available."
-                    : "No courses found for this class group."
+                    ? "You have no carry-over courses."
+                    : "No current semester courses found for this class group."
                 }
               />
             ) : (

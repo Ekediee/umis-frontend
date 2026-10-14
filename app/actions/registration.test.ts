@@ -323,6 +323,7 @@ const MOCK_COURSES_RESPONSE = {
 const EXPECTED_COURSES = [
   {
     id: "220889",
+    isCarryOver: false,
     code: "GST 312",
     title: "Peace and Conflict Resolution",
     units: 2,
@@ -331,6 +332,7 @@ const EXPECTED_COURSES = [
   },
   {
     id: "221787",
+    isCarryOver: false,
     code: "CSC 308",
     title: "Operating Systems",
     units: 3,
@@ -372,6 +374,26 @@ describe("getCoursesAction — HTTP responses", () => {
     expect(result.message).toBe("Courses retrieved successfully");
     expect(result.data?.studentType).toBe("Undergraduate");
     expect(result.data?.courses).toEqual(EXPECTED_COURSES);
+  });
+
+  it("flags carry-over courses and gives them ids distinct from a current course with the same qcourseid", async () => {
+    const base = MOCK_COURSES_RESPONSE.data.courses[0];
+    mockFetch(200, {
+      ...MOCK_COURSES_RESPONSE,
+      data: {
+        ...MOCK_COURSES_RESPONSE.data,
+        courses: [
+          { ...base, is_carry_over: false },
+          { ...base, is_carry_over: true },
+        ],
+      },
+    });
+
+    const result = await getCoursesAction(["143"]);
+
+    const courses = result.data?.courses ?? [];
+    expect(courses.map((c) => c.isCarryOver)).toEqual([false, true]);
+    expect(courses.map((c) => c.id)).toEqual(["220889", "220889-co"]);
   });
 
   it("returns an error when the API responds with a non-OK status", async () => {

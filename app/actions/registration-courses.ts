@@ -38,8 +38,14 @@ interface RawCoursesResponse {
 // ── Normalised shape used by the UI ──────────────────────────────────────────
 
 export interface CourseItem {
-  /** Unique identifier — stringified qcourseid */
+  /**
+   * Unique identifier — stringified qcourseid. Carry-over entries are suffixed
+   * with "-co" because the API can return the same qcourseid as both a current
+   * and a carry-over course.
+   */
   id: string;
+  /** True when the API flags this course as a carry-over (`is_carry_over`) */
+  isCarryOver?: boolean;
   /** Short course code, e.g. "GST 312" */
   code: string;
   /** Full course title */
@@ -121,7 +127,8 @@ export const getCoursesAction = async (classOptionIds: string[]): Promise<Course
       : [];
 
     const courses: CourseItem[] = rawCourses.map((item) => ({
-      id: String(item.qcourseid),
+      id: item.is_carry_over ? `${item.qcourseid}-co` : String(item.qcourseid),
+      isCarryOver: item.is_carry_over === true,
       code: item.courseid.trim(),
       title: item.coursetitle.trim(),
       units: item.credithours,
