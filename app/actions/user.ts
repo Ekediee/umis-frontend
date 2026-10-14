@@ -284,3 +284,100 @@ export async function updateEmailAction(email: string): Promise<UpdateEmailResul
   }
 }
 
+
+export interface RefreshAcademicStandingResult {
+  success: boolean;
+  current_level?: number | null;
+  cummulative_gpa?: number | null;
+  error?: string;
+}
+
+/**
+ * Fetches the live profile from /api/v1/student/profile and writes the
+ * student's `current_level` and `cummulative_gpa` into the user_data session
+ * cookie. Both the top-level fields and the nested `academic_information`
+ * fields (`study_level`, `cummulative_gpa`) are updated because different
+ * views read from different locations. All other cookie fields are untouched,
+ * and null/missing values from the API never overwrite existing values.
+ *
+ * Call `router.refresh()` on the client afterwards so the layout re-reads the
+ * cookie and every `useUserData()` consumer updates.
+ */
+export async function refreshAcademicStandingAction(): Promise<RefreshAcademicStandingResult> {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    return { success: false, error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken().catch(() => null);
+  if (!token) {
+    return { success: false, error: "You are not authenticated. Please log in again." };
+  }
+
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/student/profile`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!response.ok) {
+      return { success: false, error: "Failed to fetch student profile" };
+    }
+
+    const json = await response.json();
+    const payload = json?.data ?? json;
+    const rawLevel = payload?.current_level;
+    const rawGpa = payload?.cummulative_gpa;
+
+    const level =
+      rawLevel !== null && rawLevel !== undefined && rawLevel !== "" && !Number.isNaN(Number(rawLevel))
+        ? Number(rawLevel)
+        : null;
+    const gpa =
+      rawGpa !== null && rawGpa !== undefined && rawGpa !== "" && !Number.isNaN(Number(rawGpa))
+        ? Number(rawGpa)
+        : null;
+
+    if (level === null && gpa === null) {
+      return { success: false, error: "Profile response did not contain level or CGPA" };
+    }
+
+    const currentUser = await getSessionUser();
+    if (!currentUser || !currentUser.user_data) {
+      return { success: false, error: "No active session user to update" };
+    }
+
+    const existing = currentUser.user_data;
+    const updatedUser: UMISResponse = {
+      ...currentUser,
+      user_data: {
+        ...existing,
+        current_level: level ?? existing.current_level,
+        cummulative_gpa: gpa ?? existing.cummulative_gpa,
+        academic_information: {
+          ...existing.academic_information,
+          study_level: level ?? existing.academic_information?.study_level ?? null,
+          cummulative_gpa: gpa ?? existing.academic_information?.cummulative_gpa ?? null,
+        },
+      },
+    };
+    await updateSessionUser(updatedUser);
+
+    return {
+      success: true,
+      current_level: updatedUser.user_data.current_level,
+      cummulative_gpa: updatedUser.user_data.cummulative_gpa,
+    };
+  } catch (error) {
+    console.error("refreshAcademicStandingAction error:", error);
+    return {
+      success: false,
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+}

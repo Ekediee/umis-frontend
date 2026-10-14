@@ -345,7 +345,9 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
 
     // Build the courses payload from raw API data (preserves fields dropped during normalisation)
     const coursesToSubmit = rawCourses.filter((r) =>
-      selectedCourseIds.includes(String(r.qcourseid))
+      selectedCourseIds.includes(
+        r.is_carry_over ? `${r.qcourseid}-co` : String(r.qcourseid)
+      )
     );
 
     const result = await submitCourseSelectionAction({

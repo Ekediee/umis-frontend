@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { actionKey, notify } from "@/lib/notifications/bus";
 import { getSemesterRegistrationStatusAction, registerSemesterAction } from "@/app/actions/registration";
+import { refreshAcademicStandingAction } from "@/app/actions/user";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
@@ -352,9 +353,6 @@ export default function RegistrationPage() {
             // Re-fetch semester info and update the store so all pages stay in sync
             const statusResult = await getSemesterRegistrationStatusAction();
             if (statusResult.data) setSemesterInfo(statusResult.data);
-            
-            // Re-render server components to pull the updated user profile from the session cookie
-            router.refresh();
 
             setIsSemesterConfirmOpen(false);
             toast.success(result.message || "Successfully registered for the semester!");
@@ -366,6 +364,18 @@ export default function RegistrationPage() {
               href: "/registration",
               silent: true,
             });
+
+            // Refresh level & CGPA from the profile API in the background (can be slow).
+            // The session cookie is updated first, then router.refresh() makes the layout
+            // re-read it so every view that uses the user data updates. Non-fatal on failure.
+            refreshAcademicStandingAction()
+              .then((standing) => {
+                if (!standing.success) {
+                  console.error("Could not refresh academic standing:", standing.error);
+                }
+              })
+              .catch((err) => console.error("Could not refresh academic standing:", err))
+              .finally(() => router.refresh());
           }
         }}
         isLoading={isRegistering}

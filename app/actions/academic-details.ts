@@ -512,3 +512,91 @@ export const getCarryoverRepeatedAction =
       };
     }
   };
+
+// ── Raw API shapes — school officer ──────────────────────────────────────────
+
+interface RawSchoolOfficerResponse {
+  status: boolean;
+  message: string;
+  data: {
+    school_officer: string | null;
+    school_officer_email: string | null;
+    school: string | null;
+  };
+}
+
+export interface SchoolOfficerData {
+  /** Full name of the student's school officer */
+  schoolOfficer: string | null;
+  /** Email address of the school officer */
+  schoolOfficerEmail: string | null;
+  /** Name of the school / faculty the student belongs to */
+  school: string | null;
+}
+
+export interface SchoolOfficerResult {
+  data?: SchoolOfficerData;
+  error?: string;
+}
+
+// ── Action ────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the student's school officer and school / faculty.
+ * Endpoint: GET /api/v1/academics/school-officer
+ */
+export const getSchoolOfficerAction =
+  async (): Promise<SchoolOfficerResult> => {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("API_URL is not defined in environment variables");
+      return { error: "Internal server error: Missing API configuration" };
+    }
+
+    const token = await getSessionToken();
+    if (!token) {
+      return { error: "You are not authenticated. Please log in again." };
+    }
+
+    try {
+      const response = await loggedFetch(
+        `${apiUrl}/api/v1/academics/school-officer`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+          signal: AbortSignal.timeout(15000),
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Failed to fetch school officer";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // Response body wasn't JSON — keep the fallback message
+        }
+        return { error: errorMessage };
+      }
+
+      const json: RawSchoolOfficerResponse = await response.json();
+      const raw = json?.data;
+
+      return {
+        data: {
+          schoolOfficer: raw?.school_officer?.trim() || null,
+          schoolOfficerEmail: raw?.school_officer_email?.trim() || null,
+          school: raw?.school?.trim() || null,
+        },
+      };
+    } catch (error) {
+      console.error("getSchoolOfficerAction error:", error);
+      return {
+        error: "Could not connect to the server. Please try again later.",
+      };
+    }
+  };
