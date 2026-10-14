@@ -115,10 +115,10 @@ export function InstallAppHost() {
               </button>
             </div>
             <div className="flex gap-2 mt-4">
-              <Btn variant="secondary" className="flex-1" onClick={dismiss}>
+              <Btn variant="secondary" className="flex-1 whitespace-nowrap" onClick={dismiss}>
                 Not now
               </Btn>
-              <Btn className="flex-1" icon={platform === "ios" ? PlusSquare : Download} onClick={install}>
+              <Btn className="flex-1 whitespace-nowrap" icon={platform === "ios" ? PlusSquare : Download} onClick={install}>
                 {platform === "ios" ? "Show me how" : "Install"}
               </Btn>
             </div>
