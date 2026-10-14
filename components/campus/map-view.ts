@@ -22,7 +22,14 @@ export interface MapViewProps {
   dark: boolean;
   selectedId: string | null;
   visibleIds: Set<string>;
+  /** Live location [lng, lat]; the dot glides to each new reading */
   me: [number, number] | null;
+  /** Accuracy radius in metres (drawn as a soft circle) */
+  meAccuracy?: number | null;
+  /** Walking direction, degrees from north (drawn as a cone) */
+  meHeading?: number | null;
+  /** The student moved the map themselves (stops "follow me") */
+  onUserMove?: () => void;
   /** Building footprint to highlight (selected place, or a mapping-mode pick) */
   highlightBuildingId: string | null;
   /** Mapping mode: clicking a building reports its footprint id */

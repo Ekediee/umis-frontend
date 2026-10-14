@@ -13,12 +13,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { MapControls } from "@react-three/drei";
+import { Environment, Lightformer, MapControls } from "@react-three/drei";
+import { createFacadeMaterial } from "@/lib/campus/facade-material";
+import { MAIN_GATE_TOP, MainGate3D } from "./main-gate-3d";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import type { FeatureCollection, Polygon as GeoPolygon } from "geojson";
 import { CATEGORY, footprintFor, type Place } from "@/lib/student/campus";
-import { buildCampusScene, buildingAtTriangle, buildingGeometry, DAY, distanceToZoom, NIGHT, toLngLat, toMeters, zoomToDistance, type CampusScene } from "@/lib/campus/scene3d";
+import { buildCampusScene, buildingAtTriangle, buildingGeometry, DAY, distanceToZoom, landmarkPose, NIGHT, toLngLat, toMeters, zoomToDistance, type CampusScene, type Clearing } from "@/lib/campus/scene3d";
 import { cn } from "@/lib/utils";
 import type { MapViewProps } from "./map-view";
 
@@ -42,6 +44,25 @@ async function loadSceneExtras(): Promise<FeatureCollection | null> {
     return res.ok ? ((await res.json()) as FeatureCollection) : null;
   } catch {
     return null;
+  }
+}
+
+interface LabelHit {
+  place: Place;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Where labels were drawn last frame (written by the scene, read by the tap handler) */
+class LabelHitStore {
+  list: LabelHit[] = [];
+  set(list: LabelHit[]) {
+    this.list = list;
+  }
+  at(x: number, y: number) {
+    return this.list.find((l) => x >= l.x && x <= l.x + l.w && y >= l.y && y <= l.y + l.h);
   }
 }
 
@@ -99,9 +120,17 @@ export default function Campus3DView(props: MapViewProps) {
   }, [places, outline]);
 
   const palette = dark ? NIGHT : DAY;
+  // Hand-built landmark models (the Main Gate), placed on the real road beside their pin
+  const landmarks = useMemo(() => {
+    const gate = places?.find((p) => p.id === "main-gate");
+    if (!gate || extras === undefined) return null;
+    return { mainGate: { place: gate, pose: landmarkPose(extras, gate.coordinates) } };
+  }, [places, extras]);
+  const clearings = useMemo<Clearing[]>(() => (landmarks ? [{ center: landmarks.mainGate.pose.center, radius: 22 }] : []), [landmarks]);
+
   const scene = useMemo<CampusScene | null>(
-    () => (outline && extras !== undefined ? buildCampusScene(outline, extras, placeForBuilding, palette) : null),
-    [outline, extras, placeForBuilding, palette],
+    () => (outline && extras !== undefined ? buildCampusScene(outline, extras, placeForBuilding, palette, clearings) : null),
+    [outline, extras, placeForBuilding, palette, clearings],
   );
   useEffect(
     () => () => {
@@ -117,26 +146,60 @@ export default function Campus3DView(props: MapViewProps) {
     const byId = new Map(scene.list.filter((b) => b.place).map((b) => [b.place!.id, b]));
     return (places ?? []).map((p) => {
       const [x, n] = toMeters(p.coordinates);
-      return { place: p, pos: new THREE.Vector3(x, (byId.get(p.id)?.top ?? 2) + 5, -n) };
+      // Landmark models float their label above the model instead of the ground
+      const top = p.id === "main-gate" ? MAIN_GATE_TOP : (byId.get(p.id)?.top ?? 2);
+      return { place: p, pos: new THREE.Vector3(x, top + 5, -n) };
     });
   }, [places, scene]);
   const labelEls = useRef(new Map<string, HTMLButtonElement>());
+  // Labels don't take pointer events (a drag that starts on one must still pan the map).
+  // A short tap is hit-tested against where labels were drawn instead.
+  const [labelHits] = useState(() => new LabelHitStore());
+  const tapOnLabel = useRef(false);
+  const down = useRef<{ x: number; y: number; t: number } | null>(null);
+  const hitLabel = (e: React.PointerEvent<HTMLDivElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - box.left, y = e.clientY - box.top;
+    return labels ? labelHits.at(x, y) : undefined;
+  };
 
   // Low-power devices skip shadows and render at 1x
   const capable = typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 4) >= 6;
 
   return (
-    <div className="relative h-full w-full" style={{ background: palette.sky }}>
+    <div
+      className="relative h-full w-full"
+      style={{ background: palette.sky }}
+      onPointerDownCapture={(e) => {
+        down.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+        tapOnLabel.current = false;
+      }}
+      onPointerUpCapture={(e) => {
+        const d = down.current;
+        down.current = null;
+        if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6 || Date.now() - d.t > 700) return;
+        const hit = hitLabel(e);
+        if (hit) {
+          // The map's own click (ground/building) is skipped for this tap
+          tapOnLabel.current = true;
+          props.onPin(hit.place);
+        }
+      }}
+      onPointerMove={(e) => {
+        if (e.buttons) return;
+        e.currentTarget.style.cursor = hitLabel(e) ? "pointer" : "";
+      }}
+    >
       {scene ? (
         <Canvas
           shadows={capable ? "soft" : false}
           dpr={capable ? [1, 2] : [1, 1.25]}
           camera={{ fov: 42, near: 2, far: 6000, position: HOME.target.clone().add(HOME.offset).toArray() }}
           gl={{ antialias: true, powerPreference: "high-performance" }}
-          onPointerMissed={() => props.onBackground(props.me ?? toLngLat(0, 0), null)}
+          onPointerMissed={() => !tapOnLabel.current && props.onBackground(props.me ?? toLngLat(0, 0), null)}
           aria-label="3D campus view"
         >
-          <World {...props} highlightBuildingId={(props.selectedId && buildingForPlace.get(props.selectedId)) || props.highlightBuildingId} scene={scene} palette={palette} shadows={capable} labels={labels} anchors={anchors} labelEls={labelEls} />
+          <World {...props} highlightBuildingId={(props.selectedId && buildingForPlace.get(props.selectedId)) || props.highlightBuildingId} scene={scene} palette={palette} shadows={capable} labels={labels} anchors={anchors} labelEls={labelEls} labelHits={labelHits} tapOnLabel={tapOnLabel} landmarks={landmarks} />
         </Canvas>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -165,7 +228,7 @@ export default function Campus3DView(props: MapViewProps) {
               title={place.name}
               className={cn(
                 "group absolute left-0 top-0 flex items-center gap-1.5 max-w-[190px] p-0.5 data-[mode=full]:pr-2.5 rounded-full whitespace-nowrap text-[11.5px] font-semibold border select-none will-change-transform",
-                "data-[mode=hidden]:invisible pointer-events-auto transition-[opacity] duration-150",
+                "data-[mode=hidden]:invisible pointer-events-none transition-[opacity] duration-150",
                 selected ? "bg-[#003cbb] text-white border-[#003cbb] shadow-lg z-20" : "bg-white/95 dark:bg-gray-900/95 text-gray-800 dark:text-gray-100 border-white/70 dark:border-gray-700 shadow-md z-10 hover:z-30",
               )}
             >
@@ -221,19 +284,39 @@ interface LabelAnchor {
   pos: THREE.Vector3;
 }
 
-type WorldProps = MapViewProps & { scene: CampusScene; palette: typeof DAY; shadows: boolean; labels: boolean; anchors: LabelAnchor[]; labelEls: React.RefObject<Map<string, HTMLButtonElement>> };
+type WorldProps = MapViewProps & { scene: CampusScene; palette: typeof DAY; shadows: boolean; labels: boolean; anchors: LabelAnchor[]; labelEls: React.RefObject<Map<string, HTMLButtonElement>>;
+  labelHits: LabelHitStore;
+  tapOnLabel: React.RefObject<boolean>;
+  landmarks: { mainGate: { place: Place; pose: { x: number; z: number; rotationY: number } } } | null;
+};
 
 /** Label sizes by camera distance (metres) */
 const FULL_UNDER = 650;
 const ICON_UNDER = 1500;
 
-function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handleRef, selectedId, visibleIds, me, highlightBuildingId, onPin, onBackground }: WorldProps) {
+function World({ scene, palette, dark, shadows, labels, anchors, labelEls, labelHits, tapOnLabel, landmarks, handleRef, selectedId, visibleIds, me, meAccuracy, meHeading, onUserMove, highlightBuildingId, onPin, onBackground }: WorldProps) {
   const controls = useRef<MapControlsImpl>(null);
   const { camera, size } = useThree();
   const widths = useRef(new Map<string, number>());
   const v = useMemo(() => new THREE.Vector3(), []);
   const flight = useRef<{ fromT: THREE.Vector3; toT: THREE.Vector3; fromP: THREE.Vector3; toP: THREE.Vector3; t: number } | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  // While a drag is in progress nothing re-renders the scene (hover would), so the
+  // controls never lose track of the pointer and every later drag keeps working.
+  const dragging = useRef(false);
+  const onDragStart = useCallback(() => {
+    flight.current = null;
+    dragging.current = true;
+    onUserMove?.();
+  }, [onUserMove]);
+  const onDragEnd = useCallback(() => {
+    dragging.current = false;
+  }, []);
+  // Aim once on mount. Passing `target` as a prop would reset it on every re-render.
+  useEffect(() => {
+    controls.current?.target.copy(HOME.target);
+    controls.current?.update();
+  }, []);
 
   const flyTo = useCallback(
     (target: THREE.Vector3, distance: number) => {
@@ -287,6 +370,7 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
       .map((a) => ({ a, d: camera.position.distanceTo(a.pos), sel: a.place.id === selectedId }))
       .sort((x, y) => (x.sel === y.sel ? x.d - y.d : x.sel ? -1 : 1));
     const placed: [number, number, number, number][] = [];
+    const onScreen: LabelHit[] = [];
     const hits = (x: number, y: number, w: number, h: number) => placed.some(([px, py, pw, ph]) => x < px + pw + 4 && x + w + 4 > px && y < py + ph + 3 && y + h + 3 > py);
     for (const { a, d, sel } of items) {
       const el = els.get(a.place.id);
@@ -303,10 +387,12 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
         if (mode === "icon" && hits(x - 13, y - 12, 26, 24)) mode = "hidden";
         const w = mode === "full" ? fullW : 26;
         placed.push([x - w / 2, y - 12, w, 24]);
+        onScreen.push({ place: a.place, x: x - w / 2, y: y - 12, w, h: 24 });
         el.style.transform = `translate(${Math.round(x - w / 2)}px, ${Math.round(y - 12)}px)`;
       }
       if (el.dataset.mode !== mode) el.dataset.mode = mode;
     }
+    labelHits.set(onScreen);
   };
 
   useFrame((_, dt) => {
@@ -333,7 +419,8 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
   });
 
   // Materials: one for all buildings (vertex colours), one for the ground
-  const buildingMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide }), []);
+  // Windows, frames, roof tiles and night lights are drawn by the facade shader
+  const buildingMat = useMemo(() => createFacadeMaterial(dark), [dark]);
   const groundMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }), []);
   useEffect(() => () => (buildingMat.dispose(), groundMat.dispose()), [buildingMat, groundMat]);
 
@@ -356,6 +443,7 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
 
   const onBuildingClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
+    if (tapOnLabel.current) return;
     const i = indexAt(e);
     if (i === null) return;
     const b = scene.list[i];
@@ -383,13 +471,11 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
   const trunkGeo = useMemo(() => new THREE.CylinderGeometry(0.28, 0.4, 3, 5).translate(0, 1.5, 0), []);
   const crownGeo = useMemo(() => new THREE.IcosahedronGeometry(3, 0).scale(1, 1.15, 1).translate(0, 5.2, 0), []);
 
-  const meXZ = me ? toMeters(me) : null;
   return (
     <>
       <MapControls
         ref={controls}
         makeDefault
-        target={HOME.target.toArray()}
         enableDamping
         dampingFactor={0.12}
         screenSpacePanning={false}
@@ -397,17 +483,25 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
         maxDistance={2400}
         maxPolarAngle={1.32}
         zoomSpeed={0.9}
-        onStart={() => (flight.current = null)}
+        onStart={onDragStart}
+        onEnd={onDragEnd}
       />
 
       {/* Sky colour and distance haze */}
       <color attach="background" args={[palette.sky]} />
       <fog attach="fog" args={[palette.sky, dark ? 900 : 1100, dark ? 2800 : 3200]} />
 
-      <hemisphereLight args={[dark ? "#8ea3d6" : "#e3f0ff", dark ? "#2a3324" : "#7c8c55", dark ? 1.1 : 1.15]} />
+      {/* What the glass reflects: a soft sky and a bright horizon, rendered once (no download) */}
+      <Environment resolution={128} frames={1} environmentIntensity={dark ? 0.65 : 0.4}>
+        <Lightformer form="rect" intensity={dark ? 0.25 : 1.4} color={dark ? "#5a6c96" : "#dbe9f7"} scale={[40, 40, 1]} position={[0, 12, 0]} rotation-x={Math.PI / 2} />
+        <Lightformer form="ring" intensity={dark ? 0.3 : 2.2} color={dark ? "#9fb4ff" : "#fff3dc"} scale={6} position={[-10, 6, 6]} />
+        <Lightformer form="rect" intensity={dark ? 0.15 : 0.7} color={dark ? "#2a3550" : "#a9c47a"} scale={[40, 6, 1]} position={[0, -2, -12]} />
+      </Environment>
+
+      <hemisphereLight args={[dark ? "#8ea3d6" : "#e3f0ff", dark ? "#2a3324" : "#7c8c55", dark ? 1.55 : 0.85]} />
       <directionalLight
         position={dark ? [-300, 600, 200] : [-420, 620, 260]}
-        intensity={dark ? 1.3 : 2.4}
+        intensity={dark ? 1.5 : 2.7}
         color={dark ? "#9fb4ff" : "#fff0d4"}
         castShadow={shadows}
         shadow-mapSize={[4096, 4096]}
@@ -421,7 +515,11 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
         shadow-normalBias={0.6}
       />
 
-      <mesh geometry={scene.ground} material={groundMat} receiveShadow onClick={(e) => (e.stopPropagation(), onBackground(toLngLat(e.point.x, e.point.z), null))} />
+      <mesh geometry={scene.ground} material={groundMat} receiveShadow onClick={(e) => {
+          e.stopPropagation();
+          if (!tapOnLabel.current) onBackground(toLngLat(e.point.x, e.point.z), null);
+        }}
+      />
 
       <mesh
         geometry={scene.buildings}
@@ -432,7 +530,7 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
         onPointerMove={(e) => {
           e.stopPropagation();
           const i = indexAt(e);
-          if (i !== hover) setHover(i);
+          if (!dragging.current && i !== hover) setHover(i);
           document.body.style.cursor = "pointer";
         }}
         onPointerOut={() => {
@@ -443,6 +541,19 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
       {hoverGeo && <mesh geometry={hoverGeo} material={buildingMat} raycast={() => null} />}
       {highlightGeo && <mesh geometry={highlightGeo} material={buildingMat} castShadow raycast={() => null} />}
 
+      {/* Rooftop water tanks */}
+      {scene.tanks.length > 0 && <Tanks matrices={scene.tanks} />}
+
+      {/* Landmarks modelled by hand */}
+      {landmarks && (
+        <MainGate3D
+          position={[landmarks.mainGate.pose.x, 0, landmarks.mainGate.pose.z]}
+          rotationY={landmarks.mainGate.pose.rotationY}
+          selected={selectedId === landmarks.mainGate.place.id}
+          onClick={() => !tapOnLabel.current && onPin(landmarks.mainGate.place)}
+        />
+      )}
+
       <instancedMesh ref={trunks} args={[trunkGeo, undefined, scene.trees.matrices.length]} castShadow raycast={() => null}>
         <meshStandardMaterial color={palette.trunk} roughness={1} />
       </instancedMesh>
@@ -450,13 +561,98 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, handl
         <meshStandardMaterial roughness={0.95} flatShading />
       </instancedMesh>
 
-      {meXZ && (
-        <mesh position={[meXZ[0], 3, -meXZ[1]]}>
-          <sphereGeometry args={[4, 20, 20]} />
-          <meshStandardMaterial color="#2563eb" emissive="#2563eb" emissiveIntensity={0.6} />
-        </mesh>
-      )}
+      {me && <Me3D me={me} accuracy={meAccuracy ?? null} heading={meHeading ?? null} />}
 
     </>
+  );
+}
+
+/** Black polyethylene water tanks, instanced (one draw call for the whole campus) */
+function Tanks({ matrices }: { matrices: THREE.Matrix4[] }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const geo = useMemo(() => new THREE.CylinderGeometry(0.85, 0.95, 1.7, 14).translate(0, 0.85, 0), []);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    matrices.forEach((x, i) => m.setMatrixAt(i, x));
+    m.instanceMatrix.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [matrices]);
+  useEffect(() => () => geo.dispose(), [geo]);
+  return (
+    <instancedMesh ref={ref} args={[geo, undefined, matrices.length]} castShadow raycast={() => null}>
+      <meshStandardMaterial color="#1d2024" roughness={0.55} />
+    </instancedMesh>
+  );
+}
+
+/**
+ * "You are here" in 3D: a glowing blue marker that glides to each GPS reading,
+ * a soft accuracy disc on the ground and a cone pointing the way you're walking.
+ */
+function Me3D({ me, accuracy, heading }: { me: [number, number]; accuracy: number | null; heading: number | null }) {
+  const group = useRef<THREE.Group>(null);
+  const disc = useRef<THREE.Mesh>(null);
+  const cone = useRef<THREE.Group>(null);
+  const pulse = useRef<THREE.Mesh>(null);
+  const target = useMemo(() => {
+    const [x, n] = toMeters(me);
+    return new THREE.Vector3(x, 0, -n);
+  }, [me]);
+  const placed = useRef(false);
+
+  useFrame((state, dt) => {
+    const g = group.current;
+    if (!g) return;
+    // First reading (or a big jump) snaps; after that, glide like a walking person
+    if (!placed.current || g.position.distanceTo(target) > 300) {
+      g.position.copy(target);
+      placed.current = true;
+    } else {
+      g.position.lerp(target, 1 - Math.exp(-dt * 3));
+    }
+    const r = accuracy && accuracy > 8 ? Math.min(accuracy, 300) : 0;
+    if (disc.current) {
+      disc.current.visible = r > 0;
+      disc.current.scale.setScalar(Math.max(r, 0.001));
+    }
+    if (cone.current) {
+      cone.current.visible = heading != null;
+      // Heading is clockwise from north (-Z); rotation.y turns counter-clockwise
+      if (heading != null) cone.current.rotation.y = THREE.MathUtils.lerp(cone.current.rotation.y, -THREE.MathUtils.degToRad(heading), 1 - Math.exp(-dt * 6));
+    }
+    if (pulse.current) {
+      const t = (state.clock.elapsedTime % 1.6) / 1.6;
+      pulse.current.scale.setScalar(4 + t * 10);
+      (pulse.current.material as THREE.MeshBasicMaterial).opacity = 0.35 * (1 - t);
+    }
+  });
+
+  return (
+    <group ref={group}>
+      <mesh ref={disc} rotation-x={-Math.PI / 2} position-y={0.25} raycast={() => null}>
+        <circleGeometry args={[1, 48]} />
+        <meshBasicMaterial color="#2563eb" transparent opacity={0.14} depthWrite={false} />
+      </mesh>
+      <mesh ref={pulse} rotation-x={-Math.PI / 2} position-y={0.3} raycast={() => null}>
+        <ringGeometry args={[0.8, 1, 40]} />
+        <meshBasicMaterial color="#2563eb" transparent opacity={0.35} depthWrite={false} />
+      </mesh>
+      <group ref={cone} position-y={0.35}>
+        <mesh rotation-x={-Math.PI / 2} raycast={() => null}>
+          <circleGeometry args={[9, 24, Math.PI / 2 - 0.45, 0.9]} />
+          <meshBasicMaterial color="#2563eb" transparent opacity={0.3} depthWrite={false} />
+        </mesh>
+      </group>
+      {/* Marker: a glowing blue ball with a white collar, raised so it reads above the street */}
+      <mesh position-y={4} raycast={() => null}>
+        <sphereGeometry args={[3.4, 24, 24]} />
+        <meshStandardMaterial color="#2563eb" emissive="#2563eb" emissiveIntensity={0.75} roughness={0.35} />
+      </mesh>
+      <mesh position-y={4} rotation-x={Math.PI / 2} raycast={() => null}>
+        <torusGeometry args={[3.5, 0.75, 12, 40]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.5} />
+      </mesh>
+    </group>
   );
 }

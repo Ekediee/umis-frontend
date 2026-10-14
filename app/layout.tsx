@@ -22,6 +22,8 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Pulse",
   },
+  // The app has its own light and dark themes: tells forced-dark browsers not to repaint it
+  other: { "color-scheme": "light dark" },
   formatDetection: {
     telephone: false,
   },

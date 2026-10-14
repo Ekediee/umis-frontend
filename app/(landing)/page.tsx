@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/landing/hero-section";
+import { VideoSection } from "@/components/landing/video-section";
 import { FeaturesSection, ImpactSection } from "@/components/landing/features-section";
 import { PortalsSection } from "@/components/landing/portals-section";
 import { Navbar } from "@/components/landing/navbar";
@@ -27,6 +28,7 @@ export default function LandingPage() {
       {/* Main Content Sections strictly in Figma order */}
       <main className="flex-1 flex flex-col w-full z-10 relative">
         <HeroSection />
+        <VideoSection />
         <FeaturesSection />
         <PortalsSection />
         <ImpactSection />

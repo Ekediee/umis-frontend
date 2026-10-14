@@ -7,12 +7,12 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Map, { Layer, Marker, Source, type MapLayerMouseEvent, type MapRef } from "react-map-gl/maplibre";
-import { CAMPUS, MAP_STYLES, placesToGeoJSON } from "@/lib/student/campus";
+import Map, { Layer, Marker, Source, type MapLayerMouseEvent, type MapRef, type ViewStateChangeEvent } from "react-map-gl/maplibre";
+import { CAMPUS, MAP_STYLES, circlePolygon, placesToGeoJSON } from "@/lib/student/campus";
 import type { MapViewProps } from "./map-view";
-import { MeDot, Pin } from "./pin";
+import { MeDot, Pin, useGlide } from "./pin";
 
-export default function GlMapView({ handleRef, places, outline, dark, selectedId, visibleIds, me, highlightBuildingId, mapping, onPin, onBackground }: MapViewProps) {
+export default function GlMapView({ handleRef, places, outline, dark, selectedId, visibleIds, me, meAccuracy, meHeading, onUserMove, highlightBuildingId, mapping, onPin, onBackground }: MapViewProps) {
   const mapRef = useRef<MapRef>(null);
   const [beforeId, setBeforeId] = useState<string | undefined>(undefined);
 
@@ -52,6 +52,8 @@ export default function GlMapView({ handleRef, places, outline, dark, selectedId
       onLoad={onStyle}
       onStyleData={onStyle}
       attributionControl={{ compact: true }}
+      // A drag, pinch or wheel by the student (not our own fly-to) stops "follow me"
+      onMoveStart={(e: ViewStateChangeEvent) => e.originalEvent && onUserMove?.()}
       reuseMaps
     >
       {outline && (
@@ -85,11 +87,28 @@ export default function GlMapView({ handleRef, places, outline, dark, selectedId
           <Pin place={p} selected={selectedId === p.id} dimmed={!visibleIds.has(p.id)} onClick={() => onPin(p)} />
         </Marker>
       ))}
-      {me && (
-        <Marker longitude={me[0]} latitude={me[1]} anchor="center">
-          <MeDot />
-        </Marker>
-      )}
+      <MeMarker me={me} accuracy={meAccuracy ?? null} heading={meHeading ?? null} />
     </Map>
+  );
+}
+
+/** Live location: glides between readings, with an accuracy circle and a walking-direction cone */
+function MeMarker({ me, accuracy, heading }: { me: [number, number] | null; accuracy: number | null; heading: number | null }) {
+  const pos = useGlide(me);
+  const ring = useMemo(() => (pos && accuracy && accuracy > 8 ? circlePolygon(pos, Math.min(accuracy, 300)) : null), [pos, accuracy]);
+  if (!pos) return null;
+  return (
+    <>
+      {ring && (
+        <Source id="me-accuracy" type="geojson" data={ring}>
+          <Layer id="me-accuracy-fill" type="fill" paint={{ "fill-color": "#2563eb", "fill-opacity": 0.12 }} />
+          <Layer id="me-accuracy-edge" type="line" paint={{ "line-color": "#2563eb", "line-opacity": 0.35, "line-width": 1 }} />
+        </Source>
+      )}
+      {/* The cone points north inside the dot; MapLibre turns the marker with the map */}
+      <Marker longitude={pos[0]} latitude={pos[1]} anchor="center" rotation={heading ?? 0} rotationAlignment="map" style={{ zIndex: 30 }}>
+        <MeDot heading={heading == null ? null : 0} />
+      </Marker>
+    </>
   );
 }

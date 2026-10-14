@@ -92,8 +92,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - images (local images in public folder)
      * - icons (PWA icons: needed before sign-in, e.g. installing from /login)
+     * - videos (the landing page film, watched before sign-in)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|images|icons|favicon.ico|manifest.json|sw.js|swe-worker-).*)',
+    '/((?!api|_next/static|_next/image|images|icons|videos|favicon.ico|manifest.json|sw.js|swe-worker-).*)',
   ],
 }

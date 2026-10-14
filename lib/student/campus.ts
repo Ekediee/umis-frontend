@@ -4,7 +4,7 @@
  * move to GET /campus/places so staff edit places without a deploy.
  */
 
-import type { FeatureCollection, Point } from "geojson";
+import type { Feature as GeoFeature, FeatureCollection, Point, Polygon } from "geojson";
 import { Banknote, BookOpen, Building2, Church, Dumbbell, GraduationCap, HeartPulse, Home, Landmark, ShoppingBag, UtensilsCrossed, type LucideIcon } from "lucide-react";
 
 export const CAMPUS = {
@@ -191,6 +191,26 @@ export function supportsWebGL() {
     }
   }
   return webglSupport;
+}
+
+/** Compass bearing from a to b, degrees clockwise from north */
+export function bearingDeg(a: [number, number], b: [number, number]) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const y = Math.sin(toRad(b[0] - a[0])) * Math.cos(toRad(b[1]));
+  const x = Math.cos(toRad(a[1])) * Math.sin(toRad(b[1])) - Math.sin(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.cos(toRad(b[0] - a[0]));
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/** A circle of `radiusM` metres around a point, as a GeoJSON polygon (location accuracy ring) */
+export function circlePolygon([lng, lat]: [number, number], radiusM: number, steps = 48): GeoFeature<Polygon> {
+  const dLat = radiusM / 110_574;
+  const dLng = radiusM / (111_320 * Math.cos((lat * Math.PI) / 180));
+  const ring: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * 2 * Math.PI;
+    ring.push([lng + dLng * Math.cos(t), lat + dLat * Math.sin(t)]);
+  }
+  return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [ring] } };
 }
 
 export function walkLabel(m: number) {
