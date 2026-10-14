@@ -22,7 +22,8 @@ const menuItems = [
 
 export function MobilePageMenuSheet({ isOpen, onClose, title = "Quick Actions" }: MobilePageMenuSheetProps) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDarkTheme = resolvedTheme === "dark";
 
   if (!isOpen) return null;
 
@@ -54,22 +55,22 @@ export function MobilePageMenuSheet({ isOpen, onClose, title = "Quick Actions" }
         <div className="flex flex-col mt-2">
           {/* Theme Toggle Item */}
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
             className="flex items-center justify-between w-full py-4 text-[15px] font-medium transition-colors border-b border-transparent rounded-[8px] px-3 -mx-3 text-[#525866] dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                {theme === "dark" ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+                {isDarkTheme ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
               </div>
-              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+              <span>{isDarkTheme ? "Light Mode" : "Dark Mode"}</span>
             </div>
             <div className={cn(
               "w-11 h-6 rounded-full p-1 transition-colors duration-200",
-              theme === "dark" ? "bg-[#003cbb]" : "bg-gray-200 dark:bg-gray-700"
+              isDarkTheme ? "bg-[#003cbb]" : "bg-gray-200 dark:bg-gray-700"
             )}>
               <div className={cn(
                 "w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200",
-                theme === "dark" ? "translate-x-5" : "translate-x-0"
+                isDarkTheme ? "translate-x-5" : "translate-x-0"
               )} />
             </div>
           </button>

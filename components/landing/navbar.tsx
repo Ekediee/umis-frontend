@@ -8,7 +8,7 @@ import { Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ function ThemeToggle() {
   }
 
   // Resolve the current actual visual theme
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button

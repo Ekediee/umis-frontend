@@ -47,3 +47,5 @@ next-env.d.ts
 logs
 
 docker_login_troubleshooting.md
+# Video production project (renders, Remotion, ffmpeg; 1.7 GB). Web encodes live in public/videos.
+/bu-pulse-video/

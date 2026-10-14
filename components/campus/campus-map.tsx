@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useIsDark } from "@/components/student/charts";
 import { CAMPUS, CATEGORY, CATEGORY_ORDER, directionsUrl, distanceM, footprintFor, googleMapsUrl, loadCampusOutline, loadPlaces, matchVenue, searchPlaces, walkLabel, type Place, type PlaceCategory } from "@/lib/student/campus";
 import type { MapEngine, MapViewHandle } from "./map-view";
+import { useLiveLocation } from "@/hooks/use-live-location";
 import { cn } from "@/lib/utils";
 
 function PlaceDetail({ place, me, onClose, className }: { place: Place; me: [number, number] | null; onClose: () => void; className?: string }) {
@@ -294,7 +295,10 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<PlaceCategory | null>(null);
   const [selected, setSelected] = useState<Place | null>(null);
-  const [me, setMe] = useState<[number, number] | null>(null);
+  // Live location: the dot moves as the student walks; "follow" keeps the map centred on them
+  const location = useLiveLocation();
+  const me = location.fix?.coords ?? null;
+  const [follow, setFollow] = useState(false);
   const [searching, setSearching] = useState(false);
   const [outline, setOutline] = useState<FeatureCollection | null>(null);
   const [pick, setPick] = useState<MapPick | null>(null);
@@ -330,6 +334,7 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
   const buildingCount = useMemo(() => outline?.features.filter((f) => f.properties?.kind === "building").length ?? 0, [outline]);
 
   const flyTo = useCallback((p: Place) => {
+    setFollow(false); // looking at a place: stop pulling the map back to the student
     setSelected(p);
     setSearching(false);
     const m = mapRef.current;
@@ -369,19 +374,52 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
 
   const visible = new Set(results.map((r) => r.id));
 
+  // React to each reading: frame the first one, then keep up while following
+  const firstFix = useRef(true);
+  useEffect(() => {
+    const fix = location.fix;
+    if (!fix) {
+      firstFix.current = true;
+      return;
+    }
+    const m = mapRef.current;
+    if (firstFix.current) {
+      firstFix.current = false;
+      if (distanceM(fix.coords, CAMPUS.center) > 3000) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- off campus: nothing to follow on this map
+        setFollow(false);
+        toast.message("You're off campus", { description: "Your location keeps updating, and distances are shown from where you are." });
+        return;
+      }
+      m?.flyTo(fix.coords, Math.max(17, m.getZoom()));
+      return;
+    }
+    if (follow) m?.flyTo(fix.coords, m.getZoom());
+  }, [location.fix, follow]);
+
+  useEffect(() => {
+    if (location.status === "denied") toast.error("Allow location access to see where you are on campus.");
+    if (location.status === "unavailable") toast.error("Your location isn't available right now. Try again outside or near a window.");
+  }, [location.status]);
+
+  /**
+   * Locate button, like most map apps:
+   * off → start tracking and follow · tracking → re-centre and follow · following → stop tracking
+   */
   const locate = () => {
-    if (!navigator.geolocation) return toast.error("Location isn't available on this device.");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const p: [number, number] = [pos.coords.longitude, pos.coords.latitude];
-        setMe(p);
-        const far = distanceM(p, CAMPUS.center) > 3000;
-        if (far) toast.message("You're off campus", { description: "Distances are shown from where you are now." });
-        else mapRef.current?.flyTo(p, 17);
-      },
-      () => toast.error("Allow location access to see where you are on campus."),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+    if (location.status === "tracking" && follow) {
+      location.stop();
+      setFollow(false);
+      return;
+    }
+    if (location.status === "tracking" && me) {
+      setFollow(true);
+      mapRef.current?.flyTo(me, Math.max(17, mapRef.current.getZoom()));
+      return;
+    }
+    if (location.status === "locating") return;
+    setFollow(true);
+    location.start();
   };
 
   const resetView = () => {
@@ -435,6 +473,9 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
             selectedId: selected?.id ?? null,
             visibleIds: visible,
             me,
+            meAccuracy: location.fix?.accuracy ?? null,
+            meHeading: location.fix?.heading ?? null,
+            onUserMove: () => setFollow(false),
             highlightBuildingId: selectedFootprint ?? pick?.buildingId ?? null,
             mapping,
             onPin: flyTo,
@@ -486,8 +527,25 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
 
         {/* Controls (phones: above the AI assistant button, which steps aside while a card is open) */}
         <div className={cn("absolute z-30 right-3 md:right-4 md:top-4 md:bottom-auto flex flex-col gap-2 transition-[bottom] duration-300", selected ? "bottom-[calc(16px+var(--sheet,0px))]" : "bottom-[180px] md:bottom-4")} style={{ ["--sheet" as string]: selected ? (selected.photo ? "330px" : "200px") : "0px" }}>
-          <button type="button" onClick={locate} aria-label="Show my location" className="w-11 h-11 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-md inline-flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-            <LocateFixed className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={locate}
+            aria-pressed={location.status === "tracking"}
+            aria-label={location.status === "tracking" ? (follow ? "Stop sharing my location" : "Centre on me") : "Show my location"}
+            title={location.status === "tracking" ? (follow ? "Following you. Tap to stop." : "Centre on me") : "Show my location"}
+            className={cn(
+              "w-11 h-11 rounded-full border shadow-md inline-flex items-center justify-center transition-colors",
+              location.status === "tracking" && follow
+                ? "bg-[#2563eb] border-[#2563eb] text-white"
+                : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800",
+              location.status === "tracking" && !follow ? "text-[#2563eb] dark:text-[#4d82ff]" : location.status !== "tracking" && "text-gray-700 dark:text-gray-200",
+            )}
+          >
+            {location.status === "tracking" && follow ? (
+              <Navigation className="w-5 h-5 fill-current" />
+            ) : (
+              <LocateFixed className={cn("w-5 h-5", location.status === "locating" && "animate-pulse text-[#2563eb]")} />
+            )}
           </button>
           {can3d && (
             <button

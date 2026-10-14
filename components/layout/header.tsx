@@ -29,7 +29,8 @@ interface HeaderProps {
 export function Header({ initialUserData = null }: HeaderProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDarkTheme = resolvedTheme === "dark";
   const { unreadCount } = useNotifications();
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -257,22 +258,22 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
             <div className="px-1 pb-8 flex flex-col gap-1 min-h-0 overflow-y-auto overscroll-contain">
               {/* Theme Toggle Item */}
               <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
                 className="flex items-center justify-between w-full px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                    {theme === "dark" ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+                    {isDarkTheme ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
                   </div>
-                  <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                  <span>{isDarkTheme ? "Light Mode" : "Dark Mode"}</span>
                 </div>
                 <div className={cn(
                   "w-11 h-6 rounded-full p-1 transition-colors duration-200",
-                  theme === "dark" ? "bg-[#003cbb]" : "bg-gray-200 dark:bg-gray-700"
+                  isDarkTheme ? "bg-[#003cbb]" : "bg-gray-200 dark:bg-gray-700"
                 )}>
                   <div className={cn(
                     "w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200",
-                    theme === "dark" ? "translate-x-5" : "translate-x-0"
+                    isDarkTheme ? "translate-x-5" : "translate-x-0"
                   )} />
                 </div>
               </button>
