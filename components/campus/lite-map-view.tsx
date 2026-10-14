@@ -19,7 +19,7 @@ import type { Feature } from "geojson";
 import { CAMPUS, type Place } from "@/lib/student/campus";
 import { cn } from "@/lib/utils";
 import type { MapViewProps } from "./map-view";
-import { MeDot, Pin } from "./pin";
+import { MeDot, Pin, useGlide } from "./pin";
 
 const toLatLng = ([lng, lat]: [number, number]) => L.latLng(lat, lng);
 const viewBounds = L.latLngBounds(toLatLng(CAMPUS.view[0]), toLatLng(CAMPUS.view[1]));
@@ -34,7 +34,7 @@ function shapeStyle(f: Feature | undefined, dark: boolean, highlight: string | n
   return { color: dark ? "#3b4a6b" : "#b9c6e3", weight: 0.7, fillColor: dark ? "#2a3550" : "#dde5f4", fillOpacity: 0.9 };
 }
 
-export default function LiteMapView({ handleRef, places, outline, dark, selectedId, visibleIds, me, highlightBuildingId, onPin, onBackground }: MapViewProps) {
+export default function LiteMapView({ handleRef, places, outline, dark, selectedId, visibleIds, me, meAccuracy, meHeading, onUserMove, highlightBuildingId, onPin, onBackground }: MapViewProps) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const shapesRef = useRef<L.GeoJSON | null>(null);
@@ -44,9 +44,9 @@ export default function LiteMapView({ handleRef, places, outline, dark, selected
   const [meHost, setMeHost] = useState<HTMLElement | null>(null);
 
   // Latest callbacks for Leaflet listeners registered once
-  const cb = useRef({ onBackground });
+  const cb = useRef({ onBackground, onUserMove });
   useEffect(() => {
-    cb.current = { onBackground };
+    cb.current = { onBackground, onUserMove };
   });
 
   // Create the map once
@@ -60,6 +60,9 @@ export default function LiteMapView({ handleRef, places, outline, dark, selected
     m.fitBounds(viewBounds, { padding: [24, 24] });
     m.on("zoomend", () => setZoom(m.getZoom()));
     m.on("click", (e: L.LeafletMouseEvent) => cb.current.onBackground([e.latlng.lng, e.latlng.lat], null));
+    // The student moving the map (not our own fly-to) stops "follow me"
+    m.on("dragstart", () => cb.current.onUserMove?.());
+    el.current.addEventListener("wheel", () => cb.current.onUserMove?.(), { passive: true });
     mapRef.current = m;
     m.whenReady(() => {
       setMap(m);
@@ -123,17 +126,35 @@ export default function LiteMapView({ handleRef, places, outline, dark, selected
     pinHosts.forEach(({ place, marker }) => marker.setZIndexOffset(place.id === selectedId ? 1000 : 0));
   }, [pinHosts, selectedId]);
 
-  // "You are here"
+  // "You are here": one marker that glides between readings, plus an accuracy circle
+  const pos = useGlide(me);
+  const meMarker = useRef<L.Marker | null>(null);
+  const meRing = useRef<L.Circle | null>(null);
+  const hasMe = !!pos;
   useEffect(() => {
-    if (!map || !me) return;
-    const marker = L.marker(toLatLng(me), { icon: L.divIcon({ className: "campus-lite-pin", html: "", iconSize: [0, 0] }), interactive: false, keyboard: false }).addTo(map);
+    if (!map || !hasMe) return;
+    const start = toLatLng(pos!);
+    const marker = L.marker(start, { icon: L.divIcon({ className: "campus-lite-pin", html: "", iconSize: [0, 0] }), interactive: false, keyboard: false, zIndexOffset: 2000 }).addTo(map);
+    const ring = L.circle(start, { radius: 0, color: "#2563eb", weight: 1, opacity: 0.35, fillColor: "#2563eb", fillOpacity: 0.12, interactive: false }).addTo(map);
+    meMarker.current = marker;
+    meRing.current = ring;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMeHost(marker.getElement() as HTMLElement);
     return () => {
       marker.remove();
+      ring.remove();
+      meMarker.current = null;
+      meRing.current = null;
       setMeHost(null);
     };
-  }, [map, me]);
+    // Created once per tracking session; position updates below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, hasMe]);
+  useEffect(() => {
+    if (!pos) return;
+    meMarker.current?.setLatLng(toLatLng(pos));
+    meRing.current?.setLatLng(toLatLng(pos)).setRadius(meAccuracy && meAccuracy > 8 ? Math.min(meAccuracy, 300) : 0);
+  }, [pos, meAccuracy]);
 
   return (
     <>
@@ -151,7 +172,7 @@ export default function LiteMapView({ handleRef, places, outline, dark, selected
       {meHost &&
         createPortal(
           <div className="absolute -translate-x-1/2 -translate-y-1/2">
-            <MeDot />
+            <MeDot heading={meHeading ?? null} />
           </div>,
           meHost,
         )}

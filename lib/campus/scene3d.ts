@@ -121,6 +121,8 @@ export interface ScenePalette {
   campusGround: string;
   wall: string;
   roofs: string[];
+  /** Flat concrete roofs */
+  flatRoof: string;
   road: string;
   path: string;
   pitch: string;
@@ -138,8 +140,10 @@ export interface ScenePalette {
 export const DAY: ScenePalette = {
   ground: "#9fb07a",
   campusGround: "#a9c47a",
-  wall: "#f1eadb",
-  roofs: ["#b4553f", "#a3432f", "#c06a4a", "#8c939c", "#6f7b8c", "#5d7f72"],
+  // Babcock's halls: warm beige render, white frames, brown-orange roofs (see place photos)
+  wall: "#e9d9b9",
+  roofs: ["#b0573a", "#9c4a31", "#c0703f", "#8a8f96", "#6f7b8c", "#5d7f72"],
+  flatRoof: "#a9a59b",
   road: "#7d8086",
   path: "#e4dac4",
   pitch: "#6fae4f",
@@ -156,22 +160,23 @@ export const DAY: ScenePalette = {
 
 export const NIGHT: ScenePalette = {
   // Moonlit, not black: the campus still reads clearly in dark mode
-  ground: "#2c3a33",
-  campusGround: "#34473a",
-  wall: "#8b93a6",
-  roofs: ["#7a4538", "#6c3c31", "#80503f", "#5b6372", "#4e5a6c", "#46605a"],
-  road: "#454b57",
-  path: "#6b6a64",
-  pitch: "#33603d",
-  court: "#6a4a3a",
-  parking: "#4a4b52",
-  water: "#2c5470",
-  grass: "#3b5a36",
-  wood: "#2e4a2e",
-  farm: "#55533a",
-  canopy: ["#2f5a2c", "#386633", "#28502a", "#407038", "#2c5530"],
-  trunk: "#3d3229",
-  sky: "#16213a",
+  ground: "#36463d",
+  campusGround: "#405646",
+  wall: "#a3aabb",
+  roofs: ["#8c5244", "#7d4739", "#935d49", "#6b7484", "#5d6a7e", "#55706a"],
+  flatRoof: "#686b73",
+  road: "#545b68",
+  path: "#7d7b74",
+  pitch: "#3d7048",
+  court: "#7c5845",
+  parking: "#585a62",
+  water: "#346283",
+  grass: "#466a40",
+  wood: "#375738",
+  farm: "#646146",
+  canopy: ["#386a34", "#41763b", "#305e31", "#4a8241", "#346337"],
+  trunk: "#4a3d32",
+  sky: "#1d2b4a",
 };
 
 function roofColor(id: string, category: PlaceCategory | undefined, palette: ScenePalette) {
@@ -301,25 +306,102 @@ export interface CampusScene {
   list: SceneBuilding[];
   ground: THREE.BufferGeometry;
   trees: { matrices: THREE.Matrix4[]; colors: THREE.Color[] };
+  /** Rooftop water tanks */
+  tanks: THREE.Matrix4[];
   boundary: [number, number][];
   /** Scene-space box the camera may look at */
   extent: { minX: number; maxX: number; minZ: number; maxZ: number };
 }
 
-export function buildingGeometry(b: SceneBuilding, wallColor: THREE.Color, roofColorValue: THREE.Color): THREE.BufferGeometry {
-  const rect = b.place?.category === "hall" || polygonArea(b.footprint) < 1600 ? asRectangle(b.footprint) : null;
-  if (rect) {
-    const walls = extrude(b.footprint, b.height, wallColor, null);
-    const roof = hipRoof(rect, b.height, roofColorValue);
-    const merged = mergeGeometries([walls, roof]);
-    walls.dispose();
-    roof.dispose();
-    return merged;
-  }
-  return extrude(b.footprint, b.height, wallColor, roofColorValue);
+/** Pitched (hip) roof for halls and smaller rectangular blocks; big or irregular blocks stay flat */
+export function pitchedRoofFor(b: Pick<SceneBuilding, "footprint" | "place">) {
+  return b.place?.category === "hall" || polygonArea(b.footprint) < 1600 ? asRectangle(b.footprint) : null;
 }
 
-export function buildCampusScene(outline: FeatureCollection, extra: FeatureCollection | null, placeForBuilding: Map<string, Place>, palette: ScenePalette): CampusScene {
+export function isConvex(pts: [number, number][]) {
+  let sign = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length], [cx, cy] = pts[(i + 2) % pts.length];
+    const z = (bx - ax) * (cy - by) - (by - ay) * (cx - bx);
+    if (Math.abs(z) < 1e-6) continue;
+    if (sign === 0) sign = Math.sign(z);
+    else if (Math.sign(z) !== sign) return false;
+  }
+  return true;
+}
+
+/** Low wall around a flat roof (convex footprints only, so the inner edge never crosses the outer) */
+function parapet(pts: [number, number][], top: number, color: THREE.Color) {
+  if (!isConvex(pts)) return null;
+  const c = pts.reduce((s, p) => [s[0] + p[0] / pts.length, s[1] + p[1] / pts.length], [0, 0]);
+  const radius = pts.reduce((s, p) => s + Math.hypot(p[0] - c[0], p[1] - c[1]), 0) / pts.length;
+  const k = 1 - 0.35 / Math.max(radius, 2);
+  const shape = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+  shape.holes.push(new THREE.Path(pts.map(([x, y]) => new THREE.Vector2(c[0] + (x - c[0]) * k, c[1] + (y - c[1]) * k))));
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.9, bevelEnabled: false });
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, top, 0);
+  const g = geo.toNonIndexed();
+  geo.dispose();
+  g.clearGroups();
+  g.deleteAttribute("uv");
+  paint(g, color);
+  return g;
+}
+
+/** Eave height on every vertex: the facade shader only draws windows on storeys that fit under it */
+function tagTop(g: THREE.BufferGeometry, top: number) {
+  g.setAttribute("aTop", new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(top), 1));
+  return g;
+}
+
+export function buildingGeometry(b: SceneBuilding, wallColor: THREE.Color, roofColorValue: THREE.Color): THREE.BufferGeometry {
+  const rect = pitchedRoofFor(b);
+  const parts: THREE.BufferGeometry[] = [];
+  if (rect) {
+    parts.push(extrude(b.footprint, b.height, wallColor, null), hipRoof(rect, b.height, roofColorValue));
+  } else {
+    parts.push(extrude(b.footprint, b.height, wallColor, roofColorValue));
+    const wallTop = parapet(b.footprint, b.height, wallColor.clone().multiplyScalar(0.94));
+    if (wallTop) parts.push(wallTop);
+  }
+  parts.forEach((g) => tagTop(g, b.height));
+  if (parts.length === 1) return parts[0];
+  const merged = mergeGeometries(parts);
+  parts.forEach((g) => g.dispose());
+  return merged;
+}
+
+/**
+ * Black water tanks on flat roofs, as on most Nigerian campus buildings:
+ * one or two per medium block, set back from the edge.
+ */
+function roofTanks(b: SceneBuilding): THREE.Matrix4[] {
+  const area = polygonArea(b.footprint);
+  if (pitchedRoofFor(b) || area < 120 || area > 4000) return [];
+  const rand = rng(hash(b.id));
+  if (rand() < 0.25) return [];
+  const count = area > 900 ? 2 : 1;
+  const out: THREE.Matrix4[] = [];
+  for (let i = 0, tries = 0; i < count && tries < 12; tries++) {
+    const x = b.center[0] + (rand() - 0.5) * Math.sqrt(area) * 0.5;
+    const n = b.center[1] + (rand() - 0.5) * Math.sqrt(area) * 0.5;
+    if (!pointInPolygon([x, n], b.footprint)) continue;
+    const s = 0.85 + rand() * 0.35;
+    out.push(new THREE.Matrix4().compose(new THREE.Vector3(x, b.height, -n), new THREE.Quaternion(), new THREE.Vector3(s, s, s)));
+    i++;
+  }
+  return out;
+}
+
+/** Ground kept free of trees, e.g. where a hand-built landmark model stands */
+export interface Clearing {
+  /** [east, north] metres */
+  center: [number, number];
+  radius: number;
+}
+
+export function buildCampusScene(outline: FeatureCollection, extra: FeatureCollection | null, placeForBuilding: Map<string, Place>, palette: ScenePalette, clearings: Clearing[] = []): CampusScene {
   const heights = new Map<string, { levels: number | null; height: number | null }>();
   extra?.features.forEach((f) => f.properties?.kind === "height" && heights.set(f.properties.id, { levels: f.properties.levels, height: f.properties.height }));
 
@@ -331,6 +413,7 @@ export function buildCampusScene(outline: FeatureCollection, extra: FeatureColle
   const list: SceneBuilding[] = [];
   const parts: THREE.BufferGeometry[] = [];
   const triStart: number[] = [];
+  const tanks: THREE.Matrix4[] = [];
   let tris = 0;
   for (const f of outline.features) {
     if (f.properties?.kind !== "building" || f.geometry.type !== "Polygon") continue;
@@ -343,9 +426,12 @@ export function buildCampusScene(outline: FeatureCollection, extra: FeatureColle
     const center = footprint.reduce((s, p) => [s[0] + p[0] / footprint.length, s[1] + p[1] / footprint.length], [0, 0]) as [number, number];
     const b: SceneBuilding = { id, footprint, height, top: height, center, place };
     const wallTint = wall.clone().offsetHSL(0, 0, ((hash(id) % 7) - 3) * 0.008);
-    const geo = buildingGeometry(b, wallTint, new THREE.Color(roofColor(id, place?.category, palette)));
+    // Coloured tiles on pitched roofs; flat roofs are concrete, as on the real blocks
+    const roof = pitchedRoofFor(b) ? roofColor(id, place?.category, palette) : palette.flatRoof;
+    const geo = buildingGeometry(b, wallTint, new THREE.Color(roof).offsetHSL(0, 0, ((hash(id + "r") % 5) - 2) * 0.012));
     geo.computeBoundingBox();
     b.top = geo.boundingBox!.max.y;
+    tanks.push(...roofTanks(b));
     triStart.push(tris);
     tris += geo.attributes.position.count / 3;
     parts.push(geo);
@@ -407,17 +493,17 @@ export function buildCampusScene(outline: FeatureCollection, extra: FeatureColle
   ground.forEach((g) => g.dispose());
 
   // Trees: on campus lawns and woods, around the edge for a lush horizon; never on buildings, roads or pitches
-  const trees = scatterTrees(boundary, list, roadLines, blocked, palette);
+  const trees = scatterTrees(boundary, list, roadLines, blocked, palette, clearings);
 
   const xs = boundary.map((p) => p[0]);
   const ns = boundary.map((p) => p[1]);
   const extent = xs.length ? { minX: Math.min(...xs) - 150, maxX: Math.max(...xs) + 150, minZ: -Math.max(...ns) - 150, maxZ: -Math.min(...ns) + 150 } : { minX: -800, maxX: 800, minZ: -800, maxZ: 800 };
 
-  return { buildings, triStart: Int32Array.from(triStart), list, ground: groundGeo, trees, boundary, extent };
+  return { buildings, triStart: Int32Array.from(triStart), list, ground: groundGeo, trees, tanks, boundary, extent };
 }
 
 /** Occupancy grid (4 m cells) so thousands of trees can be placed without hitting anything */
-function scatterTrees(boundary: [number, number][], buildings: SceneBuilding[], roads: { pts: [number, number][]; half: number }[], areas: { poly: [number, number][]; type: string }[], palette: ScenePalette) {
+function scatterTrees(boundary: [number, number][], buildings: SceneBuilding[], roads: { pts: [number, number][]; half: number }[], areas: { poly: [number, number][]; type: string }[], palette: ScenePalette, clearings: Clearing[]) {
   const matrices: THREE.Matrix4[] = [];
   const colors: THREE.Color[] = [];
   if (!boundary.length) return { matrices, colors };
@@ -439,6 +525,9 @@ function scatterTrees(boundary: [number, number][], buildings: SceneBuilding[], 
       for (let n = Math.min(...pn) - margin; n <= Math.max(...pn) + margin; n += CELL / 2) if (pointInPolygon([x, n], poly) || margin > 0) mark(x, n);
   };
   buildings.forEach((b) => fillPoly(b.footprint, 3));
+  for (const c of clearings)
+    for (let x = c.center[0] - c.radius; x <= c.center[0] + c.radius; x += CELL / 2)
+      for (let n = c.center[1] - c.radius; n <= c.center[1] + c.radius; n += CELL / 2) if (Math.hypot(x - c.center[0], n - c.center[1]) <= c.radius) mark(x, n);
   areas.filter((a) => a.type !== "wood" && a.type !== "grass" && a.type !== "farm").forEach((a) => fillPoly(a.poly, 1));
   for (const r of roads)
     for (let i = 0; i < r.pts.length - 1; i++) {
@@ -492,3 +581,32 @@ export function buildingAtTriangle(triStart: Int32Array, tri: number) {
 /** Camera distance ↔ web-map zoom, so the shell's zoom-based calls keep working in 3D */
 export const zoomToDistance = (z: number) => 300 * 2 ** (17 - z);
 export const distanceToZoom = (d: number) => 17 - Math.log2(d / 300);
+
+/**
+ * Where a landmark model stands and which way it faces: on the nearest road
+ * within `maxM` of the pin, turned so its local X runs along the road and its
+ * local +Z points back towards the pin's side (so a gate's tower stands where
+ * the pin is and its beams cross the road). Falls back to the pin itself.
+ */
+export function landmarkPose(extra: FeatureCollection | null, pin: [number, number], maxM = 30): { x: number; z: number; rotationY: number; center: [number, number] } {
+  const p = toMeters(pin);
+  let best: { d: number; at: [number, number]; angle: number } | null = null;
+  for (const f of extra?.features ?? []) {
+    if (f.properties?.kind !== "road" || f.geometry?.type !== "LineString") continue;
+    const pts = (f.geometry as LineString).coordinates.map((c) => toMeters(c as [number, number]));
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [a, b] = [pts[i], pts[i + 1]];
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+      const at: [number, number] = [a[0] + t * dx, a[1] + t * dy];
+      const d = Math.hypot(at[0] - p[0], at[1] - p[1]);
+      if (d <= maxM && (!best || d < best.d)) best = { d, at, angle: Math.atan2(dy, dx) };
+    }
+  }
+  if (!best) return { x: p[0], z: -p[1], rotationY: 0, center: p };
+  // rotation.y = angle puts local +X along the road; local +Z is then (sin, -cos) in east/north
+  let rotationY = best.angle;
+  const toPin = [p[0] - best.at[0], p[1] - best.at[1]];
+  if (toPin[0] * Math.sin(rotationY) - toPin[1] * Math.cos(rotationY) < 0) rotationY += Math.PI;
+  return { x: best.at[0], z: -best.at[1], rotationY, center: best.at };
+}
