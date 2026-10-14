@@ -58,6 +58,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!mounted) return;
 
+    // The student notification stream is not for the lecturer portal.
+    if (window.location.pathname.startsWith('/lecturer')) return;
+
     const eventSource = new EventSource('/api/notifications/stream');
 
     const handleNewMessage = (event: MessageEvent) => {
