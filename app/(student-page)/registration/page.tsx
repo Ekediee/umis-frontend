@@ -23,6 +23,8 @@ import { refreshAcademicStandingAction } from "@/app/actions/user";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
+import { ChangePasswordModal } from "@/components/shared/change-password-modal";
+import { useUserData } from "@/contexts/user-data-context";
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -60,6 +62,16 @@ export default function RegistrationPage() {
   const isLoadingStatus = isFetchingSemesterInfo;
   const [isRegistering, setIsRegistering] = useState(false);
   const [isSemesterConfirmOpen, setIsSemesterConfirmOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  // Change password from the commence-registration flow: same address as the profile cards
+  const userData = useUserData();
+  const accountEmail = userData?.user_data?.contact_information?.babcock_email || userData?.user_data?.contact_information?.email || "";
+  const matricNo = userData?.entity_id?.toString() ?? userData?.user_data?.matric_number ?? userData?.user_data?.personal_information?.matric_number ?? "";
+  const openChangePassword = () => {
+    setIsSemesterConfirmOpen(false);
+    setIsChangePasswordOpen(true);
+  };
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
@@ -375,7 +387,16 @@ export default function RegistrationPage() {
           const result = await registerSemesterAction();
           setIsRegistering(false);
           if (result.error) {
-            toast.error(result.error);
+            // The backend refuses students still on their default password: make the fix one tap away
+            if (/password/i.test(result.error)) {
+              toast.error("Change your password to continue", {
+                description: result.error,
+                duration: 12000,
+                action: { label: "Change password", onClick: openChangePassword },
+              });
+            } else {
+              toast.error(result.error);
+            }
           } else if (result.success) {
             // Re-fetch semester info and update the store so all pages stay in sync
             const statusResult = await getSemesterRegistrationStatusAction();
@@ -406,6 +427,14 @@ export default function RegistrationPage() {
           }
         }}
         isLoading={isRegistering}
+        onChangePassword={openChangePassword}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        matricNo={matricNo}
+        email={accountEmail}
       />
 
       <FundWalletModal
