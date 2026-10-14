@@ -12,7 +12,8 @@ import {
   Building2, 
   AlertTriangle,
   Info,
-  MonitorPlay
+  MonitorPlay,
+  KeyRound
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,7 @@ import { SemesterRegistrationConfirmModal } from "@/components/registration/regi
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
+import { showActionToast } from "@/components/shared/action-toast";
 import { useUserData } from "@/contexts/user-data-context";
 
 
@@ -362,10 +364,12 @@ export default function RegistrationPage() {
           if (result.error) {
             // The backend refuses students still on their default password: make the fix one tap away
             if (/password/i.test(result.error)) {
-              toast.error("Change your password to continue", {
+              showActionToast({
+                title: "Change your password to continue",
                 description: result.error,
-                duration: 12000,
-                action: { label: "Change password", onClick: openChangePassword },
+                actionLabel: "Change password",
+                actionIcon: KeyRound,
+                onAction: openChangePassword,
               });
             } else {
               toast.error(result.error);
