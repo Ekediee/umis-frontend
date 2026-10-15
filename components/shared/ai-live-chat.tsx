@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useStreamingChat } from "@/hooks/use-streaming-chat";
 import { X, Send, Bot, User, Loader2, Sparkles, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,11 @@ function Premium3DLightbulb(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+/** Routes where the assistant stays out of the way: the public landing page */
+const HIDDEN_ROUTES = new Set(["/"]);
+
 export function AILiveChat() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const { messages, sendMessage, status, error } = useStreamingChat({
@@ -117,6 +122,8 @@ export function AILiveChat() {
   const getMessageText = (m: any) => {
     return m.content || "";
   };
+
+  if (HIDDEN_ROUTES.has(pathname)) return null;
 
   return (
     <>
