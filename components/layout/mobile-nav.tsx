@@ -25,7 +25,7 @@ export function MobileNav() {
   if (isHidden) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-[84px] bg-white dark:bg-gray-900 border-t dark:border-gray-800 flex items-center justify-around px-4 z-50 pb-safe transition-colors duration-200">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 h-[calc(84px+env(safe-area-inset-bottom,0px))] bg-white dark:bg-gray-900 border-t dark:border-gray-800 flex items-center justify-around px-2 min-[400px]:px-4 z-50 pb-safe transition-colors duration-200">
       {navItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`));
         return (
@@ -33,7 +33,7 @@ export function MobileNav() {
             key={item.title} 
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center gap-[4px] w-16 h-14 transition-all rounded-2xl",
+              "flex flex-col items-center justify-center gap-[4px] w-16 max-[360px]:w-14 h-14 transition-all rounded-2xl",
               isActive ? "text-[#003cbb] dark:text-[#4d82ff]" : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             )}
           >

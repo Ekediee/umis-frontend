@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getUserData, getStudentProfileAction } from "@/app/actions/user";
 import type { UMISResponse } from "@/lib/session";
 
@@ -12,6 +12,15 @@ import type { UMISResponse } from "@/lib/session";
 const UserDataContext = createContext<UMISResponse | null | undefined>(
   undefined
 );
+
+type UserDataUpdater = (update: (prev: UMISResponse | null) => UMISResponse | null) => void;
+
+/**
+ * Lets a page patch the shared user data after a successful edit (e.g. a new
+ * email on the profile page), so the header, sidebar and change-password modal
+ * see the change straight away instead of after a full reload.
+ */
+const UpdateUserDataContext = createContext<UserDataUpdater>(() => {});
 
 /**
  * Fetches user session data once on mount and provides it to all
@@ -46,10 +55,14 @@ export function UserDataProvider({
     }
   }, [initialData]);
 
+  const update = useCallback<UserDataUpdater>((fn) => setUserData((prev) => fn(prev)), []);
+
   return (
-    <UserDataContext.Provider value={userData}>
-      {children}
-    </UserDataContext.Provider>
+    <UpdateUserDataContext.Provider value={update}>
+      <UserDataContext.Provider value={userData}>
+        {children}
+      </UserDataContext.Provider>
+    </UpdateUserDataContext.Provider>
   );
 }
 
@@ -64,4 +77,9 @@ export function useUserData(): UMISResponse | null {
     return null;
   }
   return ctx;
+}
+
+/** Patches the shared user data. A no-op outside `<UserDataProvider>`. */
+export function useUpdateUserData(): UserDataUpdater {
+  return useContext(UpdateUserDataContext);
 }

@@ -1,0 +1,38 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { SuccessModal } from './registration-status-modals';
+
+const push = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+}));
+
+describe('SuccessModal (course registration locked in)', () => {
+  beforeEach(() => push.mockClear());
+
+  it('does not show a payment amount', () => {
+    render(<SuccessModal isOpen onClose={vi.fn()} />);
+    expect(screen.getByText('Course Registration Locked In')).toBeInTheDocument();
+    expect(screen.queryByText(/Total Payment Required/i)).toBeNull();
+    expect(screen.queryByText(/₦/)).toBeNull();
+  });
+
+  it('sends the student to registration home when they click outside the modal', () => {
+    const onClose = vi.fn();
+    render(<SuccessModal isOpen onClose={onClose} />);
+    // The backdrop is the first child of the fixed overlay
+    // The modal is portalled to <body>
+    const backdrop = document.body.querySelector('.fixed > div') as HTMLElement;
+    fireEvent.click(backdrop);
+    expect(onClose).toHaveBeenCalled();
+    expect(push).toHaveBeenCalledWith('/registration');
+  });
+
+  it('keeps the existing buttons', () => {
+    render(<SuccessModal isOpen onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('Fund Wallet & Pay'));
+    expect(push).toHaveBeenCalledWith('/dashboard/finance/fees/payment');
+    fireEvent.click(screen.getByText('Return to Dashboard'));
+    expect(push).toHaveBeenCalledWith('/dashboard');
+  });
+});

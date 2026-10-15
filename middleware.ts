@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server'
 import { decodeJwt } from 'jose'
 
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
   const token = request.cookies.get('token')?.value
 
   // Both the landing page, login page, and forgot-password pages are accessible without authentication
@@ -10,7 +12,12 @@ export function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to the login page if they try to access protected routes
   if (!token && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const login = new URL('/login', request.url)
+    // A check-in QR scanned while signed out should land back on check-in after login.
+    if (pathname.startsWith('/attendance/check-in')) {
+      login.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+    }
+    return NextResponse.redirect(login)
   }
 
   // Validate token expiry for authenticated requests to protected routes.
@@ -60,8 +67,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - images (local images in public folder)
+     * - icons (PWA icons: needed before sign-in, e.g. installing from /login)
+     * - videos (the landing page film, watched before sign-in)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|images|favicon.ico|manifest.json|sw.js).*)',
+    '/((?!api|_next/static|_next/image|images|icons|videos|favicon.ico|manifest.json|sw.js|swe-worker-).*)',
   ],
 }

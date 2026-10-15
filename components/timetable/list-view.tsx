@@ -6,17 +6,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TimetableSession } from "../data/mock-data";
+import type { TimetableSession } from "./types";
 
 interface ListViewProps {
   sessions: TimetableSession[];
   onSessionClick: (session: TimetableSession) => void;
+  /** Header for the second column, which shows `session.lecturer`. Defaults to "LECTURER". */
+  personLabel?: string;
 }
 
-export function ListView({ sessions, onSessionClick }: ListViewProps) {
+export function ListView({ sessions, onSessionClick, personLabel = "LECTURER" }: ListViewProps) {
   // Sort sessions by day and time
   const dayOrder: Record<string, number> = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
-  
+
   const sortedSessions = [...sessions].sort((a, b) => {
     if (dayOrder[a.day] !== dayOrder[b.day]) {
       return dayOrder[a.day] - dayOrder[b.day];
@@ -25,19 +27,19 @@ export function ListView({ sessions, onSessionClick }: ListViewProps) {
   });
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-b-2xl  border border-t-0 border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-b-2xl border border-t-0 border-gray-100 dark:border-gray-800 overflow-hidden">
       <Table>
         <TableHeader className="bg-[#F8FAFC] dark:bg-gray-800/50">
           <TableRow className="hover:bg-transparent border-b-gray-100 dark:border-b-gray-800">
             <TableHead className="w-[200px] text-[12px] font-semibold text-gray-500 tracking-wider">CODE</TableHead>
-            <TableHead className="text-[12px] font-semibold text-gray-500 tracking-wider">LECTURER</TableHead>
+            <TableHead className="text-[12px] font-semibold text-gray-500 tracking-wider">{personLabel}</TableHead>
             <TableHead className="text-[12px] font-semibold text-gray-500 tracking-wider">VENUE</TableHead>
             <TableHead className="text-right text-[12px] font-semibold text-gray-500 tracking-wider">DAY/TIME</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sortedSessions.map((session) => (
-            <TableRow 
+            <TableRow
               key={session.id}
               onClick={() => onSessionClick(session)}
               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b-gray-100 dark:border-b-gray-800 transition-colors"

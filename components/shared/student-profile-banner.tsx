@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Camera, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { actionKey, notify } from "@/lib/notifications/bus";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { UMISResponse } from "@/lib/session";
 import { toTitleCase } from "@/lib/utils";
@@ -188,6 +189,7 @@ export function StudentProfileBanner({
       );
 
       toast.success(result.message || "Profile picture updated successfully!");
+      notify({ key: actionKey("photo-updated"), type: "PROFILE_PHOTO_UPDATED", title: "Profile photo updated", message: "Your new photo now shows across Pulse.", href: "/profile", silent: true });
       if (onAvatarUpdated) {
         onAvatarUpdated(proxiedUrl);
       }
@@ -300,7 +302,7 @@ export function StudentProfileBanner({
                 <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
                 <p className="text-[14px] md:text-[16px] font-bold text-gray-900 dark:text-gray-100">{displayMatric}</p>
               </div>
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-start">
                 <p className="text-[11px] md:text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</p>
                 <span className="bg-[#ECFDF3] dark:bg-[#027A48]/20 text-[#027A48] dark:text-[#12B76A] px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 tracking-wide">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>
@@ -314,12 +316,15 @@ export function StudentProfileBanner({
 
         {/* Profile Picture Card on dashboard*/}
         {showDetailedRow && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-4 md:p-6 flex flex-col md:flex-row items-stretch justify-between gap-4 md:gap-8 md:w-[49.5%] w-[100%] shrink-0 transition-colors duration-200">
+          // Full width until the xl two-column layout; inside, a container query
+          // decides the arrangement from the card's own width, not the viewport's.
+          <div className="@container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-[20px] p-4 md:p-6 w-full xl:w-[49.5%] shrink-0 transition-colors duration-200">
+          <div className="flex flex-col @[36rem]:flex-row items-stretch justify-between gap-4 @[36rem]:gap-8 h-full">
 
             {/* Avatar + Name */}
-            <div className="flex flex-row items-center gap-4 w-full">
+            <div className="flex flex-row items-center gap-4 @[28rem]:gap-5 w-full min-w-0">
               <div className="relative shrink-0">
-                <div className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
+                <div className="w-[80px] h-[80px] @[28rem]:w-[104px] @[28rem]:h-[104px] @[36rem]:w-[120px] @[36rem]:h-[120px] rounded-full bg-gray-200 dark:bg-gray-800 border-[5px] border-white dark:border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden relative transition-colors duration-200">
                   <Image
                     src={avatarUrl}
                     alt={`${displayName}`}
@@ -349,27 +354,28 @@ export function StudentProfileBanner({
                 )}
               </div>
 
-              <div className="text-left select-text">
-                <h2 className="text-[18px] md:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight select-all">{displayName}</h2>
-                <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400 mt-1">{displayProgramme}</p>
-                <p className="text-[12px] font-normal text-gray-400 dark:text-gray-500 mt-1 break-all select-all">{displayEmail}</p>
+              <div className="text-left select-text min-w-0">
+                <h2 className="text-[18px] @[28rem]:text-[20px] @[36rem]:text-[22px] font-semibold text-gray-900 dark:text-gray-100 leading-tight select-all text-balance">{displayName}</h2>
+                <p className="text-[14px] font-medium text-gray-500 dark:text-gray-400 mt-1 text-pretty">{displayProgramme}</p>
+                <p className="text-[12px] font-normal text-gray-400 dark:text-gray-500 mt-1 truncate select-all" title={displayEmail}>{displayEmail}</p>
               </div>
             </div>
 
-            {/* Matric + Status — below on mobile, right side on md+ */}
-            <div className="flex flex-row items-center flex-wrap gap-3 justify-between border-t border-gray-100 dark:border-gray-800 pt-4 md:border-t-0 md:pt-0 md:border-l md:border-gray-100 md:dark:border-gray-800 md:pl-8 md:flex-col md:items-start md:justify-center md:gap-4 shrink-0">
+            {/* Matric + Status — below when the card is narrow, beside the name when it has room */}
+            <div className="flex flex-row items-center flex-wrap gap-3 justify-between border-t border-gray-100 dark:border-gray-800 pt-4 @[36rem]:border-t-0 @[36rem]:pt-0 @[36rem]:border-l @[36rem]:border-gray-100 @[36rem]:dark:border-gray-800 @[36rem]:pl-8 @[36rem]:flex-col @[36rem]:items-start @[36rem]:justify-center @[36rem]:gap-4 shrink-0">
               <div>
                 <p className="text-[11px] md:text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1">Matric no</p>
                 <p className="text-[14px] md:text-[16px] font-bold text-gray-900 dark:text-gray-100">{displayMatric}</p>
               </div>
               <div className="flex flex-col">
                 <p className="text-[11px] md:text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</p>
-                <span className="bg-[#ECFDF3] dark:bg-[#027A48]/20 text-[#027A48] dark:text-[#12B76A] px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 tracking-wide">
+                <span className="bg-[#ECFDF3] dark:bg-[#027A48]/20 text-[#027A48] dark:text-[#12B76A] px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-[12px] font-bold flex items-center gap-1.5 tracking-wide w-fit">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>
                   {displayStatus.toUpperCase()}
                 </span>
               </div>
             </div>
+          </div>
           </div>
         )}
 
