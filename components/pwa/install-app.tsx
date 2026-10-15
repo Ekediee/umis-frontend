@@ -62,7 +62,7 @@ export function InstallAppHost() {
     }
     if (platform === "native") {
       const accepted = await promptInstall();
-      if (accepted) toast.success("Pulse is installing. Find it on your home screen or app list.");
+      if (accepted) toast.success("Pulse is installing. Find it on your home screen, desktop or app list.");
     }
   }, [platform]);
 
@@ -107,7 +107,8 @@ export function InstallAppHost() {
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Get the Pulse app</p>
                 <p className="text-[13px] leading-snug text-gray-500 dark:text-gray-400 mt-0.5">
-                  Opens in one tap from your home screen, full screen, with class and fee alerts.
+                  <span className="md:hidden">Opens in one tap from your home screen, full screen, with class and fee alerts.</span>
+                  <span className="hidden md:inline">Opens in its own window from your desktop or taskbar, with class and fee alerts.</span>
                 </p>
               </div>
               <button type="button" onClick={dismiss} aria-label="Not now" className="-mt-1 -mr-1 w-8 h-8 shrink-0 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -133,8 +134,9 @@ export function InstallAppHost() {
 
 function AppIcon({ className }: { className?: string }) {
   return (
-    <span className={cn("relative block overflow-hidden shrink-0 bg-[#003cbb]", className)}>
-      <Image src="/icons/icon-192.png" alt="" fill sizes="64px" className="object-cover" />
+    <span className={cn("relative block overflow-hidden shrink-0 bg-white border border-[#dbe5fb] dark:border-white/10", className)}>
+      {/* The BU Pulse logomark, padded inside a white app tile */}
+      <Image src="/images/bu-pulse-logomark.svg" alt="" fill sizes="64px" className="object-contain p-[18%]" />
     </span>
   );
 }

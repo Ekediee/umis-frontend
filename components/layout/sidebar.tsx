@@ -12,7 +12,6 @@ import {
   Headset,
   X,
   BadgeCheck,
-  Activity,
   LogOut,
   MoreVertical,
   KeyRound,
@@ -135,9 +134,7 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
     <div className="w-64 border-r dark:border-gray-800 bg-white dark:bg-gray-900 h-screen hidden md:flex flex-col flex-shrink-0 transition-colors duration-200">
       {/* Brand */}
       <div className="px-6 py-8 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#eef3fd] dark:bg-[#003cbb]/20 flex items-center justify-center">
-          <Activity className="w-5 h-5 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={2.5} />
-        </div>
+        <Image src="/images/bu-pulse-logomark.svg" alt="BU Pulse" width={28} height={40} priority className="w-7 h-10 shrink-0" />
         <div>
           <h1 className="font-semibold text-[15px] leading-tight text-gray-900 dark:text-gray-100">Pulse</h1>
           <p className="text-[13px] text-gray-500 dark:text-gray-400">Undergraduate</p>
