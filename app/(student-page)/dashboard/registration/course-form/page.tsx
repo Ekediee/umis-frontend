@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, Download, Printer, GraduationCap, MapPin, User, Users, Shield, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Download, Printer, Camera,GraduationCap, MapPin, User, Users, Shield, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState, Suspense, useEffect } from "react";
 import { toPng } from "html-to-image";
@@ -33,6 +33,9 @@ function CourseFormContent() {
   const { avatarUrl } = useStudentAvatar(userData);
   const [photoFailed, setPhotoFailed] = useState(false);
   const studentPhoto = !photoFailed && avatarUrl !== DEFAULT_AVATAR && !isPlaceholderAvatar(avatarUrl) ? avatarUrl : null;
+  // The form can only be downloaded or printed once the student's own photo is on it
+  const profileLoaded = userData !== null;
+  const canExport = !!studentPhoto;
 
   useEffect(() => {
     getStudentProfileAction().then(setUserData);
@@ -90,7 +93,7 @@ function CourseFormContent() {
   }, []);
 
   const handleDownload = async () => {
-    if (!formRef.current) return;
+    if (!formRef.current || !canExport) return;
     try {
       setIsDownloading(true);
       const dataUrl = await toPng(formRef.current, {
@@ -119,6 +122,7 @@ function CourseFormContent() {
   };
 
   const handlePrint = () => {
+    if (!canExport) return;
     window.print();
   };
 
@@ -181,8 +185,15 @@ function CourseFormContent() {
           body * {
             visibility: hidden;
           }
-          #printable-form, #printable-form * {
+          #printable-form, #printable-form *,
+          #print-photo-required, #print-photo-required * {
             visibility: visible;
+          }
+          #print-photo-required {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
           }
           #printable-form {
             position: absolute;
@@ -221,7 +232,8 @@ function CourseFormContent() {
           <Button
             variant="outline"
             onClick={handleDownload}
-            disabled={isDownloading}
+            disabled={isDownloading || !canExport}
+            title={canExport ? undefined : "Upload your photo first"}
             className="border-[#003cbb] text-[#003cbb] rounded-[10px] px-6 py-2 h-auto text-[13px] font-medium gap-2 hover:bg-[#f5f8fe]"
           >
             <Download className="w-4 h-4" />
@@ -229,6 +241,8 @@ function CourseFormContent() {
           </Button>
           <Button
             onClick={handlePrint}
+            disabled={!canExport}
+            title={canExport ? undefined : "Upload your photo first"}
             className="bg-[#003cbb] hover:bg-[#003095] text-white rounded-[10px] px-6 py-2 h-auto text-[13px] font-medium gap-2"
           >
             <Printer className="w-4 h-4" />
@@ -237,7 +251,35 @@ function CourseFormContent() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto flex flex-col gap-4 pb-12 print:max-w-none print:px-0 print:pb-0">
+      {profileLoaded && !canExport && (
+        <>
+          <div role="status" className="max-w-4xl mx-auto mb-4 flex flex-col sm:flex-row sm:items-center gap-3 rounded-[12px] border border-[#fde68a] bg-[#fffbeb] dark:bg-amber-950/30 dark:border-amber-900/50 px-4 py-3.5 print:hidden">
+            <span className="w-9 h-9 rounded-full bg-white dark:bg-amber-900/40 border border-[#fde68a] dark:border-amber-800/60 flex items-center justify-center shrink-0">
+              <Camera className="w-[18px] h-[18px] text-[#b45309] dark:text-amber-400" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold text-[#92400e] dark:text-amber-300">Upload your photo to download your course form</p>
+              <p className="text-[13px] text-[#b45309] dark:text-amber-400/90 mt-0.5">
+                Your course form needs your own passport photo. Upload it on your profile and it will appear here, then you can download or print the form.
+              </p>
+            </div>
+            <Link
+              href="/profile"
+              className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-[10px] bg-[#003cbb] hover:bg-[#002e8f] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white text-[13px] font-semibold whitespace-nowrap transition-colors shrink-0"
+            >
+              <Camera className="w-4 h-4" />
+              Upload photo
+            </Link>
+          </div>
+          {/* Ctrl+P without a photo prints this instead of the form */}
+          <div id="print-photo-required" className="hidden print:block text-center py-24">
+            <p className="text-[18px] font-semibold text-gray-900">Upload your photo first</p>
+            <p className="text-[14px] text-gray-600 mt-2">Your course form can only be printed once your own passport photo is on it. Upload it on your Pulse profile.</p>
+          </div>
+        </>
+      )}
+
+      <div className={`max-w-4xl mx-auto flex flex-col gap-4 pb-12 print:max-w-none print:px-0 print:pb-0 ${canExport ? "" : "print:hidden"}`}>
         {/* Course Form Card */}
         <div id="printable-form" ref={formRef} className="bg-white text-gray-900 border border-gray-200 rounded-[12px] p-6 sm:p-10 md:p-12 print:p-0 relative overflow-hidden print:shadow-none print:border-none print:rounded-none">
           
