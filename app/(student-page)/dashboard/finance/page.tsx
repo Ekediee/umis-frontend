@@ -14,7 +14,7 @@ import { fundWalletAction, getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
 import { toast } from "sonner";
-import { actionKey, notify } from "@/lib/notifications/bus";
+import { notify } from "@/lib/notifications/bus";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
   getWalletFundingHistory, 
