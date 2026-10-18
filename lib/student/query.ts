@@ -18,6 +18,10 @@ export function invalidateStudent(prefix = "") {
   listeners.forEach((l) => l(prefix));
 }
 
+export function clearStudentQueryCache() {
+  cache.clear();
+}
+
 export interface StudentQuery<T> {
   data: T | undefined;
   error: ApiError | null;

@@ -10,6 +10,7 @@
  */
 
 import { ApiError } from "@/lib/api/error";
+import { performClientLogout } from "@/lib/auth-cleanup";
 
 export { ApiError };
 
@@ -47,7 +48,9 @@ export async function http<T>({ method, path, body, idempotent }: LiveRequest): 
     } catch {
       // non-JSON error body
     }
-    if (res.status === 401 && typeof window !== "undefined") window.location.href = "/login?reason=expired";
+    if (res.status === 401 && typeof window !== "undefined") {
+      void performClientLogout("session_expired", true);
+    }
     throw new ApiError(message, code, res.status);
   }
 

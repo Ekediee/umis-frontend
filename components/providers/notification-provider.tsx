@@ -121,24 +121,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setMounted(true);
   }, []);
 
-  // 2. Persist state changes
+  // 2. Persist state changes only while on signed-in student routes
   useEffect(() => {
-    if (!mounted) return;
+    if (!active) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications.slice(0, MAX_STORED)));
     } catch {}
-  }, [notifications, mounted]);
+  }, [notifications, active]);
 
-  // 3. Other tabs: keep the inbox and badge in step
+  // 3. Other tabs & logout cleanup: keep the inbox and badge in step
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key !== STORAGE_KEY) return;
+      if (e.key !== null && e.key !== STORAGE_KEY) return;
       const next = readStored();
       known.current = new Set(next.map((n) => n.id));
       setNotifications(next);
     };
+    const onSessionClear = () => {
+      known.current.clear();
+      setNotifications([]);
+    };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("umis:session-cleared", onSessionClear);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("umis:session-cleared", onSessionClear);
+    };
   }, []);
 
   /**

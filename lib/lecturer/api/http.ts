@@ -55,7 +55,13 @@ export async function http<T>({ method, path, body, idempotent }: LiveRequest): 
     } catch {
       // non-JSON error body
     }
-    if (res.status === 401 && typeof window !== "undefined") window.location.href = "/lecturer/sign-in?reason=expired";
+    if (res.status === 401 && typeof window !== "undefined") {
+      void import("@/lib/auth-cleanup")
+        .then(({ clearBrowserSessionCache }) => clearBrowserSessionCache({ reason: "expired", isInitiator: true }))
+        .finally(() => {
+          window.location.replace("/lecturer/sign-in?reason=expired");
+        });
+    }
     throw new ApiError(message, code, res.status);
   }
 

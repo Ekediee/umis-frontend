@@ -86,8 +86,11 @@ export function SessionTimeoutProvider({ children }: { children: React.ReactNode
       const stored = localStorage.getItem(STORAGE_KEY_LAST_ACTIVE);
       if (stored) {
         const parsed = parseInt(stored, 10);
-        // Only use stored timestamp if within plausible past range
-        if (!isNaN(parsed) && parsed <= now && now - parsed < IDLE_TIMEOUT_MS) {
+        if (!isNaN(parsed) && parsed <= now) {
+          if (now - parsed >= IDLE_TIMEOUT_MS) {
+            performClientLogout("idle_timeout", true);
+            return;
+          }
           lastActiveRef.current = parsed;
         } else {
           lastActiveRef.current = now;

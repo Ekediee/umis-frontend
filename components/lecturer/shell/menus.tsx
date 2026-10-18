@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { formatSemester } from "@/lib/lecturer/format";
 import { useTheme } from "@/components/theme-provider";
 import { signOutLecturer } from "@/app/actions/lecturer-auth";
+import { clearBrowserSessionCache } from "@/lib/auth-cleanup";
 import { PersonAvatar } from "../ui/primitives";
 import { ACCOUNT_NAV } from "./nav";
 import { useLecturer } from "./lecturer-provider";
@@ -118,7 +119,7 @@ export function AvatarMenu({ size = 40 }: { size?: number }) {
   const signOut = async (everywhere: boolean) => {
     setSigningOut(true);
     try {
-      sessionStorage.clear();
+      await clearBrowserSessionCache({ reason: "signed-out", isInitiator: true });
     } catch {
       // ignore
     }

@@ -44,6 +44,10 @@ export function invalidate(prefix = "") {
   listeners.forEach((l) => l(prefix));
 }
 
+export function clearLecturerQueryCache() {
+  cache.clear();
+}
+
 export interface QueryState<T> {
   data: T | undefined;
   error: ApiError | null;

@@ -89,8 +89,8 @@ function Premium3DLightbulb(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Routes where the assistant stays out of the way: the public landing page */
-const HIDDEN_ROUTES = new Set(["/"]);
+/** Routes where the assistant stays out of the way: public landing and auth pages */
+const HIDDEN_ROUTES = new Set(["/", "/login", "/forgot-password"]);
 
 export function AILiveChat() {
   const pathname = usePathname();
@@ -98,10 +98,20 @@ export function AILiveChat() {
   const { avatarUrl, setAvatarUrl, placeholder } = useStudentAvatar();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const { messages, sendMessage, status, error } = useStreamingChat({
+  const { messages, sendMessage, status, error, setMessages } = useStreamingChat({
     api: '/api/chat',
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleSessionCleared = () => {
+      setMessages([]);
+      setInputValue("");
+      setIsOpen(false);
+    };
+    window.addEventListener("umis:session-cleared", handleSessionCleared);
+    return () => window.removeEventListener("umis:session-cleared", handleSessionCleared);
+  }, [setMessages]);
 
   useEffect(() => {
     // Diagnostic logging for debugging client-side message handling

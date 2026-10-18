@@ -1,7 +1,47 @@
 import "server-only";
 import * as fs from "fs";
 import * as path from "path";
+import * as dns from "dns";
 import { Agent } from "undici";
+
+// Fallback DNS resolver using public nameservers (8.8.8.8, 1.1.1.1) in case
+// the container's /etc/resolv.conf only lists an unreachable internal server.
+const fallbackResolver = new dns.Resolver();
+try {
+  fallbackResolver.setServers(["8.8.8.8", "1.1.1.1", "196.11.231.176"]);
+} catch {
+  // Ignore if setting servers fails
+}
+
+const resilientLookup = (
+  hostname: string,
+  options: dns.LookupOptions,
+  callback: (err: NodeJS.ErrnoException | null, address: string | dns.LookupAddress[], family?: number) => void
+) => {
+  dns.lookup(hostname, options, (err, address, family) => {
+    if (!err) {
+      return callback(null, address, family);
+    }
+    fallbackResolver.resolve4(hostname, (resolveErr, addresses) => {
+      if (resolveErr || !addresses || addresses.length === 0) {
+        return callback(err, "", 4);
+      }
+      const wantAll =
+        typeof options === "object" &&
+        options !== null &&
+        "all" in options &&
+        Boolean(options.all);
+      if (wantAll) {
+        return callback(
+          null,
+          addresses.map((addr) => ({ address: addr, family: 4 })),
+          4
+        );
+      }
+      return callback(null, addresses[0], 4);
+    });
+  });
+};
 
 // ── TLS bypass ────────────────────────────────────────────────────────────────
 // Node's built-in fetch uses undici which ignores NODE_TLS_REJECT_UNAUTHORIZED.
@@ -11,7 +51,12 @@ import { Agent } from "undici";
 // DO NOT add process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0" here — it would
 // disable TLS verification globally for the entire Node process, including
 // third-party integrations. The scoped agent below is the correct minimal fix.
-const insecureAgent = new Agent({ connect: { rejectUnauthorized: false } });
+const insecureAgent = new Agent({
+  connect: {
+    rejectUnauthorized: false,
+    lookup: resilientLookup,
+  },
+});
 
 // Ensure the logs directory exists at startup/import time
 const logsDir = path.join(process.cwd(), "logs");
@@ -92,6 +137,8 @@ export function sanitize<T = unknown>(obj: T): T {
       lowerKey.includes("authorization")
     ) {
       sanitized[key] = "*****";
+    } else if (lowerKey === "photo" && typeof value === "string" && value.length > 100) {
+      sanitized[key] = `[base64 ${value.length} chars]`;
     } else if (typeof value === "object" || typeof value === "string") {
       sanitized[key] = sanitize(value);
     } else {

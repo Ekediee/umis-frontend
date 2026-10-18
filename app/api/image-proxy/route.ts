@@ -142,8 +142,8 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        // Cache for 1 hour in the browser and CDN
-        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        // Cache privately in the user's browser only (cleared on logout)
+        "Cache-Control": "private, max-age=3600, stale-while-revalidate=86400",
       },
     });
   } catch (err: any) {

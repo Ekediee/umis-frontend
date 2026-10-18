@@ -8,6 +8,7 @@ import { getUserData, getStudentProfileAction } from "@/app/actions/user";
 import { StudyTimerHost } from "@/components/student/study-timer";
 import { isFeatureEnabled } from "@/lib/features";
 import { InstallAppHost } from "@/components/pwa/install-app";
+import { ExamPortalProvider } from "@/components/exam/exam-portal-provider";
 
 export default async function DashboardLayout({
   children,
@@ -22,23 +23,25 @@ export default async function DashboardLayout({
   return (
     <UserDataProvider initialData={initialUserData}>
       <SessionTimeoutProvider>
-        <div className="flex h-screen w-full bg-[#1E1E1E] overflow-hidden">
-          {/* Sidebar background is white, and it stays on the left */}
-          <Sidebar initialUserData={initialUserData} />
-          
-          {/* Main Content Area overlapping the dark background */}
-          <div className="flex-1 flex flex-col min-w-0 bg-[#F4F5F7] dark:bg-black overflow-hidden relative z-10 transition-colors duration-200">
-             <Header initialUserData={initialUserData} />
-             <MainContent>
-                {children}
-             </MainContent>
-             <MobileNav />
+        <ExamPortalProvider>
+          <div className="flex h-screen w-full bg-[#1E1E1E] overflow-hidden">
+            {/* Sidebar background is white, and it stays on the left */}
+            <Sidebar initialUserData={initialUserData} />
+            
+            {/* Main Content Area overlapping the dark background */}
+            <div className="flex-1 flex flex-col min-w-0 bg-[#F4F5F7] dark:bg-black overflow-hidden relative z-10 transition-colors duration-200">
+               <Header initialUserData={initialUserData} />
+               <MainContent>
+                  {children}
+               </MainContent>
+               <MobileNav />
+            </div>
+            {/* Study timer sheet + floating pill, available on every student page */}
+            {isFeatureEnabled("insights") && <StudyTimerHost />}
+            {/* "Install Pulse" prompt + iPhone walkthrough */}
+            <InstallAppHost />
           </div>
-          {/* Study timer sheet + floating pill, available on every student page */}
-          {isFeatureEnabled("insights") && <StudyTimerHost />}
-          {/* "Install Pulse" prompt + iPhone walkthrough */}
-          <InstallAppHost />
-        </div>
+        </ExamPortalProvider>
       </SessionTimeoutProvider>
     </UserDataProvider>
   );
