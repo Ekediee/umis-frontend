@@ -146,3 +146,13 @@
     @apply font-sans;
   }
 }
+
+/* Horizontal tab rails: scroll without a visible bar */
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
