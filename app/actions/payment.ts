@@ -9,6 +9,8 @@ import type {
   InitialisePaymentResult,
   FundWalletResult,
   GetWalletBalanceResult,
+  StudentFeesData,
+  GetStudentFeesResult,
 } from "@/app/actions/payment.types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -202,6 +204,62 @@ export async function getWalletBalanceAction(): Promise<GetWalletBalanceResult> 
     };
   } catch (err) {
     console.error("getWalletBalanceAction error:", err);
+    return {
+      success: false,
+      error: "Could not connect to the server. Please try again.",
+    };
+  }
+}
+
+/**
+ * Fetches the student's fee summary from GET /api/v1/payment/student-fees.
+ */
+export async function getStudentFeesAction(): Promise<GetStudentFeesResult> {
+  const apiUrl = getApiUrl();
+  if (!apiUrl) {
+    return { success: false, error: "Internal error: API is not configured." };
+  }
+
+  try {
+    const response = await loggedFetch(`${apiUrl}/api/v1/payment/student-fees`, {
+      method: "GET",
+      headers: await getAuthHeaders(),
+      cache: "no-store",
+    });
+
+    const json = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: json?.message ?? "Failed to fetch student fees.",
+      };
+    }
+
+    const raw = json?.data;
+    const parseNum = (v: unknown): number => {
+      if (typeof v === "number") return isNaN(v) ? 0 : v;
+      if (typeof v === "string") {
+        const cleaned = v.replace(/,/g, "").trim();
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
+
+    const data: StudentFeesData = {
+      estimated_full_session_fee: parseNum(raw?.estimated_full_session_fee),
+      estimated_semester_fee: parseNum(raw?.estimated_semester_fee),
+      amount_paid_for_semester: parseNum(raw?.amount_paid_for_semester),
+      total_outstanding_fees: parseNum(raw?.total_outstanding_fees),
+    };
+
+    return {
+      success: true,
+      data,
+    };
+  } catch (err) {
+    console.error("getStudentFeesAction error:", err);
     return {
       success: false,
       error: "Could not connect to the server. Please try again.",

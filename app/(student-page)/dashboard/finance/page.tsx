@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { Info, ChevronDown, ChevronRight, ThumbsUp, Eye, Download, EyeOff } from "lucide-react";
+import { Info, ChevronRight, ThumbsUp, Eye, Download, EyeOff, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -10,10 +10,11 @@ import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
 import { FundWalletModal, FundWalletStep } from "@/components/fees/fund-wallet-modal";
-import { fundWalletAction } from "@/app/actions/payment";
+import { fundWalletAction, getStudentFeesAction } from "@/app/actions/payment";
+import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
 import { toast } from "sonner";
-import { actionKey, notify } from "@/lib/notifications/bus";
+import { notify } from "@/lib/notifications/bus";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
   getWalletFundingHistory, 
@@ -54,6 +55,16 @@ const paymentHistoryData = [
   },
 ];
 
+function formatFee(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || isNaN(amount)) return "₦0";
+  const absAmount = Math.abs(amount);
+  const hasDecimals = absAmount % 1 !== 0;
+  return `₦${absAmount.toLocaleString(undefined, {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 function FinancePageContent() {
   const router = useRouter();
   const [showFullfee, toggleFullfee, mountedFullfee] = usePersistentToggle("showFullfee", true);
@@ -62,6 +73,8 @@ function FinancePageContent() {
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const { balance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
+  const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
+  const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [fundWalletStep, setFundWalletStep] = useState<FundWalletStep>("amount");
   const [showWalletBalance, setShowWalletBalance] = useState(true);
@@ -69,6 +82,16 @@ function FinancePageContent() {
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
   const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "wallet">("payment");
   const [walletFundingHistory, setWalletFundingHistory] = useState<WalletFundingRecord[]>([]);
+
+  const loadStudentFees = useCallback(() => {
+    getStudentFeesAction().then((res) => {
+      if (res.success && res.data) {
+        setStudentFees(res.data);
+      }
+    }).catch((err) => {
+      console.warn("Failed to reload student fees:", err);
+    });
+  }, []);
 
   const loadWalletHistory = useCallback(async () => {
     try {
@@ -82,6 +105,15 @@ function FinancePageContent() {
   useEffect(() => {
     getUserData().then(setUserData);
     fetchBalance();
+    getStudentFeesAction().then((res) => {
+      if (res.success && res.data) {
+        setStudentFees(res.data);
+      }
+      setIsLoadingFees(false);
+    }).catch((err) => {
+      console.warn("Failed to load student fees:", err);
+      setIsLoadingFees(false);
+    });
     getWalletFundingHistory().then((history) => {
       setWalletFundingHistory(history);
     }).catch((err) => {
@@ -142,6 +174,7 @@ function FinancePageContent() {
           setIsFundWalletModalOpen(true);
           // Refetch fresh balance from backend
           fetchBalance();
+          loadStudentFees();
 
           // Record wallet funding transaction event
           recordWalletFundingEvent({
@@ -166,13 +199,43 @@ function FinancePageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const previousSemesters = [
-    { value: "1st-semester-200l", label: "1st Semester 200L", session: "2025/2026" },
-    { value: "2nd-semester-100l", label: "2nd Semester 100L", session: "2025/2026" },
-    { value: "1st-semester-100l", label: "1st Semester 100L", session: "2025/2026" }
-  ];
-  const [selectedSemester, setSelectedSemester] = useState<typeof previousSemesters[number] | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const paidAmount = studentFees?.amount_paid_for_semester ?? 0;
+  const outstandingAmount = studentFees ? Math.abs(studentFees.total_outstanding_fees) : 0;
+  const hasOutstandingFees = outstandingAmount > 0;
+
+  // Option 1: Holistic Net Obligation Evaluation
+  // Total obligation accounts for amount already paid + total remaining outstanding debt (past + current)
+  const totalObligation = paidAmount + outstandingAmount;
+
+  const progressPercent = totalObligation > 0
+    ? Math.min(100, Math.max(0, Math.round((paidAmount / totalObligation) * 100)))
+    : (outstandingAmount === 0 && paidAmount > 0 ? 100 : 0);
+
+  const isFinancialApproved = progressPercent >= 75;
+
+  const standingBadge = progressPercent >= 100
+    ? {
+        label: "GREAT",
+        badgeClass: "bg-[#D3E0FF] dark:bg-[#2563EB]/25 text-[#1E40AF] dark:text-[#60a5fa]",
+        dotClass: "bg-[#1E40AF] dark:bg-[#60a5fa]",
+      }
+    : progressPercent >= 75
+    ? {
+        label: "GOOD",
+        badgeClass: "bg-[#D3E0FF] dark:bg-[#2563EB]/25 text-[#1E40AF] dark:text-[#60a5fa]",
+        dotClass: "bg-[#1E40AF] dark:bg-[#60a5fa]",
+      }
+    : progressPercent >= 50
+    ? {
+        label: "FAIR",
+        badgeClass: "bg-[#FEF0C7] dark:bg-[#F59E0B]/20 text-[#B54708] dark:text-[#FBBF24]",
+        dotClass: "bg-[#B54708] dark:bg-[#FBBF24]",
+      }
+    : {
+        label: "DEFICIT",
+        badgeClass: "bg-[#FEE4E2] dark:bg-[#D92D20]/20 text-[#D92D20] dark:text-[#F87171]",
+        dotClass: "bg-[#D92D20] dark:text-[#F87171]",
+      };
 
   return (
     <div className="max-w-6x px-4 md:px-8 flex flex-col gap-6 pb-12">
@@ -184,19 +247,36 @@ function FinancePageContent() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <span className="text-[15px] font-medium text-gray-600 dark:text-gray-400">Financial Standing</span>
-              <div className="bg-[#D3E0FF] dark:bg-[#2563EB]/25 text-[#1E40AF] dark:text-[#60a5fa] px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-1.5 transition-colors">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#1E40AF] dark:bg-[#60a5fa]"></span>
-                GREAT
+              <div className={cn(
+                "px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-1.5 transition-colors",
+                standingBadge.badgeClass
+              )}>
+                <span className={cn("w-1.5 h-1.5 rounded-full", standingBadge.dotClass)}></span>
+                {isLoadingFees && !studentFees ? "..." : standingBadge.label}
               </div>
             </div>
 
             <div className="mb-4">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-[18px] font-bold text-gray-900 dark:text-gray-100">Payment Progress 100%</span>
-                <span className="text-[15px] font-bold text-gray-900 dark:text-gray-100">100%</span>
+                <span className="text-[18px] font-bold text-gray-900 dark:text-gray-100">
+                  Payment Progress {isLoadingFees && !studentFees ? "..." : `${progressPercent}%`}
+                </span>
+                <span className="text-[15px] font-bold text-gray-900 dark:text-gray-100">
+                  {isLoadingFees && !studentFees ? "..." : `${progressPercent}%`}
+                </span>
               </div>
               <div className="h-3 w-full bg-white/60 dark:bg-white/20 rounded-full overflow-hidden transition-colors">
-                <div className="h-full bg-[#003cbb] dark:bg-[#2563EB] rounded-full w-full"></div>
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500 ease-out",
+                    progressPercent >= 75
+                      ? "bg-[#003cbb] dark:bg-[#2563EB]"
+                      : progressPercent >= 50
+                      ? "bg-[#f59e0b] dark:bg-[#eab308]"
+                      : "bg-[#d92d20] dark:bg-[#ef4444]"
+                  )}
+                  style={{ width: `${isLoadingFees && !studentFees ? 0 : progressPercent}%` }}
+                ></div>
               </div>
             </div>
           </div>
@@ -210,11 +290,29 @@ function FinancePageContent() {
         </div>
 
         {/* Right: Financial Approval (takes 1 column) */}
-        <div className="lg:col-span-1 bg-[#ECFDF3] dark:bg-[#10B981]/10 border border-[#D1FADF] dark:border-[#10B981]/25 rounded-[24px] p-6 flex flex-col justify-between transition-colors min-h-[140px]">
+        <div className={cn(
+          "lg:col-span-1 border rounded-[24px] p-6 flex flex-col justify-between transition-colors min-h-[140px]",
+          isFinancialApproved
+            ? "bg-[#ECFDF3] dark:bg-[#10B981]/10 border-[#D1FADF] dark:border-[#10B981]/25"
+            : "bg-[#FFF4ED] dark:bg-[#F79009]/10 border-[#FEDF89] dark:border-[#F79009]/25"
+        )}>
           <p className="text-[15px] font-medium text-gray-600 dark:text-gray-400">Financial Approval</p>
           <div className="flex items-center justify-start flex-1 mt-4">
-            <div className="bg-[#ECFDF3] dark:bg-[#10B981]/15 text-[#12B76A] dark:text-[#4ade80] px-4 py-3 rounded-[16px] text-[15px] font-bold inline-flex items-center gap-2 border border-[#D1FADF] dark:border-[#10B981]/25 transition-colors w-full justify-center">
-              <ThumbsUp className="w-5 h-5 text-[#12B76A] dark:text-[#4ade80]" fill="currentColor" /> Approved
+            <div className={cn(
+              "px-4 py-3 rounded-[16px] text-[15px] font-bold inline-flex items-center gap-2 border transition-colors w-full justify-center",
+              isFinancialApproved
+                ? "bg-[#ECFDF3] dark:bg-[#10B981]/15 text-[#12B76A] dark:text-[#4ade80] border-[#D1FADF] dark:border-[#10B981]/25"
+                : "bg-[#FFF4ED] dark:bg-[#F79009]/15 text-[#B54708] dark:text-[#FDB022] border-[#FEDF89] dark:border-[#F79009]/25"
+            )}>
+              {isFinancialApproved ? (
+                <>
+                  <ThumbsUp className="w-5 h-5 text-[#12B76A] dark:text-[#4ade80]" fill="currentColor" /> Approved
+                </>
+              ) : (
+                <>
+                  <Clock className="w-5 h-5 text-[#B54708] dark:text-[#FDB022]" /> Pending Approval
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -236,26 +334,42 @@ function FinancePageContent() {
                 <button
                   type="button"
                   onClick={toggleFullfee}
-                  className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors rounded-full touch-manipulation shrink-0 ml-1"
-                  aria-label={showFullfee ? "Hide CGPA" : "Show CGPA"}
+                  className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-gray-400 active:text-gray-600 md:hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors rounded-full touch-manipulation shrink-0 ml-1 mb-2"
+                  aria-label={showFullfee ? "Hide fee figures" : "Show fee figures"}
                 >
                   {showFullfee ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
               </div>
               {mounted && !showFullfee ? (
-                <p className="text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[22px] font-bold text-gray-900 dark:text-gray-100">₦4,500,000</p>
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                  {isLoadingFees && !studentFees ? "₦..." : formatFee(studentFees?.estimated_full_session_fee)}
+                </p>
+              )}
+            </div>
+
+            {/* Estimated Semester Fee */}
+            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 @[30rem]:pr-4">
+              <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Estimated Semester Fee</p>
+              {mounted && !showFullfee ? (
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+              ) : (
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                  {isLoadingFees && !studentFees ? "₦..." : formatFee(studentFees?.estimated_semester_fee)}
+                </p>
               )}
             </div>
 
             {/* Amount Paid For Semester */}
-            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 px-0">
+            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 @[30rem]:pr-4">
               <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Amount Paid For Semester</p>
               {mounted && !showFullfee ? (
-                <p className="text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[22px] font-bold text-gray-900 dark:text-gray-100">₦4,600,000</p>
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                  {isLoadingFees && !studentFees ? "₦..." : formatFee(studentFees?.amount_paid_for_semester)}
+                </p>
               )}
             </div>
 
@@ -263,9 +377,11 @@ function FinancePageContent() {
             <div className="flex-1 min-w-0 px-0">
               <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Outstanding Payment</p>
               {mounted && !showFullfee ? (
-                <p className="text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[22px] font-bold text-gray-900 dark:text-gray-100">₦0</p>
+                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                  {isLoadingFees && !studentFees ? "₦..." : formatFee(outstandingAmount)}
+                </p>
               )}
             </div>
           </div>
@@ -339,86 +455,36 @@ function FinancePageContent() {
         {/* Banner Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
           {/* Card 1 */}
-          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 rounded-[24px] p-6 flex justify-between relative min-h-[220px] dark:border dark:border-gray-800 transition-colors">
+          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
             <div className="relative z-10 w-4/5 flex flex-col justify-center">
-              <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-6">Pay for a previous semester</h3>
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch relative">
-                <div className="relative w-full max-w-[220px]">
-                  <button 
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    type="button"
-                    className="w-full flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-2.5 text-[14px] text-gray-700 dark:text-gray-100 font-medium focus:outline-none shadow-sm h-[48px] transition-colors text-left"
-                  >
-                    {selectedSemester ? (
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-semibold leading-tight text-gray-900 dark:text-gray-100">{selectedSemester.label}</span>
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-none mt-0.5">{selectedSemester.session} Session</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 dark:text-gray-500">Select Semester</span>
-                    )}
-                    <ChevronDown className={cn("w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 shrink-0", isDropdownOpen && "transform rotate-180")} />
-                  </button>
-                  
-                  {isDropdownOpen && (
-                    <>
-                      {/* Backdrop for click-away */}
-                      <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
-                      
-                      <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-800 border border-gray-150 dark:border-gray-700 rounded-xl shadow-lg z-50 max-h-[160px] overflow-y-auto py-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                        {previousSemesters.map((sem) => (
-                          <button
-                            key={sem.value}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSemester(sem);
-                              setIsDropdownOpen(false);
-                            }}
-                            className={cn(
-                              "w-full text-left px-4 py-2.5 hover:bg-[#f5f8fe] dark:hover:bg-gray-700/50 transition-colors flex flex-col gap-0.5",
-                              selectedSemester?.value === sem.value && "bg-[#EEF3FD] dark:bg-blue-600/15"
-                            )}
-                          >
-                            <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">{sem.label}</span>
-                            <span className="text-[11px] text-gray-400 dark:text-gray-500">{sem.session} Session</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-                
-                <Button 
-                  disabled={!selectedSemester}
-                  onClick={() => {
-                    if (selectedSemester) {
-                      router.push(`/dashboard/finance/fees/payment?type=semester&semester=${selectedSemester.value}`);
-                    }
-                  }}
-                  className={cn(
-                    "w-[150px] rounded-xl py-0 h-[48px] text-[14px] font-medium flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
-                    selectedSemester 
-                      ? "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white" 
-                      : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
-                  )}
-                >
-                  Make payment <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+              <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-8">Pay for a previous semester</h3>
+              <Button 
+                disabled={!hasOutstandingFees}
+                onClick={() => {
+                  if (hasOutstandingFees) {
+                    router.push("/dashboard/finance/fees/payment?type=semester");
+                  }
+                }}
+                className={cn(
+                  "w-[160px] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
+                  hasOutstandingFees 
+                    ? "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white cursor-pointer shadow-sm" 
+                    : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
+                )}
+              >
+                Pay Now <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
             
-            {/* Background elements container to clip the hand image while allowing dropdown to overflow */}
-            <div className="absolute inset-0 rounded-[24px] overflow-hidden pointer-events-none">
-              <div className="absolute right-[-60px] md:right-[0px] bottom-[-60px] w-[250px] h-[250px]">
-                <Image
-                  className="w-full h-auto dark:opacity-85"
-                  src="/images/HandSuccessPay.png"
-                  alt="Next.js logo"
-                  width={150}
-                  height={150}
-                  priority
-                />
-              </div>
+            <div className="absolute right-[-60px] md:right-[0px] bottom-[-60px] w-[250px] h-[250px] pointer-events-none">
+              <Image
+                className="w-full h-auto dark:opacity-85"
+                src="/images/HandSuccessPay.png"
+                alt="Payment graphic"
+                width={150}
+                height={150}
+                priority
+              />
             </div>
           </div>
 
@@ -738,6 +804,7 @@ function FinancePageContent() {
         onSuccess={() => {
           fetchBalance();
           loadWalletHistory();
+          loadStudentFees();
         }}
         initialStep={fundWalletStep}
         successAmount={successAmount}

@@ -11,6 +11,11 @@ import { Summary } from "@/components/registration/steps/summary";
 import { ConfirmationModal, SuccessModal, FailureModal } from "@/components/registration/registration-status-modals";
 import { OutstandingPayment } from "@/components/registration/outstanding-payment";
 import { RegistrationProvider, useRegistration } from "@/components/providers/registration-provider";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { getHasSubmittedCoursesAction } from "@/app/actions/registration";
+import { useRegistrationStore } from "@/hooks/use-registration-store";
 
 function RegistrationCoursesFlowContent() {
   const {
@@ -27,6 +32,35 @@ function RegistrationCoursesFlowContent() {
     selectedWorshipCenterId,
     setSelectedWorshipCenterId,
   } = useRegistration();
+  const router = useRouter();
+
+  // Guard: students who already submitted courses shouldn't re-run the flow
+  // (e.g. by opening /registration/courses directly).
+  useEffect(() => {
+    let cancelled = false;
+    getHasSubmittedCoursesAction()
+      .then((result) => {
+        if (cancelled) return;
+        const { regState, setRegState } = useRegistrationStore.getState();
+        if (result.data?.hasSubmitted) {
+          setRegState("completed");
+          toast.info("You have already submitted your courses", {
+            description: "Showing your submitted course form.",
+          });
+          router.replace("/dashboard/registration/course-form");
+        } else if (result.data && regState === "completed") {
+          // Stale local flag — the backend says nothing was submitted
+          setRegState("in_progress");
+        } else if (result.error) {
+          // Fail open: don't block registration if the check itself fails
+          console.error("Could not verify course submission status:", result.error);
+        }
+      })
+      .catch((err) => console.error("Could not verify course submission status:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   if (hasOutstandingPayment) {
     return (

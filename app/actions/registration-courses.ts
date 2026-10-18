@@ -259,7 +259,6 @@ export interface RawCourseSubmit {
 
 /** Full request payload for POST /api/v1/student/submit-course-selection */
 export interface SubmitCoursePayload {
-  worship_center_id: string;
   max_credit_unit: number;
   min_credit_unit: number;
   courses: RawCourseSubmit[];
@@ -406,6 +405,89 @@ export const getRegisteredCoursesAction = async (): Promise<RegisteredCoursesRes
     return { data: courses, message: json?.message };
   } catch (error) {
     console.error("getRegisteredCoursesAction error:", error);
+    return {
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+};
+
+// ── Has Submitted Courses ─────────────────────────────────────────────────────
+
+/** `data` envelope returned by GET /api/v1/student/has-submitted-courses */
+interface RawHasSubmittedCoursesResponse {
+  status: boolean;
+  message?: string;
+  data?: {
+    has_submitted?: boolean;
+    locked_financial_reg?: boolean;
+  };
+}
+
+export interface HasSubmittedCoursesResult {
+  data?: {
+    /** True when the student has already submitted a course selection for the current semester. */
+    hasSubmitted: boolean;
+    /** True when financial registration is locked for the student. */
+    lockedFinancialReg: boolean;
+  };
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Checks with the backend whether the student has already submitted courses.
+ * Endpoint: GET /api/v1/student/has-submitted-courses
+ */
+export const getHasSubmittedCoursesAction = async (): Promise<HasSubmittedCoursesResult> => {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    console.error("API_URL is not defined in environment variables");
+    return { error: "Internal server error: Missing API configuration" };
+  }
+
+  const token = await getSessionToken();
+  if (!token) {
+    return { error: "You are not authenticated. Please log in again." };
+  }
+
+  try {
+    const response = await loggedFetch(
+      `${apiUrl}/api/v1/student/has-submitted-courses`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to check course submission status";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Response body wasn't JSON — keep the fallback message
+      }
+      return { error: errorMessage };
+    }
+
+    const json: RawHasSubmittedCoursesResponse = await response.json();
+    if (typeof json?.data?.has_submitted !== "boolean") {
+      return { error: "Unexpected response while checking course submission status" };
+    }
+
+    return {
+      data: {
+        hasSubmitted: json.data.has_submitted,
+        lockedFinancialReg: Boolean(json.data.locked_financial_reg),
+      },
+      message: json?.message,
+    };
+  } catch (error) {
+    console.error("getHasSubmittedCoursesAction error:", error);
     return {
       error: "Could not connect to the server. Please try again later.",
     };

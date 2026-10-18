@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { actionKey, notify } from "@/lib/notifications/bus";
-import { getSemesterRegistrationStatusAction, registerSemesterAction } from "@/app/actions/registration";
+import { getSemesterRegistrationStatusAction, registerSemesterAction, getHasSubmittedCoursesAction } from "@/app/actions/registration";
 import { refreshAcademicStandingAction } from "@/app/actions/user";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
@@ -101,8 +101,35 @@ export default function RegistrationPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Submitted-courses check ────────────────────────────────────────────────
+  // The persisted regState only reflects this browser. Once the student has
+  // commenced registration, ask the backend whether courses were already
+  // submitted and make that the source of truth for regState.
+  const [submissionChecked, setSubmissionChecked] = useState(false);
+  const isCheckingSubmission = isRegisteredForSemester && !submissionChecked;
+
+  useEffect(() => {
+    if (!isRegisteredForSemester) return;
+
+    getHasSubmittedCoursesAction()
+      .then((result) => {
+        const { regState: storedRegState, setRegState } = useRegistrationStore.getState();
+        if (result.data?.hasSubmitted) {
+          setRegState("completed");
+        } else if (result.data && storedRegState === "completed") {
+          // Stale local flag (other device/account/semester) — backend says nothing was submitted
+          setRegState("not_started");
+        } else if (result.error) {
+          // Keep whatever local state we have; don't block the student
+          console.error("Could not verify course submission status:", result.error);
+        }
+      })
+      .catch((err) => console.error("Could not verify course submission status:", err))
+      .finally(() => setSubmissionChecked(true));
+  }, [isRegisteredForSemester]);
+
   const getRegBannerProps = () => {
-    if (isLoadingStatus) {
+    if (isLoadingStatus || isCheckingSubmission) {
       return {
         buttonText: "Loading...",
         buttonVariant: "primary" as const,
@@ -210,7 +237,7 @@ export default function RegistrationPage() {
           gradientClass="bg-gradient-to-br from-[#c2d6ff] to-[#ebf1ff] dark:from-[#1b2a4a] dark:to-[#111c30]"
           illustrationSrc="/Reg-image.png"
           onClick={() => {
-            if (isLoadingStatus) return;
+            if (isLoadingStatus || isCheckingSubmission) return;
             if (!semesterInfo?.check) {
               // Registration not yet commenced for the semester — open commencement modal
               setIsSemesterConfirmOpen(true);

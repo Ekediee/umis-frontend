@@ -45,6 +45,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import { AILiveChat } from "@/components/shared/ai-live-chat";
+import { StudentOnly } from "@/components/shared/student-only";
 
 
 export default function RootLayout({
@@ -58,7 +59,9 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="system" storageKey="pulse-theme">
           <NotificationProvider>
             {children}
-            <AILiveChat />
+            <StudentOnly>
+              <AILiveChat />
+            </StudentOnly>
             <Toaster position="top-center" richColors />
           </NotificationProvider>
         </ThemeProvider>

@@ -10,8 +10,17 @@ import { tokenFromScan } from "@/lib/attendance/code";
 import { invalidateStudent } from "@/lib/student/query";
 import type { CheckInResult } from "@/lib/student/types";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import { Sheet } from "@/components/student/ui";
-import { QrScanner } from "./qr-scanner";
+
+const QrScanner = dynamic(() => import("./qr-scanner").then((mod) => mod.QrScanner), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full aspect-square max-w-[360px] mx-auto rounded-[24px] bg-black flex items-center justify-center text-white/80">
+      <Loader2 className="w-6 h-6 animate-spin" />
+    </div>
+  ),
+});
 
 type Mode = "scan" | "code";
 type State = { kind: "idle" } | { kind: "sending" } | { kind: "done"; result: CheckInResult } | { kind: "error"; error: ApiError };
