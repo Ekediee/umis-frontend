@@ -31,6 +31,7 @@ function RegistrationCoursesFlowContent() {
     hasOutstandingPayment,
     selectedWorshipCenterId,
     setSelectedWorshipCenterId,
+    setCurrentStep,
   } = useRegistration();
   const router = useRouter();
 
@@ -100,6 +101,12 @@ function RegistrationCoursesFlowContent() {
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmSubmit}
+        // "Edit Selected Courses": back to the Select Courses step
+        onEdit={() => {
+          setIsConfirmModalOpen(false);
+          setCurrentStep(2);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
         isLoading={isSubmitting}
       />
       
