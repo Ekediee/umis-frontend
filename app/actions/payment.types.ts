@@ -59,3 +59,16 @@ export interface GetWalletBalanceResult {
   error?: string;
 }
 
+export interface StudentFeesData {
+  estimated_full_session_fee: number;
+  estimated_semester_fee: number;
+  amount_paid_for_semester: number;
+  total_outstanding_fees: number;
+}
+
+export interface GetStudentFeesResult {
+  success: boolean;
+  data?: StudentFeesData;
+  error?: string;
+}
+
