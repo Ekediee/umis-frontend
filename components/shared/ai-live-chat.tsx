@@ -3,10 +3,36 @@
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useStreamingChat } from "@/hooks/use-streaming-chat";
-import { X, Send, Bot, User, Loader2, Sparkles, Lightbulb } from "lucide-react";
+import { X, Send, Bot, Loader2, Sparkles, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from 'react-markdown';
+import { useStudentAvatar } from "@/hooks/use-student-avatar";
+import ReactMarkdown, { type Components } from 'react-markdown';
+
+/**
+ * How Torch's replies are drawn: spaced paragraphs, real bullets and numbers, bold key
+ * terms and links in the app's blue. (The app has no typography plugin, so `prose`
+ * classes did nothing and lists lost their markers.)
+ */
+const replyMarkdown: Components = {
+  p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="my-2 pl-5 list-disc space-y-1 marker:text-[#003cbb] dark:marker:text-[#4d82ff]">{children}</ul>,
+  ol: ({ children }) => <ol className="my-2 pl-5 list-decimal space-y-1 marker:font-semibold marker:text-[#003cbb] dark:marker:text-[#4d82ff]">{children}</ol>,
+  li: ({ children }) => <li className="pl-1 [&>p]:my-0">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-50">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  h1: ({ children }) => <p className="mt-3 mb-1 first:mt-0 font-bold text-[15px] text-gray-900 dark:text-gray-50">{children}</p>,
+  h2: ({ children }) => <p className="mt-3 mb-1 first:mt-0 font-bold text-[15px] text-gray-900 dark:text-gray-50">{children}</p>,
+  h3: ({ children }) => <p className="mt-3 mb-1 first:mt-0 font-semibold text-gray-900 dark:text-gray-50">{children}</p>,
+  a: ({ children, href }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-[#003cbb] dark:text-[#4d82ff] underline underline-offset-2">
+      {children}
+    </a>
+  ),
+  code: ({ children }) => <code className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-[13px]">{children}</code>,
+  hr: () => <hr className="my-3 border-gray-200 dark:border-gray-700" />,
+  blockquote: ({ children }) => <blockquote className="my-2 pl-3 border-l-2 border-[#003cbb]/40 text-gray-600 dark:text-gray-300">{children}</blockquote>,
+};
 
 function Premium3DLightbulb(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -68,6 +94,8 @@ const HIDDEN_ROUTES = new Set(["/"]);
 
 export function AILiveChat() {
   const pathname = usePathname();
+  // The student's own picture on their messages: photo, or their placeholder until they upload one
+  const { avatarUrl, setAvatarUrl, placeholder } = useStudentAvatar();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const { messages, sendMessage, status, error } = useStreamingChat({
@@ -146,6 +174,8 @@ export function AILiveChat() {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
+        aria-label="Ask Torch, your campus guide"
+        title="Ask Torch"
         className={cn(
           "ai-live-chat-fab fixed bottom-28 right-6 md:bottom-24 md:right-8 w-14 h-14 bg-[#003cbb] text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50",
           isOpen && "scale-0 opacity-0 pointer-events-none"
@@ -157,7 +187,7 @@ export function AILiveChat() {
       {/* Chat Window */}
       <div
         className={cn(
-          "fixed bottom-0 right-0 md:bottom-24 md:right-8 w-full md:w-[380px] h-[85vh] md:h-[600px] bg-white dark:bg-gray-900 md:rounded-[24px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right border border-gray-100 dark:border-gray-800",
+          "fixed bottom-0 right-0 md:bottom-24 md:right-8 w-full md:w-[380px] h-[85vh] md:h-[600px] bg-white dark:bg-gray-900 rounded-t-[24px] md:rounded-[24px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right border border-gray-100 dark:border-gray-800",
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"
         )}
       >
@@ -168,12 +198,13 @@ export function AILiveChat() {
               <Premium3DLightbulb className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-[15px]">AI Support</h3>
-              <p className="text-blue-100 text-[12px] font-medium">Online • Ask me anything</p>
+              <h3 className="font-bold text-white text-[15px]">Torch</h3>
+              <p className="text-blue-100 text-[12px] font-medium">Your campus guide • Online</p>
             </div>
           </div>
           <button
             onClick={() => setIsOpen(false)}
+            aria-label="Close Torch"
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
           >
             <X className="w-4 h-4" />
@@ -187,14 +218,14 @@ export function AILiveChat() {
               <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4 shrink-0">
                 <Bot className="w-8 h-8 text-[#003cbb] dark:text-[#4d82ff]" />
               </div>
-              <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Welcome to Pulse Support</h4>
+              <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Hi, I&apos;m Torch</h4>
               <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-6 max-w-[280px]">
-                I can help you resolve registration issues, explain fee breakdowns, or guide you through the student handbook.
+                Your guide around Babcock. I can sort out registration issues, explain your fees, or find the answer in the student handbook.
               </p>
 
               {/* AI Quick Actions */}
               <div className="w-full max-w-[280px] flex flex-col gap-2.5">
-                <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-left pl-1">AI Quick Actions</p>
+                <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-left pl-1">Try asking</p>
                 <button
                   onClick={() => handleQuickAction("Can you give me a quick academic advice on course selection and GPA optimization?")}
                   className="w-full text-left px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-[13px] font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2.5 transition-all group active:scale-[0.98]"
@@ -229,14 +260,20 @@ export function AILiveChat() {
               >
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden",
                     m.role === "user"
-                      ? "bg-gray-200 dark:bg-gray-800"
+                      ? "bg-gray-200 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                       : "bg-[#003cbb] text-white"
                   )}
                 >
                   {m.role === "user" ? (
-                    <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarUrl}
+                      alt="You"
+                      className="w-full h-full object-cover"
+                      onError={() => avatarUrl !== placeholder && setAvatarUrl(placeholder)}
+                    />
                   ) : (
                     <Bot className="w-4 h-4" />
                   )}
@@ -246,13 +283,13 @@ export function AILiveChat() {
                     "px-4 py-3 rounded-[16px] text-[14px] leading-relaxed shadow-sm",
                     m.role === "user"
                       ? "bg-[#003cbb] text-white rounded-tr-sm"
-                      : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-sm prose prose-sm dark:prose-invert max-w-none prose-p:m-0 prose-headings:m-0 prose-ul:my-1 prose-ol:my-1"
+                      : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-sm min-w-0 break-words"
                   )}
                 >
                   {m.role === "user" ? (
                     getMessageText(m)
                   ) : (
-                    <ReactMarkdown>{getMessageText(m)}</ReactMarkdown>
+                    <ReactMarkdown components={replyMarkdown}>{getMessageText(m)}</ReactMarkdown>
                   )}
                 </div>
               </div>
@@ -283,7 +320,7 @@ export function AILiveChat() {
               type="text"
               value={inputValue}
               onChange={handleTextChange}
-              placeholder="Ask a question..."
+              placeholder="Ask Torch anything…"
               className="flex-1 bg-transparent border-none outline-none text-[14px] text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
               disabled={isLoading}
             />
