@@ -37,6 +37,21 @@ export function shouldAccept(prev: LocationFix | null, next: LocationFix) {
   return next.accuracy <= Math.max(prev.accuracy * WORSE_FACTOR, 30);
 }
 
+/**
+ * Phones can report several readings a second. The map only needs about one: more just
+ * re-renders it for a dot that moved a few centimetres. A reading is passed on when a
+ * second has passed, the student has really moved, or the accuracy changed a lot.
+ */
+const MIN_INTERVAL_MS = 1000;
+const MIN_MOVE_M = 3;
+
+export function isWorthShowing(prev: LocationFix | null, next: LocationFix) {
+  if (!prev) return true;
+  if (next.at - prev.at >= MIN_INTERVAL_MS) return true;
+  if (distanceM(prev.coords, next.coords) >= MIN_MOVE_M) return true;
+  return next.accuracy < prev.accuracy / 2;
+}
+
 export function headingFor(prev: LocationFix | null, coords: [number, number], deviceHeading: number | null, speed: number | null): number | null {
   if (deviceHeading != null && !Number.isNaN(deviceHeading) && (speed ?? 0) > 0.5) return deviceHeading;
   if (prev && distanceM(prev.coords, coords) >= MIN_MOVE_FOR_HEADING_M) return bearingDeg(prev.coords, coords);
@@ -73,7 +88,7 @@ export function useLiveLocation() {
           heading: headingFor(last.current, coords, pos.coords.heading, pos.coords.speed),
           at: pos.timestamp || Date.now(),
         };
-        if (!shouldAccept(last.current, next)) return;
+        if (!shouldAccept(last.current, next) || !isWorthShowing(last.current, next)) return;
         last.current = next;
         setFix(next);
         setStatus("tracking");

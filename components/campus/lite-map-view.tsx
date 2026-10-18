@@ -28,10 +28,10 @@ const maxBounds = L.latLngBounds(L.latLng(CAMPUS.bounds[0][1] - 0.02, CAMPUS.bou
 function shapeStyle(f: Feature | undefined, dark: boolean, highlight: string | null): L.PathOptions {
   if (f?.properties?.kind === "campus") {
     const c = dark ? "#4d82ff" : "#003cbb";
-    return { color: c, weight: 1.6, opacity: 0.6, dashArray: "6 4", fillColor: c, fillOpacity: dark ? 0.06 : 0.035 };
+    return { color: dark ? "#9db6ff" : c, weight: 1.6, opacity: dark ? 0.75 : 0.6, dashArray: "6 4", fillColor: dark ? "#9db6ff" : c, fillOpacity: dark ? 0.08 : 0.035 };
   }
   if (highlight && f?.properties?.id === highlight) return { color: "#003cbb", weight: 1.2, fillColor: "#2563eb", fillOpacity: 0.4 };
-  return { color: dark ? "#3b4a6b" : "#b9c6e3", weight: 0.7, fillColor: dark ? "#2a3550" : "#dde5f4", fillOpacity: 0.9 };
+  return { color: dark ? "#93a3c8" : "#b9c6e3", weight: 0.7, fillColor: dark ? "#6a789b" : "#dde5f4", fillOpacity: 0.9 };
 }
 
 export default function LiteMapView({ handleRef, places, outline, dark, selectedId, visibleIds, me, meAccuracy, meHeading, onUserMove, highlightBuildingId, onPin, onBackground }: MapViewProps) {

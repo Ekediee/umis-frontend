@@ -27,7 +27,9 @@ export const CAMPUS = {
 
 export const MAP_STYLES = {
   light: "https://tiles.openfreemap.org/styles/positron",
-  dark: "https://tiles.openfreemap.org/styles/dark",
+  // "fiord" is a slate-blue dark style: dark-mode friendly but bright enough to read outdoors
+  // ("dark" is near-black and washes out in sunlight)
+  dark: "https://tiles.openfreemap.org/styles/fiord",
 };
 
 export type PlaceCategory = "academic" | "hall" | "library" | "food" | "shop" | "bank" | "health" | "worship" | "sport" | "admin" | "landmark";

@@ -62,7 +62,20 @@ export default function RootLayout({
             <StudentOnly>
               <AILiveChat />
             </StudentOnly>
-            <Toaster position="top-center" richColors />
+            <Toaster
+              position="top-center"
+              richColors
+              toastOptions={{
+                // Toast buttons use the app's button styles (components/student/ui.tsx), compact for a toast;
+                // "!" beats sonner's own [data-button] rules
+                classNames: {
+                  actionButton:
+                    "!h-8 !px-3.5 !rounded-[8px] !text-[12px] !font-semibold !bg-[#003cbb] hover:!bg-[#002e8f] dark:!bg-[#2563eb] dark:hover:!bg-[#1d4ed8] !text-white transition-colors active:scale-[0.98]",
+                  cancelButton:
+                    "!h-8 !px-3.5 !rounded-[8px] !text-[12px] !font-semibold !bg-white dark:!bg-gray-900 !border !border-gray-200 dark:!border-gray-700 !text-gray-800 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 transition-colors",
+                },
+              }}
+            />
           </NotificationProvider>
         </ThemeProvider>
       </body>

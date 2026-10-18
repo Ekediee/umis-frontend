@@ -8,10 +8,10 @@ import type { FinanceMealType, FinanceGeneralCharges } from "@/app/actions/regis
 export type { FinanceMealType, FinanceGeneralCharges };
 
 const MEAL_IMAGE_MAP: Record<string, string> = {
-  BL: "/Breakfast&Lunch.png",
-  BS: "/Breakfast&Supper.png",
-  LS: "/Lunch and Supper.png",
-  BLS: "/Breakfast lunch supper.png",
+  BL: "/images/meals/breakfast-lunch.webp",
+  BS: "/images/meals/breakfast-supper.webp",
+  LS: "/images/meals/lunch-supper.webp",
+  BLS: "/images/meals/breakfast-lunch-supper.webp",
 };
 
 /**
@@ -40,7 +40,7 @@ function formatPrice(price: number): string {
 function MealPlanCardSkeleton() {
   return (
     <div className="bg-white dark:bg-gray-900 border border-[#f5f5f5] dark:border-gray-800 overflow-hidden rounded-[12px] flex flex-col gap-2 pt-2 px-2 pb-3 animate-pulse">
-      <div className="h-[114px] w-full bg-gray-200 dark:bg-gray-700 rounded-[8px]" />
+      <div className="aspect-[4/3] w-full bg-gray-200 dark:bg-gray-700 rounded-[8px]" />
       <div className="flex flex-col px-1 gap-1">
         <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
         <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -91,7 +91,7 @@ export function SelectMealPlan({
             const isSelected =
               selectedId === String(meal.qselectionid) || selectedId === meal.mealtype;
             const price = getMealPlanPrice(meal.mealtype, generalCharges);
-            const imageSrc = MEAL_IMAGE_MAP[meal.mealtype] || "/Breakfast&Lunch.png";
+            const imageSrc = MEAL_IMAGE_MAP[meal.mealtype] || "/images/meals/breakfast-lunch.webp";
 
             return (
               <div
@@ -104,8 +104,8 @@ export function SelectMealPlan({
                 )}
                 onClick={() => onSelect(String(meal.qselectionid))}
               >
-                {/* Meal Image — static, no carousel */}
-                <div className="relative h-[114px] w-full rounded-[8px] overflow-hidden">
+                {/* Meal Image: 4:3 so the illustrated meal and its label show in full */}
+                <div className="relative aspect-[4/3] w-full rounded-[8px] overflow-hidden bg-[#f6efe6]">
                   <Image
                     src={imageSrc}
                     alt={meal.selection}

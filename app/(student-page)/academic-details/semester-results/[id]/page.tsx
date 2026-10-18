@@ -9,6 +9,7 @@ import {
   type SemesterResult,
   type ResultCourse,
 } from "@/app/actions/academic-details";
+import { semesterFromParam, semesterResultHref } from "@/lib/student/semester-slug";
 
 // ── Grade helpers ─────────────────────────────────────────────────────────────
 
@@ -187,7 +188,8 @@ function CourseRow({ course }: { course: ResultCourse }) {
 export default function SemesterResultDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const semesterId = decodeURIComponent((params.id as string) || "");
+  // "2025-2026.1" in the address (Apache rejects %2F), the real code "2025/2026.1" here
+  const semesterId = semesterFromParam(params.id);
 
   const [allSemesters, setAllSemesters] = useState<SemesterResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -263,7 +265,7 @@ export default function SemesterResultDetailPage() {
                     onClick={() => {
                       setDropdownOpen(false);
                       router.push(
-                        `/academic-details/semester-results/${encodeURIComponent(s.semester)}`
+                        semesterResultHref(s.semester)
                       );
                     }}
                     className={`w-full text-left px-4 py-2.5 text-[14px] font-medium transition-colors hover:bg-[#f5f8fe] dark:hover:bg-gray-700 ${
@@ -293,7 +295,7 @@ export default function SemesterResultDetailPage() {
           className="bg-[#003CBB] dark:bg-[#4d82ff] hover:bg-[#5585EA] dark:hover:bg-[#7aa4ff] text-white font-semibold rounded-[12px] h-11 px-6 w-full md:w-auto transition-colors flex items-center gap-2"
           onClick={() =>
             router.push(
-              `/academic-details/semester-results/${encodeURIComponent(semesterId)}/preview`
+              semesterResultHref(semesterId, true)
             )
           }
         >

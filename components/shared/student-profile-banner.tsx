@@ -7,12 +7,12 @@ import { toast } from "sonner";
 import { actionKey, notify } from "@/lib/notifications/bus";
 import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { UMISResponse } from "@/lib/session";
+import { placeholderAvatarFor } from "@/lib/student/placeholder-avatar";
 import { toTitleCase } from "@/lib/utils";
 import { updateProfilePictureAction } from "@/app/actions/user";
 import {
   proxyImageUrl,
   extractPicUrl,
-  DEFAULT_AVATAR,
 } from "@/hooks/use-student-avatar";
 
 interface StudentProfileBannerProps {
@@ -39,8 +39,10 @@ export function StudentProfileBanner({
   onAvatarUpdated,
 }: StudentProfileBannerProps) {
   const initialPic = extractPicUrl(userData);
+  // Male/female illustration, fixed per student, until they upload a photo
+  const placeholder = placeholderAvatarFor(userData);
   const [avatarUrl, setAvatarUrl] = useState<string>(
-    initialPic ? proxyImageUrl(initialPic) : DEFAULT_AVATAR
+    initialPic ? proxyImageUrl(initialPic) : placeholder
   );
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,9 +91,9 @@ export function StudentProfileBanner({
       }
     }
 
-    // Default avatar
-    setAvatarUrl(DEFAULT_AVATAR);
-  }, [userData, avatarKey]);
+    // No photo yet: the student's placeholder
+    setAvatarUrl(placeholder);
+  }, [userData, avatarKey, placeholder]);
 
   useEffect(() => {
     const handleAvatarUpdate = (e: Event) => {
@@ -267,8 +269,8 @@ export function StudentProfileBanner({
                     unoptimized
                     className="object-cover"
                     onError={() => {
-                      if (avatarUrl !== DEFAULT_AVATAR) {
-                        setAvatarUrl(DEFAULT_AVATAR);
+                      if (avatarUrl !== placeholder) {
+                        setAvatarUrl(placeholder);
                       }
                     }}
                   />
@@ -332,8 +334,8 @@ export function StudentProfileBanner({
                     unoptimized
                     className="object-cover"
                     onError={() => {
-                      if (avatarUrl !== DEFAULT_AVATAR) {
-                        setAvatarUrl(DEFAULT_AVATAR);
+                      if (avatarUrl !== placeholder) {
+                        setAvatarUrl(placeholder);
                       }
                     }}
                   />

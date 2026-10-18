@@ -120,7 +120,8 @@ function BaseModal({
   );
 }
 
-export function ConfirmationModal({ isOpen, onClose, onConfirm, isLoading }: ModalProps) {
+/** `onEdit` takes the student back to course selection; closing the dialog any other way just closes it. */
+export function ConfirmationModal({ isOpen, onClose, onConfirm, onEdit, isLoading }: ModalProps & { onEdit?: () => void }) {
   return (
     <BaseModal
       isOpen={isOpen}
@@ -137,7 +138,7 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm, isLoading }: Mod
       primaryActionText="Confirm & Submit"
       secondaryActionText="Edit Selected Courses"
       onPrimaryAction={onConfirm}
-      onSecondaryAction={onClose}
+      onSecondaryAction={onEdit ?? onClose}
       isLoading={isLoading}
     />
   );

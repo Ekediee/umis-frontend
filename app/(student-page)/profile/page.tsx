@@ -92,9 +92,10 @@ export default function ProfilePage() {
       throw new Error(result.error || "Failed to update email");
     }
 
+    // The form edits the Babcock (student) email, the one on the profile cards
     setContactInfo((prev) => ({
       ...prev,
-      email: email,
+      babcockEmail: email,
     }));
     
     const withEmail = (prev: UMISResponse | null) => {
@@ -105,7 +106,7 @@ export default function ProfilePage() {
           ...prev.user_data,
           contact_information: {
             ...prev.user_data.contact_information,
-            email: email,
+            babcock_email: email,
           },
         },
       } as UMISResponse;
