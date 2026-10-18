@@ -35,6 +35,7 @@ import { isFeatureEnabled, type PreviewFeature } from "@/lib/features";
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
 import { openInstallApp, useCanInstallApp } from "@/components/pwa/install-app";
+import { useExamPortal } from "@/components/exam/exam-portal-provider";
 
 
 const mainNavItems = [
@@ -71,6 +72,7 @@ interface SidebarProps {
 export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
   const pathname = usePathname();
   const contextUserData = useUserData();
+  const { openExamPortal, isLoading: isAccessingExamPortal } = useExamPortal();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -203,16 +205,32 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
             OTHER
           </p>
           <nav className="flex flex-col gap-1">
-            {otherNavItems.map((item) => (
-              <Link 
-                key={item.title} 
-                href={item.href} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <item.icon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                {item.title}
-              </Link>
-            ))}
+            {otherNavItems.map((item) => {
+              if (item.title === "Online Exam") {
+                return (
+                  <button
+                    key={item.title}
+                    type="button"
+                    onClick={openExamPortal}
+                    disabled={isAccessingExamPortal}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors w-full text-left disabled:opacity-60"
+                  >
+                    <item.icon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    {item.title}
+                  </button>
+                );
+              }
+              return (
+                <Link 
+                  key={item.title} 
+                  href={item.href} 
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                >
+                  <item.icon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  {item.title}
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </div>

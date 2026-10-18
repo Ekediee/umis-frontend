@@ -43,6 +43,8 @@ services:
       - /app/.next
 
     dns:
+      - 8.8.8.8
+      - 1.1.1.1
       - 196.11.231.176
 
     extra_hosts:

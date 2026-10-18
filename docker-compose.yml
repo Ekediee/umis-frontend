@@ -34,6 +34,8 @@ services:
       - logs_data:/app/logs
 
     dns:
+      - 8.8.8.8
+      - 1.1.1.1
       - 196.11.231.176
 
     extra_hosts:

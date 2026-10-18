@@ -27,6 +27,7 @@ import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
 import { showActionToast } from "@/components/shared/action-toast";
 import { useUserData } from "@/contexts/user-data-context";
+import { useExamPortal } from "@/components/exam/exam-portal-provider";
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -41,6 +42,7 @@ function formatDate(iso: string | undefined): string {
 export default function RegistrationPage() {
   const router = useRouter();
   const store = useRegistrationStore();
+  const { openExamPortal, isLoading: isAccessingExamPortal } = useExamPortal();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -374,8 +376,13 @@ export default function RegistrationPage() {
           </div>
 
           <div className="relative z-10">
-            <button className="bg-white text-[#313cac] px-8 py-3 rounded-[12px] font-bold hover:bg-[#f8faff] transition-all active:scale-95">
-              Access Portal
+            <button
+              type="button"
+              onClick={openExamPortal}
+              disabled={isAccessingExamPortal}
+              className="bg-white text-[#313cac] px-8 py-3 rounded-[12px] font-bold hover:bg-[#f8faff] transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isAccessingExamPortal ? "Accessing Portal..." : "Access Portal"}
             </button>
           </div>
         </div>

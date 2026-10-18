@@ -21,6 +21,7 @@ import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
 import { performClientLogout } from "@/lib/auth-cleanup";
 import { openInstallApp, useCanInstallApp } from "@/components/pwa/install-app";
+import { useExamPortal } from "@/components/exam/exam-portal-provider";
 
 interface HeaderProps {
   initialUserData?: UMISResponse | null;
@@ -32,6 +33,7 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDarkTheme = resolvedTheme === "dark";
   const { unreadCount } = useNotifications();
+  const { openExamPortal, isLoading: isAccessingExamPortal } = useExamPortal();
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -352,14 +354,18 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                     <MapIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     Campus map
                   </Link>
-                  <Link 
-                    href="#" 
-                    onClick={() => setIsBottomSheetOpen(false)}
-                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+                  <button
+                    type="button"
+                    disabled={isAccessingExamPortal}
+                    onClick={() => {
+                      setIsBottomSheetOpen(false);
+                      openExamPortal();
+                    }}
+                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1 w-full text-left disabled:opacity-60"
                   >
                     <BookOpen className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     Online exam
-                  </Link>
+                  </button>
                   <Link 
                     href="https://support.babcock.edu.ng/" 
                     target="_blank"
