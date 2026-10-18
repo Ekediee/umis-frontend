@@ -12,6 +12,7 @@ import {
   getAcademicResultsAction,
   type SemesterResult,
 } from "@/app/actions/academic-details";
+import { semesterResultHref } from "@/lib/student/semester-slug";
 
 /** Per-row data enriched with computed running cumulative values */
 interface EnrichedSemester extends SemesterResult {
@@ -215,7 +216,7 @@ export default function SemesterResultsPage() {
                             className="rounded-[10px] text-[#003cbb] dark:text-[#4d82ff] font-semibold px-4 h-9 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 transition-colors"
                             onClick={() =>
                               router.push(
-                                `/academic-details/semester-results/${encodeURIComponent(sem.semester)}`
+                                semesterResultHref(sem.semester)
                               )
                             }
                           >
@@ -278,7 +279,7 @@ export default function SemesterResultsPage() {
                           className="w-full rounded-[12px] text-[#003cbb] dark:text-[#4d82ff] font-semibold h-11 border border-[#003cbb]/20 dark:border-[#4d82ff]/30 hover:bg-[#f5f8fe] dark:hover:bg-gray-800 bg-white dark:bg-gray-900 mt-1 transition-colors"
                           onClick={() =>
                             router.push(
-                              `/academic-details/semester-results/${encodeURIComponent(sem.semester)}`
+                              semesterResultHref(sem.semester)
                             )
                           }
                         >
