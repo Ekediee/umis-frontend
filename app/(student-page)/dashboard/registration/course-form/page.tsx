@@ -13,6 +13,8 @@ import { CourseItem, getWorshipCentersAction, getRegisteredCoursesAction, getHas
 import { getOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
 import { isPlaceholderAvatar } from "@/lib/student/placeholder-avatar";
+import { getStudentFeesAction } from "@/app/actions/payment";
+import type { StudentFeesData } from "@/app/actions/payment.types";
 
 function CourseFormContent() {
   const [userData, setUserData] = useState<UMISResponse | null>(null);
@@ -22,6 +24,9 @@ function CourseFormContent() {
   const [selectedWorshipCenter, setSelectedWorshipCenter] = useState<string | null>(null);
   // "Fully registered" only once the backend confirms the course form was submitted
   const [submission, setSubmission] = useState<"checking" | "submitted" | "not_submitted" | "unknown">("checking");
+  // Fees from the same endpoint as the Finance page
+  const [fees, setFees] = useState<StudentFeesData | null>(null);
+  const [feesState, setFeesState] = useState<"loading" | "ready" | "error">("loading");
   const formRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   // The student's own photo (server, fresh upload or cached copy); the form only shows a real photo
@@ -31,6 +36,15 @@ function CourseFormContent() {
 
   useEffect(() => {
     getStudentProfileAction().then(setUserData);
+
+    getStudentFeesAction()
+      .then((res) => {
+        if (res.success && res.data) {
+          setFees(res.data);
+          setFeesState("ready");
+        } else setFeesState("error");
+      })
+      .catch(() => setFeesState("error"));
 
     getHasSubmittedCoursesAction()
       .then((res) => setSubmission(res.data ? (res.data.hasSubmitted ? "submitted" : "not_submitted") : "unknown"))
@@ -111,25 +125,42 @@ function CourseFormContent() {
   const student = userData?.user_data;
 
   const rawLevel = student?.academic_information?.study_level || student?.current_level;
-  const displayLevel = rawLevel ? (Number(rawLevel) < 10 ? Number(rawLevel) * 100 : rawLevel) : "300";
+  const displayLevel = rawLevel ? (Number(rawLevel) < 10 ? Number(rawLevel) * 100 : rawLevel) : null;
 
   const displayCgpa = typeof student?.academic_information?.cummulative_gpa === 'number'
     ? student.academic_information.cummulative_gpa.toFixed(2)
     : typeof student?.cummulative_gpa === 'number'
     ? student.cummulative_gpa.toFixed(2)
-    : student?.academic_information?.cummulative_gpa || student?.cummulative_gpa || "4.36";
+    : student?.academic_information?.cummulative_gpa || student?.cummulative_gpa || "—";
 
-  const displayFullName = student?.personal_information?.student_name || student?.student_name || userData?.entity_name || "YAKUBU ONOME JOY";
+  const displayFullName = student?.personal_information?.student_name || student?.student_name || userData?.entity_name || "—";
 
-  const displayMatricNumber = student?.personal_information?.matric_number || student?.matric_number || "23/0039";
+  const displayMatricNumber = student?.personal_information?.matric_number || student?.matric_number || "—";
 
   const displayCourses = courses.map(course => ({
     code: course.code || course.id,
     title: course.title,
     units: typeof course.units === 'number' ? course.units.toFixed(1) : String(course.units || "0.0"),
-    option: course.classOption || (student?.department || "Software Engineering"),
+    option: course.classOption || student?.department || "—",
     lecturer: course.lecturer
   }));
+
+  /** "₦492,984" like the Finance page; a dash while loading or if fees couldn't load */
+  const fee = (amount: number | undefined) => {
+    if (feesState === "loading") return "₦…";
+    if (amount === undefined || Number.isNaN(amount)) return "—";
+    const abs = Math.abs(amount);
+    return `₦${abs.toLocaleString(undefined, { minimumFractionDigits: abs % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+  };
+
+  // The profile API doesn't send a birth date yet; show it as soon as it does
+  const personal = (student?.personal_information ?? {}) as Record<string, unknown>;
+  const rawBirthDate = personal.date_of_birth ?? personal.birth_date ?? personal.dob;
+  const displayBirthDate = (() => {
+    if (typeof rawBirthDate !== "string" || !rawBirthDate.trim()) return "—";
+    const d = new Date(rawBirthDate);
+    return Number.isNaN(d.getTime()) ? rawBirthDate : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-");
+  })();
 
   const totalUnits = displayCourses.reduce((sum, c) => sum + parseFloat(c.units || "0"), 0).toFixed(1);
 
@@ -262,12 +293,12 @@ function CourseFormContent() {
               </div>
               <div className="col-span-1 bg-[#f8fafc] border border-[#f1f5f9] rounded-lg p-5 print:p-4 flex flex-col justify-between">
                 <div>
-                  <p className="text-[13px] font-bold text-gray-600 uppercase mb-0.5">{student?.school_name || "SCHOOL OF COMPUTING"}</p>
-                  <p className="text-[14px] font-medium text-gray-500">{student?.department || "Software Engineering"}</p>
+                  <p className="text-[13px] font-bold text-gray-600 uppercase mb-0.5">{student?.school_name || "—"}</p>
+                  <p className="text-[14px] font-medium text-gray-500">{student?.department || "—"}</p>
                 </div>
                 <div className="mt-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Level</p>
-                  <p className="text-[16px] font-bold text-gray-800">{displayLevel}.0</p>
+                  <p className="text-[16px] font-bold text-gray-800">{displayLevel ? `${displayLevel}.0` : "—"}</p>
                 </div>
               </div>
               <div className="col-span-1 bg-[#f8fafc] border border-[#f1f5f9] rounded-lg p-5 print:p-4 flex flex-col justify-between">
@@ -307,19 +338,19 @@ function CourseFormContent() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-6 gap-x-8 px-2 print:gap-y-4">
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Sex</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.gender || "Female"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.gender || "—"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Marital Status</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.marital_status || "Single"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.marital_status || "—"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Birth Date</p>
-                  <p className="text-[14px] font-medium text-gray-900">19-Feb-2007</p>
+                  <p className="text-[14px] font-medium text-gray-900">{displayBirthDate}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Religion</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.religion || "Christian (SDA)"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.personal_information?.religion || "—"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Worship Center</p>
@@ -331,7 +362,7 @@ function CourseFormContent() {
                 </div>
                 <div className="col-span-2">
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Address</p>
-                  <p className="text-[14px] font-medium text-gray-900">{student?.contact_information?.residential_address || "11 Eleku Street, Ilishan Remo"}</p>
+                  <p className="text-[14px] font-medium text-gray-900">{student?.contact_information?.residential_address || "—"}</p>
                 </div>
               </div>
 
@@ -435,23 +466,23 @@ function CourseFormContent() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 print:gap-4">
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Account No</p>
-                  <p className="text-[14px] font-mono font-bold text-gray-900">{student?.account_number || "S230039"}</p>
+                  <p className="text-[14px] font-mono font-bold text-gray-900">{student?.account_number || "—"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Level</p>
-                  <p className="text-[14px] font-bold text-gray-900">{displayLevel}.0</p>
+                  <p className="text-[14px] font-bold text-gray-900">{displayLevel ? `${displayLevel}.0` : "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Fees</p>
-                  <p className="text-[14px] font-bold text-gray-900">₦492,984</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Semester Fee</p>
+                  <p className="text-[14px] font-bold text-gray-900">{fee(fees?.estimated_semester_fee)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Paid</p>
-                  <p className="text-[14px] font-bold text-green-600">₦492,984</p>
+                  <p className="text-[14px] font-bold text-green-600">{fee(fees?.amount_paid_for_semester)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Final Balance</p>
-                  <p className="text-[16px] font-bold text-blue-900">-20,109.00</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Outstanding</p>
+                  <p className="text-[16px] font-bold text-blue-900">{fee(fees?.total_outstanding_fees)}</p>
                 </div>
               </div>
             </div>
