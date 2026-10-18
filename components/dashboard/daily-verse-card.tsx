@@ -88,13 +88,13 @@ export function DailyVerseCard() {
       <Quote className="absolute right-4 bottom-4 w-28 h-28 text-blue-200/15 dark:text-blue-900/10 pointer-events-none" strokeWidth={1} />
 
       <div className="flex gap-4 md:gap-5 relative z-10 flex-1">
-        {/* Left Side: BU Torch Icon Visual Indicator */}
+        {/* Left Side: the gold Babcock crest */}
         <div className="w-10 h-10 md:w-11 md:h-11 bg-white dark:bg-[#1a2353]/40 rounded-[14px] flex items-center justify-center shrink-0 border border-blue-100/60 dark:border-blue-800/25 shadow-sm overflow-hidden p-1.5">
           <Image
-            src="/images/BU Torch.png"
-            alt="Babcock University Torch"
-            width={32}
-            height={32}
+            src="/images/bu_logo.png"
+            alt="Babcock University crest"
+            width={45}
+            height={49}
             className="w-full h-full object-contain"
             priority
           />
