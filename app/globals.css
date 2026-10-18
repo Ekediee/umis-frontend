@@ -79,7 +79,8 @@
 }
 /* Dark mode for raster tiles: invert and rotate hues back so water and parks keep their colours */
 .campus-lite-dark .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+  /* Partial invert: a slate dark map, not black, so it still reads outdoors */
+  filter: invert(0.88) hue-rotate(180deg) brightness(1.15) contrast(0.85) saturate(0.85);
 }
 
 /* QR scanner sweep line (attendance check-in) */
