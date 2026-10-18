@@ -339,7 +339,6 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     );
 
     const result = await submitCourseSelectionAction({
-      worship_center_id: selectedWorshipCenterId || "1",
       max_credit_unit: MAX_UNITS,
       min_credit_unit: MIN_UNITS,
       class_options: selectedGroups,

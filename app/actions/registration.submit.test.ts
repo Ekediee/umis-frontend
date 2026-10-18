@@ -27,7 +27,6 @@ const mockLoggedFetch = loggedFetch as ReturnType<typeof vi.fn>;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 const VALID_PAYLOAD: SubmitCoursePayload = {
-  worship_center_id: "4",
   max_credit_unit: 23,
   min_credit_unit: 12,
   courses: [
