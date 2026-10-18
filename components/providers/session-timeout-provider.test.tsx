@@ -151,4 +151,17 @@ describe("SessionTimeoutProvider", () => {
 
     expect(performClientLogoutMock).toHaveBeenCalledWith("idle_timeout", false);
   });
+
+  it("immediately logs out on mount if stored umis_last_active already exceeded the 30-minute timeout", () => {
+    const expiredTimestamp = Date.now() - (31 * 60 * 1000);
+    localStorage.setItem("umis_last_active", expiredTimestamp.toString());
+
+    render(
+      <SessionTimeoutProvider>
+        <TestChild />
+      </SessionTimeoutProvider>
+    );
+
+    expect(performClientLogoutMock).toHaveBeenCalledWith("idle_timeout", true);
+  });
 });

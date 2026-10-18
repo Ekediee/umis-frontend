@@ -38,8 +38,13 @@ function LoginFormInner({ ssoEnabled = false }: LoginFormProps) {
   }
 
   useEffect(() => {
-    // Clear residual expiration flags on login page
+    // Clear residual expiration and activity flags on login page
     clearAuthExpiredFlag();
+    try {
+      localStorage.removeItem("umis_last_active");
+    } catch {
+      // Ignore storage errors
+    }
   }, []);
 
   useEffect(() => {
