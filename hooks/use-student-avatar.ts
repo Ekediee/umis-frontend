@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { useUserData } from "@/contexts/user-data-context";
 import { getStudentProfileAction } from "@/app/actions/user";
 import type { UMISResponse } from "@/lib/session";
+import { placeholderAvatarFor } from "@/lib/student/placeholder-avatar";
 
+/** Last-resort fallback; students normally get an illustrated placeholder (lib/student/placeholder-avatar) */
 export const DEFAULT_AVATAR = "/images/student-image.png";
 
 /**
@@ -96,8 +98,10 @@ export function extractPicUrl(
 interface UseStudentAvatarReturn {
   /** The proxied avatar URL to use as the `src` for an <Image> or <img>. */
   avatarUrl: string;
-  /** Setter — call with DEFAULT_AVATAR or new URL on update/error. */
+  /** Setter — call with `placeholder` or a new URL on update/error. */
   setAvatarUrl: (url: string) => void;
+  /** This student's illustrated placeholder, shown until they upload a photo (and if it fails to load). */
+  placeholder: string;
 }
 
 /**
@@ -129,6 +133,8 @@ export function useStudentAvatar(
     liveUserData?.matric_number ??
     null;
   const avatarKey = matricNumber ? `profile_avatar:${matricNumber}` : null;
+  // Male/female illustration, fixed per student, until they upload a photo
+  const placeholder = placeholderAvatarFor(liveData);
 
   // ── Derive base avatar synchronously (React 19 render-derived state) ─────────
   const baseAvatarUrl = useMemo(() => {
@@ -145,8 +151,8 @@ export function useStudentAvatar(
       }
     }
 
-    return DEFAULT_AVATAR;
-  }, [contextUserData, initialUserData, avatarKey]);
+    return placeholder;
+  }, [contextUserData, initialUserData, avatarKey, placeholder]);
 
   // Current active avatar: override (from upload/fetch) takes precedence over derived base
   const avatarUrl = overrideAvatar ?? baseAvatarUrl;
@@ -211,5 +217,6 @@ export function useStudentAvatar(
   return {
     avatarUrl,
     setAvatarUrl: (url: string) => setOverrideAvatar(url),
+    placeholder,
   };
 }

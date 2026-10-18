@@ -32,7 +32,7 @@ import type { UMISResponse } from "@/lib/session";
 import { useState, useEffect, useRef } from "react";
 import { isFeatureEnabled, type PreviewFeature } from "@/lib/features";
 
-import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
+import { useStudentAvatar } from "@/hooks/use-student-avatar";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
 import { openInstallApp, useCanInstallApp } from "@/components/pwa/install-app";
 
@@ -78,7 +78,7 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
   const canInstallApp = useCanInstallApp();
 
   // Single source of truth for avatar — no more copy-pasted logic
-  const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
+  const { avatarUrl, setAvatarUrl, placeholder } = useStudentAvatar(initialUserData);
 
   const userData = contextUserData ?? initialUserData;
   const rawName =
@@ -230,8 +230,8 @@ export function Sidebar({ initialUserData = null }: SidebarProps = {}) {
                   unoptimized
                   className="object-cover"
                   onError={() => {
-                    if (avatarUrl !== DEFAULT_AVATAR) {
-                      setAvatarUrl(DEFAULT_AVATAR);
+                    if (avatarUrl !== placeholder) {
+                      setAvatarUrl(placeholder);
                     }
                   }}
                 />

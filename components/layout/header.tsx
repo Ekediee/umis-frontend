@@ -15,7 +15,7 @@ import { useNotifications } from "@/components/providers/notification-provider";
 import { cn, toTitleCase } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
 import type { UMISResponse } from "@/lib/session";
-import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
+import { useStudentAvatar } from "@/hooks/use-student-avatar";
 import { ChangePasswordModal } from "@/components/shared/change-password-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
@@ -44,7 +44,7 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
   };
 
   // Single source of truth for avatar — no more copy-pasted logic
-  const { avatarUrl, setAvatarUrl } = useStudentAvatar(initialUserData);
+  const { avatarUrl, setAvatarUrl, placeholder } = useStudentAvatar(initialUserData);
 
   // Derive user fields for the change password modal
   const contextUserData = useUserData();
@@ -178,8 +178,8 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                 unoptimized
                 className="object-cover"
                 onError={() => {
-                  if (avatarUrl !== "/images/student-image.png") {
-                    setAvatarUrl("/images/student-image.png");
+                  if (avatarUrl !== placeholder) {
+                    setAvatarUrl(placeholder);
                   }
                 }}
               />
