@@ -11,7 +11,7 @@
  * Loaded on demand (Three.js is large) and only offered on WebGL devices.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, MapControls } from "@react-three/drei";
 import { createFacadeMaterial } from "@/lib/campus/facade-material";
@@ -163,6 +163,9 @@ export default function Campus3DView(props: MapViewProps) {
     return labels ? labelHits.at(x, y) : undefined;
   };
 
+  // Everything except the live location, which changes with every reading
+  const { me, meAccuracy, meHeading, ...sceneProps } = props;
+
   // Low-power devices skip shadows and render at 1x
   const capable = typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 4) >= 6;
 
@@ -196,10 +199,12 @@ export default function Campus3DView(props: MapViewProps) {
           dpr={capable ? [1, 2] : [1, 1.25]}
           camera={{ fov: 42, near: 2, far: 6000, position: HOME.target.clone().add(HOME.offset).toArray() }}
           gl={{ antialias: true, powerPreference: "high-performance" }}
-          onPointerMissed={() => !tapOnLabel.current && props.onBackground(props.me ?? toLngLat(0, 0), null)}
+          onPointerMissed={() => !tapOnLabel.current && props.onBackground(me ?? toLngLat(0, 0), null)}
           aria-label="3D campus view"
         >
-          <World {...props} highlightBuildingId={(props.selectedId && buildingForPlace.get(props.selectedId)) || props.highlightBuildingId} scene={scene} palette={palette} shadows={capable} labels={labels} anchors={anchors} labelEls={labelEls} labelHits={labelHits} tapOnLabel={tapOnLabel} landmarks={landmarks} />
+          <World {...sceneProps} highlightBuildingId={(props.selectedId && buildingForPlace.get(props.selectedId)) || props.highlightBuildingId} scene={scene} palette={palette} shadows={capable} labels={labels} anchors={anchors} labelEls={labelEls} labelHits={labelHits} tapOnLabel={tapOnLabel} landmarks={landmarks} />
+          {/* The location dot renders on its own: a new GPS reading must not re-render the whole campus */}
+          {me && <Me3D me={me} accuracy={meAccuracy ?? null} heading={meHeading ?? null} />}
         </Canvas>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -284,7 +289,7 @@ interface LabelAnchor {
   pos: THREE.Vector3;
 }
 
-type WorldProps = MapViewProps & { scene: CampusScene; palette: typeof DAY; shadows: boolean; labels: boolean; anchors: LabelAnchor[]; labelEls: React.RefObject<Map<string, HTMLButtonElement>>;
+type WorldProps = Omit<MapViewProps, "me" | "meAccuracy" | "meHeading"> & { scene: CampusScene; palette: typeof DAY; shadows: boolean; labels: boolean; anchors: LabelAnchor[]; labelEls: React.RefObject<Map<string, HTMLButtonElement>>;
   labelHits: LabelHitStore;
   tapOnLabel: React.RefObject<boolean>;
   landmarks: { mainGate: { place: Place; pose: { x: number; z: number; rotationY: number } } } | null;
@@ -294,7 +299,8 @@ type WorldProps = MapViewProps & { scene: CampusScene; palette: typeof DAY; shad
 const FULL_UNDER = 650;
 const ICON_UNDER = 1500;
 
-function World({ scene, palette, dark, shadows, labels, anchors, labelEls, labelHits, tapOnLabel, landmarks, handleRef, selectedId, visibleIds, me, meAccuracy, meHeading, onUserMove, highlightBuildingId, onPin, onBackground }: WorldProps) {
+/** The campus scene. Memoised: it only re-renders when the scene, selection, filter or theme changes. */
+const World = memo(function World({ scene, palette, dark, shadows, labels, anchors, labelEls, labelHits, tapOnLabel, landmarks, handleRef, selectedId, visibleIds, onUserMove, highlightBuildingId, onPin, onBackground }: WorldProps) {
   const controls = useRef<MapControlsImpl>(null);
   const { camera, size } = useThree();
   const widths = useRef(new Map<string, number>());
@@ -489,20 +495,20 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, label
 
       {/* Sky colour and distance haze */}
       <color attach="background" args={[palette.sky]} />
-      <fog attach="fog" args={[palette.sky, dark ? 900 : 1100, dark ? 2800 : 3200]} />
+      <fog attach="fog" args={[palette.sky, 1100, 3200]} />
 
       {/* What the glass reflects: a soft sky and a bright horizon, rendered once (no download) */}
-      <Environment resolution={128} frames={1} environmentIntensity={dark ? 0.65 : 0.4}>
-        <Lightformer form="rect" intensity={dark ? 0.25 : 1.4} color={dark ? "#5a6c96" : "#dbe9f7"} scale={[40, 40, 1]} position={[0, 12, 0]} rotation-x={Math.PI / 2} />
+      <Environment resolution={128} frames={1} environmentIntensity={dark ? 0.85 : 0.4}>
+        <Lightformer form="rect" intensity={dark ? 0.6 : 1.4} color={dark ? "#7d90bd" : "#dbe9f7"} scale={[40, 40, 1]} position={[0, 12, 0]} rotation-x={Math.PI / 2} />
         <Lightformer form="ring" intensity={dark ? 0.3 : 2.2} color={dark ? "#9fb4ff" : "#fff3dc"} scale={6} position={[-10, 6, 6]} />
         <Lightformer form="rect" intensity={dark ? 0.15 : 0.7} color={dark ? "#2a3550" : "#a9c47a"} scale={[40, 6, 1]} position={[0, -2, -12]} />
       </Environment>
 
-      <hemisphereLight args={[dark ? "#8ea3d6" : "#e3f0ff", dark ? "#2a3324" : "#7c8c55", dark ? 1.55 : 0.85]} />
+      <hemisphereLight args={[dark ? "#a9bbe6" : "#e3f0ff", dark ? "#4a5a40" : "#7c8c55", dark ? 2.1 : 0.85]} />
       <directionalLight
         position={dark ? [-300, 600, 200] : [-420, 620, 260]}
-        intensity={dark ? 1.5 : 2.7}
-        color={dark ? "#9fb4ff" : "#fff0d4"}
+        intensity={dark ? 2.1 : 2.7}
+        color={dark ? "#c3d0ff" : "#fff0d4"}
         castShadow={shadows}
         shadow-mapSize={[4096, 4096]}
         shadow-camera-left={-1100}
@@ -560,12 +566,9 @@ function World({ scene, palette, dark, shadows, labels, anchors, labelEls, label
       <instancedMesh ref={crowns} args={[crownGeo, undefined, scene.trees.matrices.length]} castShadow receiveShadow raycast={() => null}>
         <meshStandardMaterial roughness={0.95} flatShading />
       </instancedMesh>
-
-      {me && <Me3D me={me} accuracy={meAccuracy ?? null} heading={meHeading ?? null} />}
-
     </>
   );
-}
+});
 
 /** Black polyethylene water tanks, instanced (one draw call for the whole campus) */
 function Tanks({ matrices }: { matrices: THREE.Matrix4[] }) {

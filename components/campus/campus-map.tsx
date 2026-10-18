@@ -372,7 +372,20 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
     return searchPlaces(base, query);
   }, [places, category, query]);
 
-  const visible = new Set(results.map((r) => r.id));
+  // Stable between renders, so the map views can skip work when only the location dot moves
+  const visible = useMemo(() => new Set(results.map((r) => r.id)), [results]);
+  const stopFollowing = useCallback(() => setFollow(false), []);
+  const onBackground = useCallback(
+    (lngLat: [number, number], buildingId: string | null) => {
+      setSelected(null);
+      setSearching(false);
+      if (mapping) {
+        const named = buildingId && places ? (places.find((pl) => footprintFor(outline, pl) === buildingId) ?? null) : null;
+        setPick({ lngLat, buildingId, named });
+      }
+    },
+    [mapping, places, outline],
+  );
 
   // React to each reading: frame the first one, then keep up while following
   const firstFix = useRef(true);
@@ -475,18 +488,11 @@ export default function CampusMap({ initialQuery, mapping: mappingRequested = fa
             me,
             meAccuracy: location.fix?.accuracy ?? null,
             meHeading: location.fix?.heading ?? null,
-            onUserMove: () => setFollow(false),
+            onUserMove: stopFollowing,
             highlightBuildingId: selectedFootprint ?? pick?.buildingId ?? null,
             mapping,
             onPin: flyTo,
-            onBackground: (lngLat: [number, number], buildingId: string | null) => {
-              setSelected(null);
-              setSearching(false);
-              if (mapping) {
-                const named = buildingId && places ? (places.find((pl) => footprintFor(outline, pl) === buildingId) ?? null) : null;
-                setPick({ lngLat, buildingId, named });
-              }
-            },
+            onBackground,
           };
           const lite = <LiteMapView {...viewProps} />;
           if (mode === "3d")

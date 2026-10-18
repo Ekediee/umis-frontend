@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { headingFor, shouldAccept, type LocationFix } from "./use-live-location";
+import { headingFor, isWorthShowing, shouldAccept, type LocationFix } from "./use-live-location";
 import { bearingDeg, circlePolygon, distanceM } from "@/lib/student/campus";
 
 const fix = (over: Partial<LocationFix> = {}): LocationFix => ({ coords: [3.7229, 6.8905], accuracy: 10, heading: null, at: 1_000, ...over });
@@ -16,6 +16,19 @@ describe("shouldAccept", () => {
 
   it("accepts anything once the last good reading is stale", () => {
     expect(shouldAccept(fix({ accuracy: 10 }), fix({ accuracy: 400, at: 30_000 }))).toBe(true);
+  });
+});
+
+describe("isWorthShowing", () => {
+  it("passes on about one reading a second, not every GPS burst", () => {
+    expect(isWorthShowing(null, fix())).toBe(true);
+    expect(isWorthShowing(fix({ at: 1_000 }), fix({ at: 1_200, coords: [3.72291, 6.89051] }))).toBe(false);
+    expect(isWorthShowing(fix({ at: 1_000 }), fix({ at: 2_000, coords: [3.72291, 6.89051] }))).toBe(true);
+  });
+
+  it("shows a real move or a much better accuracy straight away", () => {
+    expect(isWorthShowing(fix({ at: 1_000 }), fix({ at: 1_200, coords: [3.7229, 6.89055] }))).toBe(true); // ~5.5 m
+    expect(isWorthShowing(fix({ at: 1_000, accuracy: 40 }), fix({ at: 1_200, accuracy: 12 }))).toBe(true);
   });
 });
 

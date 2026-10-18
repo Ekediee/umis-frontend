@@ -159,24 +159,24 @@ export const DAY: ScenePalette = {
 };
 
 export const NIGHT: ScenePalette = {
-  // Moonlit, not black: the campus still reads clearly in dark mode
-  ground: "#36463d",
-  campusGround: "#405646",
-  wall: "#a3aabb",
-  roofs: ["#8c5244", "#7d4739", "#935d49", "#6b7484", "#5d6a7e", "#55706a"],
-  flatRoof: "#686b73",
-  road: "#545b68",
-  path: "#7d7b74",
-  pitch: "#3d7048",
-  court: "#7c5845",
-  parking: "#585a62",
-  water: "#346283",
-  grass: "#466a40",
-  wood: "#375738",
-  farm: "#646146",
-  canopy: ["#386a34", "#41763b", "#305e31", "#4a8241", "#346337"],
-  trunk: "#4a3d32",
-  sky: "#1d2b4a",
+  // Dusk, not night: easy on the eyes in dark mode but bright enough to read outdoors
+  ground: "#56695b",
+  campusGround: "#617c66",
+  wall: "#c6cbd8",
+  roofs: ["#a9614f", "#9a5645", "#b16e56", "#838c9d", "#76849b", "#6c8b83"],
+  flatRoof: "#878b94",
+  road: "#6d7584",
+  path: "#a29f96",
+  pitch: "#518b5d",
+  court: "#9b6f58",
+  parking: "#757882",
+  water: "#4c7fa5",
+  grass: "#5f8757",
+  wood: "#4c714a",
+  farm: "#837f5d",
+  canopy: ["#4b8544", "#56914b", "#40773f", "#609d53", "#477e46"],
+  trunk: "#5f4e40",
+  sky: "#3d527a",
 };
 
 function roofColor(id: string, category: PlaceCategory | undefined, palette: ScenePalette) {

@@ -34,6 +34,16 @@ export default function GlMapView({ handleRef, places, outline, dark, selectedId
   }, []);
 
   const labels = useMemo(() => (places ? placesToGeoJSON(places) : null), [places]);
+  // Pins only change with the places, selection or search, never with a new GPS reading
+  const pins = useMemo(
+    () =>
+      places?.map((p) => (
+        <Marker key={p.id} longitude={p.coordinates[0]} latitude={p.coordinates[1]} anchor="bottom" style={{ zIndex: selectedId === p.id ? 20 : 10 }}>
+          <Pin place={p} selected={selectedId === p.id} dimmed={!visibleIds.has(p.id)} onClick={() => onPin(p)} />
+        </Marker>
+      )),
+    [places, selectedId, visibleIds, onPin],
+  );
 
   return (
     <Map
@@ -58,10 +68,10 @@ export default function GlMapView({ handleRef, places, outline, dark, selectedId
     >
       {outline && (
         <Source id="campus" type="geojson" data={outline}>
-          <Layer id="campus-area" type="fill" beforeId={beforeId} filter={["==", ["get", "kind"], "campus"]} paint={{ "fill-color": dark ? "#4d82ff" : "#003cbb", "fill-opacity": dark ? 0.06 : 0.035 }} />
-          <Layer id="campus-edge" type="line" beforeId={beforeId} filter={["==", ["get", "kind"], "campus"]} paint={{ "line-color": dark ? "#4d82ff" : "#003cbb", "line-width": 1.6, "line-opacity": 0.55, "line-dasharray": [3, 2] }} />
-          <Layer id="campus-buildings" type="fill" beforeId={beforeId} filter={["==", ["get", "kind"], "building"]} paint={{ "fill-color": dark ? "#2a3550" : "#dde5f4", "fill-opacity": 0.95 }} />
-          <Layer id="campus-buildings-edge" type="line" beforeId={beforeId} filter={["==", ["get", "kind"], "building"]} paint={{ "line-color": dark ? "#3b4a6b" : "#b9c6e3", "line-width": 0.7 }} />
+          <Layer id="campus-area" type="fill" beforeId={beforeId} filter={["==", ["get", "kind"], "campus"]} paint={{ "fill-color": dark ? "#9db6ff" : "#003cbb", "fill-opacity": dark ? 0.08 : 0.035 }} />
+          <Layer id="campus-edge" type="line" beforeId={beforeId} filter={["==", ["get", "kind"], "campus"]} paint={{ "line-color": dark ? "#9db6ff" : "#003cbb", "line-width": 1.6, "line-opacity": dark ? 0.75 : 0.55, "line-dasharray": [3, 2] }} />
+          <Layer id="campus-buildings" type="fill" beforeId={beforeId} filter={["==", ["get", "kind"], "building"]} paint={{ "fill-color": dark ? "#6a789b" : "#dde5f4", "fill-opacity": 0.95 }} />
+          <Layer id="campus-buildings-edge" type="line" beforeId={beforeId} filter={["==", ["get", "kind"], "building"]} paint={{ "line-color": dark ? "#93a3c8" : "#b9c6e3", "line-width": 0.7 }} />
           <Layer
             id="campus-building-selected"
             type="fill"
@@ -78,15 +88,11 @@ export default function GlMapView({ handleRef, places, outline, dark, selectedId
             type="symbol"
             minzoom={16.6}
             layout={{ "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11, "text-offset": [0, 0.9], "text-anchor": "top", "text-max-width": 9, "text-optional": true }}
-            paint={{ "text-color": dark ? "#e5e7eb" : "#1f2937", "text-halo-color": dark ? "#111827" : "#ffffff", "text-halo-width": 1.4 }}
+            paint={{ "text-color": dark ? "#f8fafc" : "#1f2937", "text-halo-color": dark ? "#2b3550" : "#ffffff", "text-halo-width": 1.4 }}
           />
         </Source>
       )}
-      {places?.map((p) => (
-        <Marker key={p.id} longitude={p.coordinates[0]} latitude={p.coordinates[1]} anchor="bottom" style={{ zIndex: selectedId === p.id ? 20 : 10 }}>
-          <Pin place={p} selected={selectedId === p.id} dimmed={!visibleIds.has(p.id)} onClick={() => onPin(p)} />
-        </Marker>
-      ))}
+      {pins}
       <MeMarker me={me} accuracy={meAccuracy ?? null} heading={meHeading ?? null} />
     </Map>
   );
