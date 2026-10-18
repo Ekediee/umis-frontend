@@ -290,6 +290,30 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                   <Link href="/academic-details/courses?tab=repeated" onClick={() => setIsBottomSheetOpen(false)} className={`flex items-center px-5 py-4 text-[15px] font-medium rounded-xl mx-1 transition-colors ${pathname.includes('tab=repeated') ? 'bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#0a0d14] dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800'}`}>View Repeated Course</Link>
                   <Link href="/academic-details/transcript" onClick={() => setIsBottomSheetOpen(false)} className={`flex items-center px-5 py-4 text-[15px] font-medium rounded-xl mx-1 transition-colors ${pathname.includes('/transcript') ? 'bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#0a0d14] dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800'}`}>Export Unofficial Transcript</Link>
                 </>
+              ) : pathname?.includes('/finance') || pathname?.includes('/registration') ? (
+                // Finance and Registration tabs: their own quick links, like Academic Details
+                (pathname.includes('/finance')
+                  ? [
+                      { href: "/dashboard/finance", label: "Finance Overview", active: pathname === "/dashboard/finance" },
+                      { href: "/dashboard/finance?action=fund", label: "Fund Wallet", active: false },
+                      { href: "/dashboard/finance/fees", label: "Financial Registration", active: pathname.startsWith("/dashboard/finance/fees") },
+                    ]
+                  : [
+                      { href: "/registration", label: "Registration Overview", active: pathname === "/registration" },
+                      { href: "/registration/courses", label: "Select Courses", active: pathname.startsWith("/registration/courses") },
+                      { href: "/dashboard/registration/course-form", label: "View Course Form", active: pathname.includes("/course-form") },
+                      { href: "/dashboard/finance/fees", label: "Financial Registration", active: false },
+                    ]
+                ).map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsBottomSheetOpen(false)}
+                    className={`flex items-center px-5 py-4 text-[15px] font-medium rounded-xl mx-1 transition-colors ${item.active ? 'bg-[#eef3fd] dark:bg-[#003cbb]/20 text-[#0a0d14] dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800'}`}
+                  >
+                    {item.label}
+                  </Link>
+                ))
               ) : (
                 <>
                   <button 
@@ -344,39 +368,42 @@ export function Header({ initialUserData = null }: HeaderProps = {}) {
                       </>
                     );
                   })()}
-                  <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
-
-                  <Link
-                    href="/campus-map"
-                    onClick={() => setIsBottomSheetOpen(false)}
-                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
-                  >
-                    <MapIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                    Campus map
-                  </Link>
-                  <button
-                    type="button"
-                    disabled={isAccessingExamPortal}
-                    onClick={() => {
-                      setIsBottomSheetOpen(false);
-                      openExamPortal();
-                    }}
-                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1 w-full text-left disabled:opacity-60"
-                  >
-                    <BookOpen className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                    Online exam
-                  </button>
-                  <Link 
-                    href="https://support.babcock.edu.ng/" 
-                    target="_blank"
-                    onClick={() => setIsBottomSheetOpen(false)}
-                    className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
-                  >
-                    <Headphones className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                    Support
-                  </Link>
                 </>
               )}
+
+              {/* Defaults on every page's sheet, like the sidebar's "Other" section */}
+              <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
+
+              <Link
+                href="/campus-map"
+                onClick={() => setIsBottomSheetOpen(false)}
+                className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+              >
+                <MapIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                Campus map
+              </Link>
+              <button
+                type="button"
+                disabled={isAccessingExamPortal}
+                onClick={() => {
+                  setIsBottomSheetOpen(false);
+                  openExamPortal();
+                }}
+                className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1 w-full text-left disabled:opacity-60"
+              >
+                <BookOpen className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                Online exam
+              </button>
+              <Link 
+                href="https://support.babcock.edu.ng/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsBottomSheetOpen(false)}
+                className="flex items-center gap-3 px-5 py-4 text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800 transition-colors rounded-xl mx-1"
+              >
+                <Headphones className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                Support
+              </Link>
 
               {/* Log out lives on every page's sheet, same as the desktop sidebar menu */}
               <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-5" />
