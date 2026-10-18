@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Plus, Trash2, Sparkles, TrendingUp, AlertCircle, CheckCircle, Target, ArrowRight, Settings2, RefreshCw } from "lucide-react";
+import { X, Plus, Trash2, Sparkles, TrendingUp, AlertCircle, CheckCircle, Target, ArrowRight, Settings2, RefreshCw, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/contexts/user-data-context";
@@ -12,6 +12,10 @@ interface MockCourse {
   code: string;
   units: number;
   grade: string; // A, B, C, D, E, F
+  /** From the student's semester registration: code and units are fixed, only the grade is simulated */
+  registered?: boolean;
+  isCarryOver?: boolean;
+  title?: string;
 }
 
 interface GPAWhatIfSimulatorProps {
@@ -48,30 +52,45 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
   // Target GPA State (Default target semester GPA: 4.50)
   const [targetSemesterGPA, setTargetSemesterGPA] = useState<number>(4.5);
 
-  // Course list — pre-populated from the student's registered courses on open.
+  // Course list. Once the student has registered for the semester it holds their registered
+  // courses (fixed codes and units, grades to simulate); before that, courses they add themselves.
   // Grades default to "A" so the student can explore optimistic projections.
   const [courses, setCourses] = useState<MockCourse[]>([]);
+  const [registration, setRegistration] = useState<"checking" | "registered" | "not_registered">("checking");
+  const isRegistered = registration === "registered";
 
-  // Fetch student's real registered courses when the modal opens.
-  // Replace hardcoded COSC department defaults so every student sees their
-  // own courses, regardless of department.
+  // Check for registered courses each time the simulator opens
   useEffect(() => {
     if (!isOpen) return;
-    getRegisteredCoursesAction().then((result) => {
-      if (result.data && result.data.length > 0) {
-        setCourses(
-          result.data.map((c, i) => ({
-            id: String(i + 1),
-            code: c.courseId,
-            units: c.units,
-            grade: "A", // Default to A so students can model best-case scenarios
-          }))
-        );
-      } else {
-        // Fall back to an empty list if no courses are registered yet
-        setCourses([]);
-      }
-    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- show "checking" while the request runs
+    setRegistration((r) => (r === "registered" ? r : "checking"));
+    getRegisteredCoursesAction()
+      .then((result) => {
+        if (result.data && result.data.length > 0) {
+          setRegistration("registered");
+          setCourses((prev) => {
+            // Keep any grades the student already picked for these courses
+            const picked = new Map(prev.filter((c) => c.registered).map((c) => [c.code, c.grade]));
+            return result.data!.map((c, i) => ({
+              id: `reg-${i}-${c.courseId}`,
+              code: c.courseId,
+              title: c.title,
+              units: c.units,
+              grade: picked.get(c.courseId) ?? "A",
+              registered: true,
+              isCarryOver: c.isCarryOver,
+            }));
+          });
+        } else {
+          // Not registered yet: keep the courses the student added themselves
+          setRegistration("not_registered");
+          setCourses((prev) => prev.filter((c) => !c.registered));
+        }
+      })
+      .catch(() => {
+        setRegistration("not_registered");
+        setCourses((prev) => prev.filter((c) => !c.registered));
+      });
   }, [isOpen]);
 
   const userData = contextUserData;
@@ -168,11 +187,12 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
   };
 
   const removeCourse = (id: string) => {
-    setCourses(courses.filter((c) => c.id !== id));
+    setCourses(courses.filter((c) => c.id !== id || c.registered));
   };
 
   const updateCourse = (id: string, updates: Partial<MockCourse>) => {
-    setCourses(courses.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    // Registered courses: only the simulated grade can change
+    setCourses(courses.map((c) => (c.id === id ? { ...c, ...(c.registered ? { grade: updates.grade ?? c.grade } : updates) } : c)));
   };
 
   if (!isOpen) return null;
@@ -269,12 +289,12 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
             
             {/* 1. Set Target Semester GPA */}
             <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col justify-between relative overflow-hidden group">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <span className="min-w-0 leading-snug text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                   <Target className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff]" />
                   Target Semester GPA
                 </span>
-                <span className="bg-blue-50 dark:bg-blue-950/40 text-[#003cbb] dark:text-[#4d82ff] text-[11px] font-extrabold px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/40">
+                <span className="bg-blue-50 dark:bg-blue-950/40 text-[#003cbb] dark:text-[#4d82ff] shrink-0 whitespace-nowrap text-[11px] font-extrabold px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/40">
                   Goal
                 </span>
               </div>
@@ -310,12 +330,12 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
 
             {/* 2. Simulated Semester GPA */}
             <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <span className="min-w-0 leading-snug text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Simulated Semester GPA
                 </span>
                 <span className={cn(
-                  "text-[11px] font-extrabold px-2 py-0.5 rounded-full border",
+                  "shrink-0 whitespace-nowrap text-[11px] font-extrabold px-2 py-0.5 rounded-full border",
                   isTargetMet 
                     ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40"
                     : isTargetClose 
@@ -346,12 +366,12 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
 
             {/* 3. Projected Cumulative CGPA */}
             <div className="bg-white dark:bg-gray-900 rounded-[20px] p-4 sm:p-5 border border-gray-200/80 dark:border-gray-800 flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <span className="min-w-0 leading-snug text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Projected CGPA
                 </span>
                 <span className={cn(
-                  "text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border",
+                  "shrink-0 whitespace-nowrap text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border",
                   cgpaDelta > 0 
                     ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40"
                     : cgpaDelta < 0
@@ -406,21 +426,50 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
 
           {/* Course Sandbox Table */}
           <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200/80 dark:border-gray-800 overflow-hidden flex flex-col shrink-0">
-            <div className="px-5 py-4 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
-              <span className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
-                Simulated Courses ({courses.length})
-              </span>
-              <Button 
-                onClick={addCourse}
-                variant="outline"
-                className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-8 text-[12px] font-semibold flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add Course
-              </Button>
+            <div className="px-5 py-4 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <span className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
+                  {isRegistered ? `Your Registered Courses (${courses.length})` : `Simulated Courses (${courses.length})`}
+                </span>
+                <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+                  {registration === "checking"
+                    ? "Checking your semester registration…"
+                    : isRegistered
+                      ? "From your semester registration. Pick the grade you expect in each course."
+                      : "You haven't registered for this semester yet. Add the courses you plan to take."}
+                </p>
+              </div>
+              {!isRegistered && (
+                <Button
+                  onClick={addCourse}
+                  variant="outline"
+                  disabled={registration === "checking"}
+                  className="shrink-0 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-8 text-[12px] font-semibold flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Course
+                </Button>
+              )}
             </div>
 
             <div className="p-4 sm:p-5 flex flex-col gap-4">
+              {registration === "checking" && courses.length === 0 && (
+                <div className="flex items-center justify-center gap-2 py-6 text-[13px] text-gray-500 dark:text-gray-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading your registered courses…
+                </div>
+              )}
+              {registration === "not_registered" && courses.length === 0 && (
+                <button
+                  type="button"
+                  onClick={addCourse}
+                  className="flex flex-col items-center justify-center gap-1.5 py-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-[#003cbb] hover:text-[#003cbb] dark:hover:border-[#4d82ff] dark:hover:text-[#4d82ff] transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="text-[13px] font-semibold">Add your first course</span>
+                  <span className="text-[12px]">Your registered courses appear here automatically once you register.</span>
+                </button>
+              )}
               {courses.map((course) => {
                 const targetGradeNeeded = requiredTargetGrades[course.id] || "A";
                 return (
@@ -431,13 +480,26 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
                     {/* Course Code & Target Requirement Badge */}
                     <div className="w-full lg:w-[180px] shrink-0">
                       <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 lg:hidden">Course Code</label>
-                      <input 
-                        type="text" 
-                        value={course.code}
-                        onChange={(e) => updateCourse(course.id, { code: e.target.value.toUpperCase() })}
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-[14px] font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#003cbb]"
-                      />
-                      <div className="mt-2 flex items-center gap-1.5">
+                      {course.registered ? (
+                        <div title={course.title}>
+                          <p className="text-[14px] font-bold text-gray-900 dark:text-gray-100">{course.code}</p>
+                          {course.title && <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">{course.title}</p>}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={course.code}
+                          onChange={(e) => updateCourse(course.id, { code: e.target.value.toUpperCase() })}
+                          className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-[14px] font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#003cbb]"
+                        />
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        {course.registered && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/40">
+                            <Lock className="w-3 h-3" />
+                            {course.isCarryOver ? "Carry-over" : "Registered"}
+                          </span>
+                        )}
                         <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40">
                           Needs: {targetGradeNeeded} Grade
                         </span>
@@ -447,6 +509,11 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
                     {/* Credit Units */}
                     <div className="w-full lg:w-[120px] shrink-0">
                       <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Credit Units</label>
+                      {course.registered ? (
+                        <p className="px-3 py-1.5 rounded-lg bg-white/60 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 text-[13px] font-bold text-gray-900 dark:text-gray-100">
+                          {course.units} {course.units === 1 ? "Unit" : "Units"}
+                        </p>
+                      ) : (
                       <select
                         value={course.units}
                         onChange={(e) => updateCourse(course.id, { units: Number(e.target.value) })}
@@ -456,6 +523,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
                           <option key={u} value={u}>{u} {u === 1 ? 'Unit' : 'Units'}</option>
                         ))}
                       </select>
+                      )}
                     </div>
 
                     {/* Interactive Grade Selector (A, B, C, D, E, F) */}
@@ -490,7 +558,8 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
                       </div>
                     </div>
 
-                    {/* Delete Course Button */}
+                    {/* Delete Course Button (own courses only) */}
+                    {!course.registered && (
                     <button 
                       onClick={() => removeCourse(course.id)}
                       className="p-2 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors shrink-0 self-end lg:self-center mt-2 lg:mt-0"
@@ -498,6 +567,7 @@ export function GPAWhatIfSimulator({ isOpen, onClose }: GPAWhatIfSimulatorProps)
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </div>
                 );
               })}
