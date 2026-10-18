@@ -11,6 +11,7 @@ import {
   type SemesterResult,
   type ResultCourse,
 } from "@/app/actions/academic-details";
+import { semesterFromParam } from "@/lib/student/semester-slug";
 
 // ── Grade helpers ─────────────────────────────────────────────────────────────
 
@@ -74,7 +75,8 @@ function DocumentSkeleton() {
 export default function DocumentPreviewPage() {
   const router = useRouter();
   const params = useParams();
-  const semesterId = decodeURIComponent((params.id as string) || "");
+  // "2025-2026.1" in the address (Apache rejects %2F), the real code "2025/2026.1" here
+  const semesterId = semesterFromParam(params.id);
   const session = semesterId.split(".")[0];
   const termName = getSemesterLabel(semesterId);
 
