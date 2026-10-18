@@ -182,7 +182,8 @@ export function useStudentAvatar(
     getStudentProfileAction().then((res) => {
       if (res) {
         const pic = extractPicUrl(res);
-        const matric = res.user_data?.personal_information?.matric_number;
+        // The profile API puts matric_number on user_data; some shapes nest it in personal_information
+        const matric = res.user_data?.personal_information?.matric_number ?? (res.user_data as { matric_number?: string | null } | undefined)?.matric_number;
         const key = matric ? `profile_avatar:${matric}` : null;
         if (pic) {
           const proxied = proxyImageUrl(pic);
@@ -194,6 +195,16 @@ export function useStudentAvatar(
               // Ignore
             }
           }
+        } else if (!liveData) {
+          // Outside the student layout (e.g. the AI chat) there's no layout data: use the photo
+          // the layout cached for this student, else their placeholder by gender
+          let cached: string | null = null;
+          try {
+            cached = key ? localStorage.getItem(key) : null;
+          } catch {
+            // Ignore
+          }
+          setOverrideAvatar(cached ? proxyImageUrl(cached) : placeholderAvatarFor(res));
         }
       }
     });

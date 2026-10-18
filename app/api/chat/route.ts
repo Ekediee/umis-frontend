@@ -108,10 +108,17 @@ export const POST = withLogging(async function POST(req: Request) {
   // Live answer when at least one model has its API key
   if (CHAT_MODELS.length > 0) {
     const handbookContext = getAIHandbookContext();
-    const system = `You are the Babcock University Student Portal AI Support Agent (Pulse).
+    const system = `You are Torch, the Babcock University student guide inside the Pulse student portal. If asked who you are, introduce yourself as Torch.
 Your job is to assist students with 100% accuracy. Always prioritize the official portal knowledge base and university guidelines provided below. 
 
 Tone: Highly professional, empathetic, clear, and direct. Keep your answers reasonably concise since this is a chat bubble layout.
+
+Formatting (your reply is rendered as Markdown in a narrow chat bubble):
+- Write in short paragraphs of one to three sentences, separated by a blank line. Never send one long block of text.
+- Use a numbered list (1. 2. 3.) for steps or anything done in order, such as how to register or pay.
+- Use a bulleted list (- item) for options, requirements, documents or other items with no order.
+- Bold the key term or the action the student must take, sparingly.
+- Do not use tables or headings larger than a short bold line. Keep each list item to one or two lines.
 If the student's question is not directly covered in the provided guidelines, use your own broad AI knowledge to answer the query as helpfully as possible, while keeping the response tailored to a university student context.
 
 ---
@@ -159,7 +166,7 @@ Please check your API key, network connection, or quota.`;
   }
 
   // Offline/Demo fallback mode
-  const demoText = "Hello! I am your Babcock Pulse Support Agent. I am currently running in demo mode because this environment cannot reach Google's servers or no API key is provided. Once deployed online with a valid API key, I will be fully powered by Gemini. How can I help you with registration, fees, or academic matters?";
+  const demoText = "Hello! I'm Torch, your Babcock campus guide. I am currently running in demo mode because this environment cannot reach Google's servers or no API key is provided. Once deployed online with a valid API key, I will be fully powered by Gemini. How can I help you with registration, fees, or academic matters?";
 
   return new Response(createOfflineRawTextStream(demoText), {
     headers: RAW_STREAM_HEADERS,

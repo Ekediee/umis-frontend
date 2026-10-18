@@ -47,6 +47,8 @@ export function placeholderAvatar(gender: string | null | undefined, seed: strin
 
 /** The placeholder for a student, read from their profile data */
 export function placeholderAvatarFor(data: UMISResponse | null | undefined): string {
-  const pi = data?.user_data?.personal_information;
-  return placeholderAvatar(pi?.gender, pi?.matric_number ?? pi?.student_name);
+  const ud = data?.user_data as { matric_number?: string | null; student_name?: string | null; personal_information?: { gender?: string | null; matric_number?: string | null; student_name?: string | null } } | undefined;
+  const pi = ud?.personal_information;
+  // matric_number sits on user_data in the profile API, inside personal_information in other shapes
+  return placeholderAvatar(pi?.gender, pi?.matric_number ?? ud?.matric_number ?? pi?.student_name ?? ud?.student_name);
 }
