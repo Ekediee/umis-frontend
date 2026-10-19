@@ -10,6 +10,7 @@ import { usePersistentToggle } from "@/hooks/use-persistent-toggle";
 import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
 import { FundWalletModal, FundWalletStep } from "@/components/fees/fund-wallet-modal";
+import { PayOutstandingModal } from "@/components/fees/pay-outstanding-modal";
 import { fundWalletAction, getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
@@ -76,6 +77,7 @@ function FinancePageContent() {
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
+  const [isPayOutstandingOpen, setIsPayOutstandingOpen] = useState(false);
   const [fundWalletStep, setFundWalletStep] = useState<FundWalletStep>("amount");
   const [showWalletBalance, setShowWalletBalance] = useState(true);
   const [successAmount, setSuccessAmount] = useState<number | undefined>(undefined);
@@ -121,12 +123,17 @@ function FinancePageContent() {
     });
   }, [fetchBalance]);
 
-  // Open modal when ?action=fund is in the URL
+  // Open a modal from the URL: ?action=fund (Fund Wallet) or ?action=pay-outstanding (from registration)
   useEffect(() => {
-    if (searchParams.get("action") === "fund") {
+    const action = searchParams.get("action");
+    if (action === "fund" || action === "pay-outstanding") {
       const timer = setTimeout(() => {
-        setFundWalletStep("amount");
-        setIsFundWalletModalOpen(true);
+        if (action === "fund") {
+          setFundWalletStep("amount");
+          setIsFundWalletModalOpen(true);
+        } else {
+          setIsPayOutstandingOpen(true);
+        }
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -457,13 +464,12 @@ function FinancePageContent() {
           {/* Card 1 */}
           <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
             <div className="relative z-10 w-4/5 flex flex-col justify-center">
-              <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-8">Pay for a previous semester</h3>
+              <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-8">Pay outstanding fees</h3>
               <Button 
                 disabled={!hasOutstandingFees}
                 onClick={() => {
-                  if (hasOutstandingFees) {
-                    router.push("/dashboard/finance/fees/payment?type=semester");
-                  }
+                  // Enter an amount and pay it from the wallet
+                  if (hasOutstandingFees) setIsPayOutstandingOpen(true);
                 }}
                 className={cn(
                   "w-[160px] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
@@ -792,6 +798,21 @@ function FinancePageContent() {
           </div>
         )}
       </div>
+
+      <PayOutstandingModal
+        isOpen={isPayOutstandingOpen}
+        onClose={() => setIsPayOutstandingOpen(false)}
+        outstanding={outstandingAmount}
+        onFundWallet={() => {
+          setIsPayOutstandingOpen(false);
+          setFundWalletStep("amount");
+          setIsFundWalletModalOpen(true);
+        }}
+        onPaid={() => {
+          fetchBalance();
+          loadStudentFees();
+        }}
+      />
 
       <FundWalletModal
         isOpen={isFundWalletModalOpen}
