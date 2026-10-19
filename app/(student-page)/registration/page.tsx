@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { actionKey, notify } from "@/lib/notifications/bus";
 import { getSemesterRegistrationStatusAction, registerSemesterAction, getHasSubmittedCoursesAction } from "@/app/actions/registration";
 import { refreshAcademicStandingAction } from "@/app/actions/user";
+import { getStudentFeesAction } from "@/app/actions/payment";
+import { needsPasswordChange, rememberDefaultPassword } from "@/lib/student/default-password";
 import { SemesterRegistrationConfirmModal } from "@/components/registration/registration-status-modals";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
@@ -72,6 +74,8 @@ export default function RegistrationPage() {
   const userData = useUserData();
   const accountEmail = userData?.user_data?.contact_information?.babcock_email || userData?.user_data?.contact_information?.email || "";
   const matricNo = userData?.entity_id?.toString() ?? userData?.user_data?.matric_number ?? userData?.user_data?.personal_information?.matric_number ?? "";
+  // "Still using your default password?" only for students the backend refused for it
+  const [showPasswordNotice, setShowPasswordNotice] = useState(false);
   const openChangePassword = () => {
     setIsSemesterConfirmOpen(false);
     setIsChangePasswordOpen(true);
@@ -82,24 +86,39 @@ export default function RegistrationPage() {
   // Derived boolean — true only if student has commenced registration for the semester
   const isRegisteredForSemester = Boolean(semesterInfo?.check);
 
-  const fetchRegistrationStatus = async () => {
-    if (isFetchingSemesterInfo) return;
-    setIsFetchingSemesterInfo(true);
-    const result = await getSemesterRegistrationStatusAction();
-    if (result.error) {
-      toast.error(result.error);
-      setSemesterInfoError(result.error);
-    } else if (result.data) {
-      setSemesterInfo(result.data);
-    }
-    // isFetchingSemesterInfo is reset inside the setters above
-  };
-
-  // Cache-first: only fetch if the store doesn't already have semester data
+  // Outstanding fees (previous semesters included), same source as the Finance page.
+  // Under ₦1 is treated as rounding, not debt. null = not loaded or couldn't load.
+  const [outstanding, setOutstanding] = useState<number | null>(null);
   useEffect(() => {
-    if (semesterInfo === null && !isFetchingSemesterInfo) {
-      fetchRegistrationStatus();
-    }
+    getStudentFeesAction()
+      .then((res) => setOutstanding(res.success && res.data ? Math.abs(res.data.total_outstanding_fees) : null))
+      .catch(() => setOutstanding(null));
+  }, []);
+  const owesFees = outstanding !== null && outstanding >= 1;
+  const outstandingLabel = outstanding !== null ? `₦${outstanding.toLocaleString(undefined, { minimumFractionDigits: outstanding % 1 ? 2 : 0, maximumFractionDigits: 2 })}` : "";
+
+  // Show the stored status straight away, but always refresh it: the stored copy can be
+  // stale (commenced on another device, or an older visit), which used to show
+  // "Commence Registration" and its pop-up to students who had already commenced.
+  // Runs on its own (the store's fetching flag is persisted and can be left stuck).
+  useEffect(() => {
+    let cancelled = false;
+    const hadStored = useRegistrationStore.getState().semesterInfo !== null;
+    if (!hadStored) setIsFetchingSemesterInfo(true);
+    getSemesterRegistrationStatusAction()
+      .then((result) => {
+        if (cancelled) return;
+        if (result.data) setSemesterInfo(result.data);
+        else if (result.error) {
+          setSemesterInfoError(result.error);
+          // With a stored status on screen, a failed refresh isn't worth an error toast
+          if (!hadStored) toast.error(result.error);
+        } else setIsFetchingSemesterInfo(false);
+      })
+      .catch(() => !cancelled && setIsFetchingSemesterInfo(false));
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -138,7 +157,7 @@ export default function RegistrationPage() {
         description: "Checking your registration status..."
       };
     }
-    if (!isRegisteredForSemester) {
+if (!isRegisteredForSemester) {
       return {
         buttonText: "Commence Registration",
         buttonVariant: "primary" as const,
@@ -238,12 +257,20 @@ export default function RegistrationPage() {
           buttonVariant={regProps.buttonVariant}
           gradientClass="bg-gradient-to-br from-[#c2d6ff] to-[#ebf1ff] dark:from-[#1b2a4a] dark:to-[#111c30]"
           illustrationSrc="/Reg-image.png"
-          onClick={() => {
+          onClick={async () => {
             if (isLoadingStatus || isCheckingSubmission) return;
-            if (!semesterInfo?.check) {
+if (!semesterInfo?.check) {
+              // Re-check before opening the commencement pop-up, in case the stored status is stale
+              const fresh = await getSemesterRegistrationStatusAction();
+              if (fresh.data) setSemesterInfo(fresh.data);
+              if (fresh.data?.check) {
+                router.push(regState === "completed" ? "/dashboard/registration/course-form" : "/registration/courses");
+                return;
+              }
               // Registration not yet commenced for the semester — open commencement modal
+              setShowPasswordNotice(needsPasswordChange(userData, matricNo));
               setIsSemesterConfirmOpen(true);
-            } else if (regState !== "completed") {
+            } else if(regState !== "completed") {
               router.push("/registration/courses");
             } else {
               router.push("/dashboard/registration/course-form");
@@ -398,6 +425,9 @@ export default function RegistrationPage() {
           if (result.error) {
             // The backend refuses students still on their default password: make the fix one tap away
             if (/password/i.test(result.error)) {
+              // Remember it, so the pop-up offers the fix until they change their password
+              rememberDefaultPassword(matricNo);
+              setShowPasswordNotice(true);
               showActionToast({
                 title: "Change your password to continue",
                 description: result.error,
@@ -438,7 +468,14 @@ export default function RegistrationPage() {
           }
         }}
         isLoading={isRegistering}
-        onChangePassword={openChangePassword}
+        onChangePassword={showPasswordNotice ? openChangePassword : undefined}
+        // Students who owe feesclear them first: the main button becomes "Pay Outstanding Fees"
+        outstanding={owesFees ? outstandingLabel : null}
+        onPayOutstanding={() => {
+          setIsSemesterConfirmOpen(false);
+          // Opens the same "Pay Outstanding Fees" window as Pay Now on the Finance page
+          router.push("/dashboard/finance?action=pay-outstanding");
+        }}
       />
 
       <ChangePasswordModal
