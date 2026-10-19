@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, CheckCircle, ChevronRight, KeyRound, XCircle, X, type LucideIcon } from "lucide-react";
+import { AlertCircle, CheckCircle, KeyRound, XCircle, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -193,7 +193,20 @@ export function FailureModal({ isOpen, onClose, onConfirm }: ModalProps) {
   );
 }
 
-export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, isLoading, onChangePassword }: ModalProps & { onChangePassword?: () => void }) {
+/**
+ * `outstanding` (e.g. "₦34,252.88") turns the main button into "Pay Outstanding Fees":
+ * students who owe fees clear them before they can register for the semester.
+ */
+export function SemesterRegistrationConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading,
+  onChangePassword,
+  outstanding,
+  onPayOutstanding,
+}: ModalProps & { onChangePassword?: () => void; outstanding?: string | null; onPayOutstanding?: () => void }) {
+  const owes = Boolean(outstanding && onPayOutstanding);
   return (
     <BaseModal
       isOpen={isOpen}
@@ -203,40 +216,45 @@ export function SemesterRegistrationConfirmModal({ isOpen, onClose, onConfirm, i
       iconColorClass="text-[#F97316] dark:text-[#f89856]"
       title="Register for Semester"
       description={
-        <p>
-          Are you sure you want to register for this semester? By confirming, you agree to begin your academic session registration and proceed to the course selection workspace.
-        </p>
+        owes ? (
+          <p>
+            You have <span className="font-semibold text-[#0a0d14] dark:text-gray-100">{outstanding}</span> outstanding. Clear it before you can register for this semester.
+          </p>
+        ) : (
+          <p>
+            Are you sure you want to register for this semester? By confirming, you agree to begin your academic session registration and proceed to the course selection workspace.
+          </p>
+        )
       }
-      primaryActionText="Confirm & Register"
+      primaryActionText={owes ? "Pay Outstanding Fees" : "Confirm & Register"}
       secondaryActionText="Cancel"
-      onPrimaryAction={onConfirm}
+      onPrimaryAction={owes ? onPayOutstanding : onConfirm}
       onSecondaryAction={onClose}
       isLoading={isLoading}
       aside={
         onChangePassword && (
-          // Students still on their default password can't commence registration:
-          // offer the fix here, before they hit the error
-          <button
-            type="button"
-            onClick={onChangePassword}
-            disabled={isLoading}
-            className="group w-full flex flex-col sm:flex-row sm:items-center gap-3 rounded-[12px] border border-[#FDE6CF] dark:border-[#F97316]/25 bg-[#FFF8F1] dark:bg-[#F97316]/10 px-3.5 py-3 text-left transition-colors hover:bg-[#FFF1E3] dark:hover:bg-[#F97316]/15 disabled:opacity-50"
-          >
-            <span className="flex items-center gap-3 flex-1 min-w-0">
-              <span className="w-9 h-9 shrink-0 rounded-full bg-white dark:bg-gray-900 border border-[#FDE6CF] dark:border-[#F97316]/25 flex items-center justify-center">
-                <KeyRound className="w-4 h-4 text-[#F97316]" />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-[13px] font-semibold text-[#0A0D14] dark:text-gray-100">Still using your default password?</span>
-                <span className="block text-[12px] leading-snug text-[#525866] dark:text-gray-400">Change it first. Registration may not go through until you do.</span>
-              </span>
+          // Only for students still on their default password (the backend won't commence
+          // registration until they change it): the fix, right where they need it
+          <div role="note" className="w-full flex items-start gap-3 rounded-[12px] border border-[#fde68a] dark:border-amber-900/50 bg-[#fffbeb] dark:bg-amber-950/30 p-3.5 text-left">
+            <span className="w-9 h-9 shrink-0 rounded-full bg-white dark:bg-amber-900/40 border border-[#fde68a] dark:border-amber-800/60 flex items-center justify-center">
+              <KeyRound className="w-4 h-4 text-[#b45309] dark:text-amber-400" />
             </span>
-            <span className="shrink-0 inline-flex items-center justify-center gap-1 rounded-[8px] bg-white dark:bg-gray-900 border border-[#E2E4E9] dark:border-gray-700 px-3 h-9 sm:h-8 text-[13px] sm:text-[12px] font-semibold text-[#003399] dark:text-[#8FB0FF] group-hover:border-[#003399]/30 w-full sm:w-auto">
-              <KeyRound className="w-3.5 h-3.5 sm:hidden" />
-              Change password
-              <ChevronRight className="w-3.5 h-3.5" />
-            </span>
-          </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold text-[#c2410c] dark:text-orange-400">Change your default password first</p>
+              <p className="text-[13px] leading-snug text-[#b45309] dark:text-amber-400/90 mt-0.5">
+                You&apos;re still using the password you were given. Change it, then register for the semester.
+              </p>
+              <button
+                type="button"
+                onClick={onChangePassword}
+                disabled={isLoading}
+                className="mt-3 inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-[10px] bg-[#003cbb] hover:bg-[#002e8f] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white text-[13px] font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <KeyRound className="w-4 h-4" />
+                Change password
+              </button>
+            </div>
+          </div>
         )
       }
     />

@@ -26,7 +26,7 @@ export function OutstandingPayment() {
       <div className="bg-gradient-to-b from-[#c2d6ff] to-[#ebf1ff] dark:from-[#1b2a4a] dark:to-[#111c30] rounded-[14px] relative overflow-hidden flex flex-col justify-center px-6 md:px-10 py-10 md:h-[220px]">
         <div className="relative z-10 flex flex-col gap-6 md:max-w-[60%]">
           <h2 className="text-[28px] md:text-[32px] font-semibold text-black dark:text-gray-100 tracking-[-0.5px]">
-            Pay for a previous semester
+            Pay outstanding fees
           </h2>
           
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
