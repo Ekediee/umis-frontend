@@ -24,13 +24,15 @@ vi.mock("next/headers", () => ({
 }));
 
 import { accessExamPortalAction } from "@/app/actions/exam-portal";
-import {
-  EXAM_PORTAL_URLS,
-  EXAM_AUTH_USERNAME,
-  EXAM_AUTH_PASSWORD,
-} from "@/app/actions/exam-portal.types";
 
 const MOCK_TOKEN = "test-bearer-token";
+const MOCK_EXAM_URLS = [
+  "https://exam.babcock.edu.ng/session",
+  "https://exam1.babcock.edu.ng/session",
+  "https://exam2.babcock.edu.ng/session",
+];
+const MOCK_EXAM_USER = "ba_user";
+const MOCK_EXAM_PASS = "12345678";
 
 const SESSION_USER = {
   entity_id: "PT/21/2043",
@@ -64,6 +66,9 @@ beforeEach(() => {
   cookieStore._store = {};
   vi.unstubAllGlobals();
   process.env.API_URL = "https://api.test.com";
+  process.env.EXAM_PORTAL_URLS = MOCK_EXAM_URLS.join(",");
+  process.env.EXAM_AUTH_USERNAME = MOCK_EXAM_USER;
+  process.env.EXAM_AUTH_PASSWORD = MOCK_EXAM_PASS;
 });
 
 afterEach(() => {
@@ -71,6 +76,15 @@ afterEach(() => {
 });
 
 describe("accessExamPortalAction", () => {
+  it("fails when exam portal env vars are missing", async () => {
+    delete process.env.EXAM_PORTAL_URLS;
+
+    const result = await accessExamPortalAction();
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Missing Online Exam Portal configuration/i);
+  });
+
   it("fails when no user session exists", async () => {
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: false,
@@ -101,15 +115,15 @@ describe("accessExamPortalAction", () => {
 
     expect(result.success).toBe(true);
     expect(result.html).toContain("Welcome to Babcock University CBT Platform");
-    expect(EXAM_PORTAL_URLS).toContain(result.portalUrl);
+    expect(MOCK_EXAM_URLS).toContain(result.portalUrl);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [calledUrl, calledInit] = fetchSpy.mock.calls[0];
-    expect(EXAM_PORTAL_URLS).toContain(calledUrl);
+    expect(MOCK_EXAM_URLS).toContain(calledUrl);
     expect(calledInit.method).toBe("POST");
 
     const expectedAuth =
-      "Basic " + btoa(`${EXAM_AUTH_USERNAME}:${EXAM_AUTH_PASSWORD}`);
+      "Basic " + btoa(`${MOCK_EXAM_USER}:${MOCK_EXAM_PASS}`);
     expect(calledInit.headers["Authorization"]).toBe(expectedAuth);
     expect(calledInit.headers["Content-Type"]).toBe("application/json");
     expect(calledInit.headers["Accept"]).toBe("application/json");
@@ -171,4 +185,3 @@ describe("accessExamPortalAction", () => {
     expect(result.error).toContain("HTTP Error: 503");
   });
 });
-

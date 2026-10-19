@@ -7,16 +7,24 @@ import { getSessionUser, getSessionToken, type UMISResponse } from "@/lib/sessio
 import { getStudentProfileAction } from "@/app/actions/user";
 import { getSchoolOfficerAction } from "@/app/actions/academic-details";
 import { loggedFetch } from "@/lib/logger";
-import {
-  EXAM_PORTAL_URLS,
-  EXAM_AUTH_USERNAME,
-  EXAM_AUTH_PASSWORD,
-  type ExamPortalPayload,
-  type AccessExamPortalResult,
+import type {
+  ExamPortalPayload,
+  AccessExamPortalResult,
 } from "@/app/actions/exam-portal.types";
 
-const username = EXAM_AUTH_USERNAME;
-const password = EXAM_AUTH_PASSWORD;
+/**
+ * Reads Online Exam Portal URLs and Basic Auth credentials from environment variables.
+ */
+function getExamPortalConfig() {
+  const urls = (process.env.EXAM_PORTAL_URLS ?? "")
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean);
+  const username = (process.env.EXAM_AUTH_USERNAME ?? "").trim();
+  const password = (process.env.EXAM_AUTH_PASSWORD ?? "").trim();
+
+  return { urls, username, password };
+}
 
 /**
  * Extracts the profile picture URL or base64 string from any shape of UMISResponse.
@@ -195,6 +203,17 @@ function extractHtmlFromPayload(data: unknown): string | null {
  * to a randomly selected Babcock Exam Portal server and returning the full HTML page.
  */
 export async function accessExamPortalAction(): Promise<AccessExamPortalResult> {
+  const { urls, username, password } = getExamPortalConfig();
+  if (urls.length === 0 || !username || !password) {
+    console.error(
+      "EXAM_PORTAL_URLS, EXAM_AUTH_USERNAME, or EXAM_AUTH_PASSWORD is not defined in environment variables"
+    );
+    return {
+      success: false,
+      error: "Internal server error: Missing Online Exam Portal configuration",
+    };
+  }
+
   try {
     const token = await getSessionToken().catch(() => null);
     const userData = (await getSessionUser()) ?? (await getStudentProfileAction());
@@ -251,7 +270,7 @@ export async function accessExamPortalAction(): Promise<AccessExamPortalResult> 
     };
 
     // Randomly select one of the configured exam portal URLs
-    const url = EXAM_PORTAL_URLS[Math.floor(Math.random() * EXAM_PORTAL_URLS.length)];
+    const url = urls[Math.floor(Math.random() * urls.length)];
     const portalOrigin = new URL(url).origin;
 
     const response = await loggedFetch(url, {
