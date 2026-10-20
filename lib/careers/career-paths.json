@@ -1,0 +1,2641 @@
+{
+  "version": "2026-10-20",
+  "currency": "NGN",
+  "salary_basis": "Typical gross monthly pay in Nigeria, from entry level to experienced, including bonuses (Paylab Nigeria salary survey). Indicative only.",
+  "grading_scale": 5.0,
+  "cgpa_note": "cgpa.min is the level many employers ask for (for example a 2:1 = 3.50 for bank and Big Four graduate programmes); cgpa.ideal makes a graduate competitive for the most selective roles. null means the role is licensed by professional exams, not CGPA.",
+  "sources": [
+    "https://www.babcock.edu.ng/admission/undergraduate",
+    "https://babcock.edu.ng/programs/undergraduate",
+    "https://babcock.edu.ng/schools",
+    "https://www.paylab.com/ng/salaryinfo"
+  ],
+  "careers": {
+    "accountant": {
+      "title": "Accountant",
+      "summary": "Records, reports and checks an organisation's money so its books are accurate and audit-ready.",
+      "salary": {
+        "min": 110000,
+        "max": 410000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ICAN (Institute of Chartered Accountants of Nigeria)",
+        "ACCA",
+        "Microsoft Excel Expert (MO-211)"
+      ],
+      "salary_source": "Paylab Nigeria – Accountant"
+    },
+    "actuary": {
+      "title": "Actuary",
+      "summary": "Uses mathematics and statistics to price insurance and pensions and manage financial risk.",
+      "salary": {
+        "min": 210000,
+        "max": 760000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.5
+      },
+      "certifications": [
+        "Society of Actuaries (SOA) or IFoA exams",
+        "CIIN (Chartered Insurance Institute of Nigeria)",
+        "Excel VBA / Python"
+      ],
+      "salary_source": "Paylab Nigeria – Actuary"
+    },
+    "agri-finance-officer": {
+      "title": "Agribusiness Loan Officer",
+      "summary": "Assesses and manages loans to farmers and agro-processing businesses.",
+      "salary": {
+        "min": 120000,
+        "max": 500000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CIBN",
+        "Credit analysis (CFI CBCA)",
+        "Agricultural finance training (NIRSAL)"
+      ],
+      "salary_source": "Paylab Nigeria – Loan Specialist"
+    },
+    "agricultural-economist": {
+      "title": "Agricultural Economist",
+      "summary": "Analyses farm costs, food markets and agricultural policy.",
+      "salary": {
+        "min": 150000,
+        "max": 500000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Nigerian Association of Agricultural Economists membership",
+        "Stata / Excel modelling",
+        "Agricultural value-chain analysis"
+      ],
+      "salary_source": "Paylab Nigeria – Economist"
+    },
+    "agronomist": {
+      "title": "Agronomist",
+      "summary": "Advises on crop production, soil health and farm yields.",
+      "salary": {
+        "min": 170000,
+        "max": 380000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Certified Crop Adviser (CCA)",
+        "Agricultural Society of Nigeria membership",
+        "Good Agricultural Practices (GAP)"
+      ],
+      "salary_source": "Paylab Nigeria – Agricultural Engineer, Agronomist"
+    },
+    "architect": {
+      "title": "Architect",
+      "summary": "Designs buildings and oversees their construction (full licence after an M.Sc. and practice).",
+      "salary": {
+        "min": 150000,
+        "max": 550000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ARCON registration (Architects Registration Council of Nigeria)",
+        "NIA (Nigerian Institute of Architects) membership",
+        "Autodesk Revit Certified Professional"
+      ],
+      "salary_source": "Paylab Nigeria – Architect"
+    },
+    "auditor": {
+      "title": "Auditor",
+      "summary": "Examines financial records and internal controls for accuracy, fraud and compliance, often at a Big Four or bank.",
+      "salary": {
+        "min": 190000,
+        "max": 690000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "ICAN",
+        "ACCA",
+        "CIA (Certified Internal Auditor)"
+      ],
+      "salary_source": "Paylab Nigeria – Auditor"
+    },
+    "automation-engineer": {
+      "title": "Automation & Control Engineer",
+      "summary": "Programs PLCs and control systems that run automated plants.",
+      "salary": {
+        "min": 190000,
+        "max": 610000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Siemens or Allen-Bradley PLC certification",
+        "COREN registration",
+        "ISA CCST"
+      ],
+      "salary_source": "Paylab Nigeria – Automation engineer / PLC Programmer"
+    },
+    "barrister": {
+      "title": "Barrister & Solicitor",
+      "summary": "Advises clients and represents them in court or in deals.",
+      "salary": {
+        "min": 270000,
+        "max": 740000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Call to the Nigerian Bar (Nigerian Law School)",
+        "NBA (Nigerian Bar Association) membership",
+        "CIArb (Chartered Institute of Arbitrators)"
+      ],
+      "salary_source": "Paylab Nigeria – Solicitor, Barrister"
+    },
+    "bim-specialist": {
+      "title": "BIM / CAD Specialist",
+      "summary": "Builds detailed 3D models and drawings for construction projects.",
+      "salary": {
+        "min": 140000,
+        "max": 480000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Autodesk Revit Certified Professional",
+        "AutoCAD Certified Professional",
+        "ISO 19650 BIM Foundation"
+      ],
+      "salary_source": "Paylab Nigeria – CAD Specialist"
+    },
+    "brand-manager": {
+      "title": "Brand Manager",
+      "summary": "Owns how a product looks, sounds and sells, often on an FMCG graduate programme.",
+      "salary": {
+        "min": 240000,
+        "max": 670000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "CIM",
+        "NIMN",
+        "APCON (Advertising Regulatory Council of Nigeria)"
+      ],
+      "salary_source": "Paylab Nigeria – Brand Manager"
+    },
+    "broadcast-producer": {
+      "title": "Broadcast / Content Producer",
+      "summary": "Plans and produces TV, radio, podcast and video content.",
+      "salary": {
+        "min": 290000,
+        "max": 610000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Adobe Certified Professional: Premiere Pro",
+        "Avid Media Composer User",
+        "Mobile video production (MoJo)"
+      ],
+      "salary_source": "Paylab Nigeria – Producer"
+    },
+    "business-analyst": {
+      "title": "Business Analyst",
+      "summary": "Turns business problems into clear requirements, process maps and data-driven recommendations.",
+      "salary": {
+        "min": 210000,
+        "max": 830000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "IIBA ECBA (Business Analysis)",
+        "Google Data Analytics",
+        "Professional Scrum Product Owner (PSPO I)"
+      ],
+      "salary_source": "Paylab Nigeria – IT Business Analyst"
+    },
+    "civil-engineer": {
+      "title": "Civil Engineer",
+      "summary": "Designs and supervises roads, bridges, buildings and drainage.",
+      "salary": {
+        "min": 90000,
+        "max": 440000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "NSE (Nigerian Society of Engineers) membership",
+        "AutoCAD Civil 3D"
+      ],
+      "salary_source": "Paylab Nigeria – Civil Engineer"
+    },
+    "civil-servant": {
+      "title": "Administrative Officer (Civil Service)",
+      "summary": "Runs government programmes and departments at federal, state or local level.",
+      "salary": {
+        "min": 110000,
+        "max": 350000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NIM (Nigerian Institute of Management)",
+        "CIPM",
+        "CAPM (project management)"
+      ],
+      "salary_source": "Paylab Nigeria – Administrative officer"
+    },
+    "clinical-research-associate": {
+      "title": "Clinical Research Associate",
+      "summary": "Monitors clinical trials of new medicines and treatments.",
+      "salary": {
+        "min": 260000,
+        "max": 610000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ICH Good Clinical Practice (GCP)",
+        "ACRP Certified CRA",
+        "Clinical data management"
+      ],
+      "salary_source": "Paylab Nigeria – Clinical Research Associate"
+    },
+    "cloud-engineer": {
+      "title": "Cloud / DevOps Engineer",
+      "summary": "Deploys and runs applications on cloud platforms with automation.",
+      "salary": {
+        "min": 210000,
+        "max": 1080000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "AWS Solutions Architect – Associate",
+        "Microsoft Azure Administrator (AZ-104)",
+        "Certified Kubernetes Administrator (CKA)"
+      ],
+      "salary_source": "Paylab Nigeria – DevOps Engineer"
+    },
+    "compliance-officer": {
+      "title": "Compliance Officer",
+      "summary": "Makes sure a bank or company follows laws, regulations and anti-fraud rules.",
+      "salary": {
+        "min": 200000,
+        "max": 620000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CAMS (Anti-Money Laundering Specialist)",
+        "ICA Certificate in Compliance",
+        "NDPC data protection"
+      ],
+      "salary_source": "Paylab Nigeria – Compliance Specialist"
+    },
+    "construction-manager": {
+      "title": "Construction Project Manager",
+      "summary": "Runs building sites, contractors, schedules and budgets.",
+      "salary": {
+        "min": 140000,
+        "max": 550000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "PMP or CAPM (Project Management Institute)",
+        "NEBOSH / ISPON safety",
+        "COREN or ARCON registration"
+      ],
+      "salary_source": "Paylab Nigeria – Construction Manager"
+    },
+    "content-writer": {
+      "title": "Content Writer / Copywriter",
+      "summary": "Writes articles, ads, scripts and web copy for brands and agencies.",
+      "salary": {
+        "min": 140000,
+        "max": 400000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "HubSpot Content Marketing",
+        "Google Digital Marketing & E-commerce",
+        "APCON registration (advertising)"
+      ],
+      "salary_source": "Paylab Nigeria – Copywriter"
+    },
+    "corporate-trainer": {
+      "title": "Corporate Trainer",
+      "summary": "Designs and delivers staff training and learning programmes in organisations.",
+      "salary": {
+        "min": 150000,
+        "max": 520000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CIPM",
+        "ATD CPTD (Talent Development)",
+        "Instructional design certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Lecturer, trainer"
+    },
+    "counsellor": {
+      "title": "Guidance & Career Counsellor",
+      "summary": "Helps students and staff with academic, career and personal decisions.",
+      "salary": {
+        "min": 150000,
+        "max": 410000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CASSON (Counselling Association of Nigeria) membership",
+        "TRCN registration (in schools)",
+        "Psychological First Aid"
+      ],
+      "salary_source": "Paylab Nigeria – Career advisor"
+    },
+    "cybersecurity-analyst": {
+      "title": "Cybersecurity Analyst",
+      "summary": "Protects systems and data from attacks and investigates security incidents.",
+      "salary": {
+        "min": 220000,
+        "max": 1120000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CompTIA Security+",
+        "ISC2 Certified in Cybersecurity (CC)",
+        "Certified Ethical Hacker (CEH)"
+      ],
+      "salary_source": "Paylab Nigeria – IT Security Specialist"
+    },
+    "data-analyst": {
+      "title": "Data Analyst",
+      "summary": "Cleans and analyses data, and builds dashboards that answer business questions.",
+      "salary": {
+        "min": 170000,
+        "max": 520000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Google Data Analytics",
+        "Microsoft Power BI Data Analyst (PL-300)",
+        "SQL certification (e.g. Oracle Database SQL)"
+      ],
+      "salary_source": "Paylab Nigeria – Data analyst"
+    },
+    "data-scientist": {
+      "title": "Data Scientist",
+      "summary": "Builds machine-learning models that predict, recommend and automate.",
+      "salary": {
+        "min": 180000,
+        "max": 780000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Microsoft Azure Data Scientist (DP-100)",
+        "Google Professional Machine Learning Engineer",
+        "IBM Data Science Professional"
+      ],
+      "salary_source": "Paylab Nigeria – Data scientist"
+    },
+    "dietitian": {
+      "title": "Dietitian / Clinical Nutritionist",
+      "summary": "Plans diets that prevent and treat illness in hospitals and communities.",
+      "salary": {
+        "min": 120000,
+        "max": 360000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Dietetics Association of Nigeria (DAN) membership",
+        "Nutrition Society of Nigeria membership",
+        "HACCP"
+      ],
+      "salary_source": "Paylab Nigeria – Nutrition Assistant"
+    },
+    "digital-marketer": {
+      "title": "Digital Marketing Specialist",
+      "summary": "Grows brands online through social media, search, email and paid ads.",
+      "salary": {
+        "min": 140000,
+        "max": 490000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Google Digital Marketing & E-commerce",
+        "Meta Certified Digital Marketing Associate",
+        "HubSpot Content Marketing"
+      ],
+      "salary_source": "Paylab Nigeria – Digital marketing specialist"
+    },
+    "economist": {
+      "title": "Economist",
+      "summary": "Analyses economic data to advise government, central banks, banks and companies.",
+      "salary": {
+        "min": 150000,
+        "max": 500000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.5
+      },
+      "certifications": [
+        "Nigerian Economic Society (NES) membership",
+        "CFA",
+        "Econometrics with Stata or EViews"
+      ],
+      "salary_source": "Paylab Nigeria – Economist"
+    },
+    "editor": {
+      "title": "Editor",
+      "summary": "Edits books, magazines, reports and online content for clarity and accuracy.",
+      "salary": {
+        "min": 130000,
+        "max": 390000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Professional editing certificate",
+        "AP / Chicago style training",
+        "Nigerian Publishers Association workshops"
+      ],
+      "salary_source": "Paylab Nigeria – Editor"
+    },
+    "education-coordinator": {
+      "title": "Education Programme Coordinator",
+      "summary": "Plans learning programmes for schools, edtech companies and NGOs.",
+      "salary": {
+        "min": 190000,
+        "max": 350000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "TRCN registration",
+        "PMD Pro",
+        "Instructional design certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Education coordinator"
+    },
+    "electrical-engineer": {
+      "title": "Electrical Engineer",
+      "summary": "Designs and maintains electrical systems in buildings, plants and industry.",
+      "salary": {
+        "min": 160000,
+        "max": 550000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "NEMSA electrical competency certificate",
+        "NSE membership"
+      ],
+      "salary_source": "Paylab Nigeria – Electrical Engineer"
+    },
+    "embedded-engineer": {
+      "title": "Embedded Systems Engineer",
+      "summary": "Programs the chips and firmware inside devices, from smart meters to robots.",
+      "salary": {
+        "min": 200000,
+        "max": 650000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration (Council for the Regulation of Engineering in Nigeria)",
+        "ARM Accredited Engineer",
+        "Cisco IoT Fundamentals"
+      ],
+      "salary_source": "Paylab Nigeria – Microcontroller programmer"
+    },
+    "environmental-officer": {
+      "title": "Environmental Officer",
+      "summary": "Monitors pollution, waste and environmental impact for companies and government.",
+      "salary": {
+        "min": 170000,
+        "max": 390000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ISO 14001 Lead Auditor",
+        "NEBOSH Environmental Certificate",
+        "EIA training (NESREA)"
+      ],
+      "salary_source": "Paylab Nigeria – Environmentalist"
+    },
+    "epidemiologist": {
+      "title": "Epidemiologist / Health Data Analyst",
+      "summary": "Tracks disease patterns and analyses health data for NCDC, hospitals and NGOs.",
+      "salary": {
+        "min": 170000,
+        "max": 540000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Field Epidemiology Training (NCDC FETP)",
+        "R or Stata",
+        "DHIS2"
+      ],
+      "salary_source": "Paylab Nigeria – Statistician"
+    },
+    "estate-agent": {
+      "title": "Real Estate Sales Agent",
+      "summary": "Markets and sells or lets property for developers and owners, often with commission.",
+      "salary": {
+        "min": 150000,
+        "max": 560000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 1.5,
+        "ideal": 2.4
+      },
+      "certifications": [
+        "NIESV / ESVARBON",
+        "REDAN (Real Estate Developers Association of Nigeria)",
+        "LASRERA registration (Lagos)"
+      ],
+      "salary_source": "Paylab Nigeria – Estate Agent"
+    },
+    "estate-surveyor": {
+      "title": "Estate Surveyor & Valuer",
+      "summary": "Values property and advises on buying, selling and investing in real estate.",
+      "salary": {
+        "min": 150000,
+        "max": 590000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ESVARBON registration (Estate Surveyors and Valuers Registration Board)",
+        "NIESV membership",
+        "RICS (APC)"
+      ],
+      "salary_source": "Paylab Nigeria – Real Estate Appraiser"
+    },
+    "extension-officer": {
+      "title": "Agricultural Extension Officer",
+      "summary": "Trains farmers on better crops, livestock and farm technology.",
+      "salary": {
+        "min": 150000,
+        "max": 370000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "AESON (Agricultural Extension Society of Nigeria)",
+        "Good Agricultural Practices (GAP)",
+        "Digital agriculture tools"
+      ],
+      "salary_source": "Paylab Nigeria – Agricultural Technician"
+    },
+    "facility-manager": {
+      "title": "Facility Manager",
+      "summary": "Runs buildings, maintenance, security and services for organisations.",
+      "salary": {
+        "min": 170000,
+        "max": 590000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "IFMA Facility Management Professional (FMP)",
+        "NEBOSH",
+        "ESVARBON registration"
+      ],
+      "salary_source": "Paylab Nigeria – Facility Manager"
+    },
+    "feed-nutritionist": {
+      "title": "Animal Feed Nutritionist",
+      "summary": "Formulates balanced, cost-effective feed for farms and feed mills.",
+      "salary": {
+        "min": 180000,
+        "max": 440000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NIAS registration",
+        "Feed formulation software",
+        "HACCP"
+      ],
+      "salary_source": "Paylab Nigeria – Agricultural Technologist"
+    },
+    "financial-analyst": {
+      "title": "Financial Analyst",
+      "summary": "Studies company performance, budgets and markets to guide investment and business decisions.",
+      "salary": {
+        "min": 180000,
+        "max": 660000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "CFA (Chartered Financial Analyst)",
+        "FMVA (Corporate Finance Institute)",
+        "ICAN"
+      ],
+      "salary_source": "Paylab Nigeria – Financial Analyst"
+    },
+    "food-technologist": {
+      "title": "Food Technologist",
+      "summary": "Makes sure food and drinks are safe, consistent and meet NAFDAC standards.",
+      "salary": {
+        "min": 160000,
+        "max": 400000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NIFST (Nigerian Institute of Food Science and Technology)",
+        "HACCP Level 3",
+        "FSSC 22000 / ISO 22000"
+      ],
+      "salary_source": "Paylab Nigeria – Food Technologist"
+    },
+    "foreign-service-officer": {
+      "title": "Foreign Service Officer",
+      "summary": "Represents Nigeria abroad in diplomacy, trade and consular work.",
+      "salary": {
+        "min": 210000,
+        "max": 430000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Federal Civil Service Commission recruitment exam",
+        "DELF / DALF (French)",
+        "UNITAR diplomacy courses"
+      ],
+      "salary_source": "Paylab Nigeria – State Advisor"
+    },
+    "heritage-officer": {
+      "title": "Museum & Heritage Officer",
+      "summary": "Preserves and presents history in museums, archives and cultural agencies.",
+      "salary": {
+        "min": 170000,
+        "max": 470000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NCMM museum training",
+        "Archives & records management certificate",
+        "Digital archiving"
+      ],
+      "salary_source": "Paylab Nigeria – Museum Specialist"
+    },
+    "hr-officer": {
+      "title": "Human Resources Officer",
+      "summary": "Recruits, onboards and supports staff, and runs payroll, performance and HR policy.",
+      "salary": {
+        "min": 120000,
+        "max": 420000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CIPM (Chartered Institute of Personnel Management of Nigeria)",
+        "SHRM-CP",
+        "CIPD Level 3"
+      ],
+      "salary_source": "Paylab Nigeria – HR Officer"
+    },
+    "hse-officer": {
+      "title": "Health, Safety & Environment (HSE) Officer",
+      "summary": "Keeps workplaces safe and compliant with health, safety and environmental rules.",
+      "salary": {
+        "min": 150000,
+        "max": 460000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "NEBOSH International General Certificate",
+        "ISPON (Institute of Safety Professionals of Nigeria)",
+        "ISO 45001 Lead Auditor"
+      ],
+      "salary_source": "Paylab Nigeria – ISO Specialist"
+    },
+    "industrial-chemist": {
+      "title": "Industrial Chemist",
+      "summary": "Develops, tests and controls chemical products in manufacturing.",
+      "salary": {
+        "min": 150000,
+        "max": 400000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ICCON registration (Institute of Chartered Chemists of Nigeria)",
+        "CSN (Chemical Society of Nigeria)",
+        "GMP / ISO 17025"
+      ],
+      "salary_source": "Paylab Nigeria – Chemist"
+    },
+    "interior-designer": {
+      "title": "Interior Designer",
+      "summary": "Plans functional, attractive interior spaces for homes and businesses.",
+      "salary": {
+        "min": 110000,
+        "max": 410000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "SketchUp / 3ds Max",
+        "IDAN (Interior Designers Association of Nigeria)",
+        "Autodesk AutoCAD"
+      ],
+      "salary_source": "Paylab Nigeria – Interior Designer"
+    },
+    "investment-analyst": {
+      "title": "Investment Analyst / Stockbroker",
+      "summary": "Researches shares, bonds and funds, and manages or trades investments for clients.",
+      "salary": {
+        "min": 200000,
+        "max": 670000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.5
+      },
+      "certifications": [
+        "CIS (Chartered Institute of Stockbrokers)",
+        "CFA",
+        "SEC Nigeria sponsored-individual registration"
+      ],
+      "salary_source": "Paylab Nigeria – Financial Markets Specialist"
+    },
+    "it-officer": {
+      "title": "Information Systems Officer",
+      "summary": "Keeps an organisation's information systems, accounts and software running.",
+      "salary": {
+        "min": 180000,
+        "max": 470000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "CompTIA A+",
+        "ITIL 4 Foundation",
+        "Microsoft 365 Administrator"
+      ],
+      "salary_source": "Paylab Nigeria – ICT-specialist"
+    },
+    "it-support": {
+      "title": "IT Support Specialist",
+      "summary": "Fixes hardware, software and account problems for staff and customers.",
+      "salary": {
+        "min": 120000,
+        "max": 410000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 1.5,
+        "ideal": 2.4
+      },
+      "certifications": [
+        "CompTIA A+",
+        "Google IT Support",
+        "ITIL 4 Foundation"
+      ],
+      "salary_source": "Paylab Nigeria – IT/Technical Support Specialist"
+    },
+    "journalist": {
+      "title": "Journalist / Reporter",
+      "summary": "Researches, writes and presents news for print, broadcast and online media.",
+      "salary": {
+        "min": 150000,
+        "max": 370000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "NUJ (Nigeria Union of Journalists) membership",
+        "Google News Initiative training",
+        "Mobile journalism (MoJo)"
+      ],
+      "salary_source": "Paylab Nigeria – Journalist"
+    },
+    "lecturer": {
+      "title": "Lecturer",
+      "summary": "Lectures and researches your subject at a university, polytechnic or college of education, usually after a master's degree.",
+      "salary": {
+        "min": 240000,
+        "max": 420000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.5
+      },
+      "certifications": [
+        "Master's degree, then a Ph.D.",
+        "TRCN registration (colleges of education)",
+        "Research methods and academic publishing"
+      ],
+      "salary_source": "Paylab Nigeria – University Teacher"
+    },
+    "legal-adviser": {
+      "title": "In-house Legal Adviser",
+      "summary": "Handles contracts, regulation and disputes for a company.",
+      "salary": {
+        "min": 200000,
+        "max": 630000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Call to the Nigerian Bar",
+        "CIArb",
+        "ICSAN (company secretaries)"
+      ],
+      "salary_source": "Paylab Nigeria – Legal advisor"
+    },
+    "librarian": {
+      "title": "Librarian",
+      "summary": "Manages physical and digital library collections and helps people find information.",
+      "salary": {
+        "min": 110000,
+        "max": 300000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "LRCN registration (Librarians' Registration Council of Nigeria)",
+        "NLA (Nigerian Library Association) membership",
+        "Koha / digital library systems"
+      ],
+      "salary_source": "Paylab Nigeria – Librarian"
+    },
+    "livestock-specialist": {
+      "title": "Livestock Production Manager",
+      "summary": "Runs poultry, cattle, fish or pig farms for productivity and animal health.",
+      "salary": {
+        "min": 140000,
+        "max": 330000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "NIAS registration (Nigerian Institute of Animal Science)",
+        "Biosecurity and animal welfare",
+        "Farm management certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Livestock Specialist"
+    },
+    "maintenance-engineer": {
+      "title": "Maintenance Engineer",
+      "summary": "Keeps factory and plant equipment running safely and reliably.",
+      "salary": {
+        "min": 190000,
+        "max": 560000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "COREN registration",
+        "CMRP (Maintenance & Reliability)",
+        "Six Sigma Green Belt"
+      ],
+      "salary_source": "Paylab Nigeria – Maintenance Engineer"
+    },
+    "market-research-analyst": {
+      "title": "Market Research Analyst",
+      "summary": "Studies customers, competitors and trends to guide product and marketing decisions.",
+      "salary": {
+        "min": 160000,
+        "max": 510000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Google Data Analytics",
+        "Microsoft Power BI Data Analyst (PL-300)",
+        "NIMN"
+      ],
+      "salary_source": "Paylab Nigeria – Marketing Analyst"
+    },
+    "marketing-executive": {
+      "title": "Marketing Executive",
+      "summary": "Plans and runs campaigns that promote products and win customers.",
+      "salary": {
+        "min": 150000,
+        "max": 480000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NIMN",
+        "CIM (Chartered Institute of Marketing)",
+        "Google Ads"
+      ],
+      "salary_source": "Paylab Nigeria – Marketing Specialist"
+    },
+    "mechanical-engineer": {
+      "title": "Mechanical Engineer",
+      "summary": "Designs and maintains machines, engines and plant equipment.",
+      "salary": {
+        "min": 160000,
+        "max": 530000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "SolidWorks CSWA",
+        "NSE membership"
+      ],
+      "salary_source": "Paylab Nigeria – Mechanical Engineer"
+    },
+    "medical-advisor": {
+      "title": "Medical Advisor (Pharmaceutical)",
+      "summary": "Gives medical expertise to pharmaceutical companies on products and trials.",
+      "salary": {
+        "min": 150000,
+        "max": 410000,
+        "period": "month"
+      },
+      "cgpa": null,
+      "certifications": [
+        "MDCN registration",
+        "ICH Good Clinical Practice (GCP)",
+        "Pharmacovigilance certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Medical Advisor"
+    },
+    "medical-doctor": {
+      "title": "Medical Doctor",
+      "summary": "Diagnoses and treats patients in hospitals and clinics, then specialises through residency.",
+      "salary": {
+        "min": 270000,
+        "max": 740000,
+        "period": "month"
+      },
+      "cgpa": null,
+      "certifications": [
+        "MDCN full registration (after housemanship)",
+        "BLS / ACLS",
+        "USMLE or PLAB (to practise abroad)"
+      ],
+      "salary_source": "Paylab Nigeria – Doctor"
+    },
+    "medical-lab-scientist": {
+      "title": "Medical Laboratory Scientist",
+      "summary": "Runs diagnostic tests on blood and samples so doctors can treat patients.",
+      "salary": {
+        "min": 150000,
+        "max": 320000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "MLSCN licence (Medical Laboratory Science Council of Nigeria)",
+        "ASCP certification (international)",
+        "ISO 15189 laboratory quality"
+      ],
+      "salary_source": "Paylab Nigeria – Medical Laboratory Technician"
+    },
+    "medical-sales-rep": {
+      "title": "Medical Sales Representative",
+      "summary": "Promotes medicines and devices to doctors, pharmacies and hospitals.",
+      "salary": {
+        "min": 240000,
+        "max": 560000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Certified Medical Representative (CMR)",
+        "NIMN",
+        "Valid driver's licence"
+      ],
+      "salary_source": "Paylab Nigeria – Medical/Pharmaceutical Sales Representative"
+    },
+    "microbiologist": {
+      "title": "Microbiologist",
+      "summary": "Studies microbes to keep food, water, medicines and patients safe.",
+      "salary": {
+        "min": 150000,
+        "max": 370000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NSM (Nigerian Society for Microbiology) membership",
+        "Biosafety (ABSA)",
+        "HACCP"
+      ],
+      "salary_source": "Paylab Nigeria – Biologist"
+    },
+    "midwife": {
+      "title": "Nurse-Midwife",
+      "summary": "Cares for mothers and newborns before, during and after birth.",
+      "salary": {
+        "min": 120000,
+        "max": 370000,
+        "period": "month"
+      },
+      "cgpa": null,
+      "certifications": [
+        "NMCN Registered Midwife",
+        "Helping Babies Breathe (neonatal resuscitation)",
+        "BLS"
+      ],
+      "salary_source": "Paylab Nigeria – Midwife"
+    },
+    "mobile-developer": {
+      "title": "Mobile App Developer",
+      "summary": "Builds Android and iOS apps used by millions of people.",
+      "salary": {
+        "min": 210000,
+        "max": 870000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Google Associate Android Developer",
+        "Meta React Native",
+        "Apple Swift / iOS development"
+      ],
+      "salary_source": "Paylab Nigeria – Android Developer"
+    },
+    "musician": {
+      "title": "Professional Musician",
+      "summary": "Performs, records and arranges music for events, churches and media.",
+      "salary": {
+        "min": 150000,
+        "max": 400000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 1.5,
+        "ideal": 2.4
+      },
+      "certifications": [
+        "ABRSM Grade 8",
+        "PMAN (Performing Musicians Employers Association of Nigeria)",
+        "Music theory diploma"
+      ],
+      "salary_source": "Paylab Nigeria – Orchestra Musician"
+    },
+    "network-administrator": {
+      "title": "Network Administrator",
+      "summary": "Sets up, secures and monitors an organisation's networks.",
+      "salary": {
+        "min": 180000,
+        "max": 580000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Cisco CCNA",
+        "CompTIA Network+",
+        "Fortinet NSE"
+      ],
+      "salary_source": "Paylab Nigeria – IT Network Administrator"
+    },
+    "ngo-programme-officer": {
+      "title": "NGO Programme Officer",
+      "summary": "Designs and runs development projects in health, education or community welfare.",
+      "salary": {
+        "min": 120000,
+        "max": 560000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "PMD Pro (Project Management for Development)",
+        "Monitoring & Evaluation certificate",
+        "Humanitarian essentials (Kaya)"
+      ],
+      "salary_source": "Paylab Nigeria – Junior Project Manager"
+    },
+    "occupational-health-nurse": {
+      "title": "Occupational Health Nurse",
+      "summary": "Looks after workers' health in companies, factories and oil & gas.",
+      "salary": {
+        "min": 170000,
+        "max": 460000,
+        "period": "month"
+      },
+      "cgpa": null,
+      "certifications": [
+        "NMCN licence",
+        "Occupational health certificate",
+        "NEBOSH"
+      ],
+      "salary_source": "Paylab Nigeria – Occupational health nurse"
+    },
+    "pastor": {
+      "title": "Pastor / Chaplain",
+      "summary": "Leads a congregation or gives spiritual care in schools, hospitals and the military.",
+      "salary": {
+        "min": 190000,
+        "max": 480000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Ordination by your church body",
+        "Clinical Pastoral Education (CPE)",
+        "Counselling certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Priest"
+    },
+    "policy-analyst": {
+      "title": "Policy Analyst",
+      "summary": "Researches issues and drafts recommendations for government, think tanks and NGOs.",
+      "salary": {
+        "min": 200000,
+        "max": 430000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Public policy analysis certificate",
+        "Google Data Analytics",
+        "Monitoring & Evaluation certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Advisor (public administration)"
+    },
+    "power-engineer": {
+      "title": "Power & Renewable Energy Engineer",
+      "summary": "Works on power generation, transmission and solar installations.",
+      "salary": {
+        "min": 150000,
+        "max": 520000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "NABCEP PV Associate (solar)",
+        "NEMSA competency certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Power Engineer"
+    },
+    "pr-officer": {
+      "title": "Public Relations Officer",
+      "summary": "Manages an organisation's reputation, media relations and messaging.",
+      "salary": {
+        "min": 160000,
+        "max": 460000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NIPR (Nigerian Institute of Public Relations)",
+        "CIPR Foundation Certificate",
+        "Crisis communication training"
+      ],
+      "salary_source": "Paylab Nigeria – Internal Communication Specialist"
+    },
+    "process-engineer": {
+      "title": "Process / Production Engineer",
+      "summary": "Improves how products are made in factories, refineries and plants.",
+      "salary": {
+        "min": 180000,
+        "max": 510000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "Lean Six Sigma Green Belt",
+        "Aspen HYSYS"
+      ],
+      "salary_source": "Paylab Nigeria – Process Engineer"
+    },
+    "project-officer": {
+      "title": "Project Officer",
+      "summary": "Plans, coordinates and tracks projects so they finish on time and within budget.",
+      "salary": {
+        "min": 120000,
+        "max": 560000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CAPM (Project Management Institute)",
+        "PRINCE2 Foundation",
+        "Professional Scrum Master (PSM I)"
+      ],
+      "salary_source": "Paylab Nigeria – Junior Project Manager"
+    },
+    "property-manager": {
+      "title": "Property Manager",
+      "summary": "Manages rented buildings, tenants, rent collection and maintenance for owners.",
+      "salary": {
+        "min": 130000,
+        "max": 480000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "ESVARBON registration",
+        "NIESV membership",
+        "IFMA Facility Management Professional (FMP)"
+      ],
+      "salary_source": "Paylab Nigeria – Property Manager"
+    },
+    "public-health-officer": {
+      "title": "Public Health Officer",
+      "summary": "Plans programmes that prevent disease and improve community health.",
+      "salary": {
+        "min": 130000,
+        "max": 380000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CPH (Certified in Public Health)",
+        "Master of Public Health (MPH)",
+        "Monitoring & Evaluation certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Public Health Administrator"
+    },
+    "qa-engineer": {
+      "title": "QA / Test Automation Engineer",
+      "summary": "Tests software and builds automated checks that catch bugs before release.",
+      "salary": {
+        "min": 200000,
+        "max": 740000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "ISTQB Foundation Level",
+        "Playwright or Cypress automation",
+        "Postman API testing"
+      ],
+      "salary_source": "Paylab Nigeria – IT tester - automated tests"
+    },
+    "qc-analyst": {
+      "title": "Quality Control Analyst",
+      "summary": "Tests raw materials and products to meet quality and safety standards.",
+      "salary": {
+        "min": 180000,
+        "max": 520000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "ISO 9001 Lead Auditor",
+        "Six Sigma Green Belt",
+        "GMP / GLP"
+      ],
+      "salary_source": "Paylab Nigeria – Quality Engineer"
+    },
+    "records-manager": {
+      "title": "Records & Information Manager",
+      "summary": "Organises, protects and retrieves an organisation's records, archives and data.",
+      "salary": {
+        "min": 160000,
+        "max": 400000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Certified Records Manager (ICRM)",
+        "Data protection training (NDPC)",
+        "Microsoft 365 Fundamentals"
+      ],
+      "salary_source": "Paylab Nigeria – Registry Administration Officer"
+    },
+    "registered-nurse": {
+      "title": "Registered Nurse",
+      "summary": "Cares for patients in hospitals, clinics and communities.",
+      "salary": {
+        "min": 80000,
+        "max": 520000,
+        "period": "month"
+      },
+      "cgpa": null,
+      "certifications": [
+        "NMCN licence (Nursing and Midwifery Council of Nigeria)",
+        "BLS / ACLS",
+        "NCLEX or NMC UK (to practise abroad)"
+      ],
+      "salary_source": "Paylab Nigeria – Nurse to Charge Nurse"
+    },
+    "regulatory-affairs": {
+      "title": "Regulatory Affairs Officer",
+      "summary": "Prepares product registrations and compliance files for NAFDAC and other regulators.",
+      "salary": {
+        "min": 220000,
+        "max": 520000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "RAPS Regulatory Affairs Certification (RAC)",
+        "NAFDAC regulatory training",
+        "GMP"
+      ],
+      "salary_source": "Paylab Nigeria – Regulatory Affairs Specialist"
+    },
+    "relationship-manager": {
+      "title": "Bank Relationship Manager",
+      "summary": "Manages a portfolio of bank customers, growing deposits, loans and services.",
+      "salary": {
+        "min": 170000,
+        "max": 600000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "CIBN",
+        "CAMS (Anti-Money Laundering Specialist)",
+        "NIM (Nigerian Institute of Management)"
+      ],
+      "salary_source": "Paylab Nigeria – Relationship Manager"
+    },
+    "research-scientist": {
+      "title": "Research Scientist",
+      "summary": "Runs experiments in universities, research institutes and industry labs (usually after an M.Sc. or Ph.D.).",
+      "salary": {
+        "min": 170000,
+        "max": 440000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.5
+      },
+      "certifications": [
+        "Good Laboratory / Clinical Practice (GLP / GCP)",
+        "Biosafety certification",
+        "R or Python for research"
+      ],
+      "salary_source": "Paylab Nigeria – Research Worker, Scientific Worker"
+    },
+    "risk-analyst": {
+      "title": "Risk Analyst",
+      "summary": "Measures credit, market and operational risk for banks, insurers and large companies.",
+      "salary": {
+        "min": 180000,
+        "max": 620000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.5,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "FRM (Financial Risk Manager)",
+        "CIBN (Chartered Institute of Bankers of Nigeria)",
+        "PRM (Professional Risk Manager)"
+      ],
+      "salary_source": "Paylab Nigeria – Risk Specialist"
+    },
+    "sales-executive": {
+      "title": "Business Development Executive",
+      "summary": "Finds new customers, closes deals and grows revenue for a company.",
+      "salary": {
+        "min": 170000,
+        "max": 530000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "NIMN (National Institute of Marketing of Nigeria)",
+        "HubSpot Sales Software",
+        "Salesforce Certified Associate"
+      ],
+      "salary_source": "Paylab Nigeria – Account Manager"
+    },
+    "school-administrator": {
+      "title": "School Administrator",
+      "summary": "Manages a school's staff, budget, admissions and records.",
+      "salary": {
+        "min": 230000,
+        "max": 410000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "TRCN registration",
+        "NAEAP (educational administration) membership",
+        "Google Workspace for Education"
+      ],
+      "salary_source": "Paylab Nigeria – Deputy Headmaster"
+    },
+    "social-media-manager": {
+      "title": "Social Media Manager",
+      "summary": "Runs a brand's social channels, content calendar and online community.",
+      "salary": {
+        "min": 120000,
+        "max": 390000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.0
+      },
+      "certifications": [
+        "Meta Certified Community Manager",
+        "Hootsuite Social Marketing",
+        "Google Analytics (GA4)"
+      ],
+      "salary_source": "Paylab Nigeria – Social media specialist"
+    },
+    "social-worker": {
+      "title": "Social Worker",
+      "summary": "Supports vulnerable children, families and patients through casework and advocacy.",
+      "salary": {
+        "min": 110000,
+        "max": 340000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "NASoW (Nigeria Association of Social Workers) membership",
+        "Psychological First Aid",
+        "Case management certificate"
+      ],
+      "salary_source": "Paylab Nigeria – Caseworker"
+    },
+    "software-engineer": {
+      "title": "Software Engineer",
+      "summary": "Designs, builds and maintains web and backend applications.",
+      "salary": {
+        "min": 200000,
+        "max": 920000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "AWS Certified Developer – Associate",
+        "Meta Back-End Developer",
+        "CPN registration (Computer Professionals Council of Nigeria)"
+      ],
+      "salary_source": "Paylab Nigeria – Backend developer"
+    },
+    "soil-scientist": {
+      "title": "Soil Scientist",
+      "summary": "Tests and manages soil for farming, land use and the environment.",
+      "salary": {
+        "min": 180000,
+        "max": 440000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Soil Science Society of Nigeria membership",
+        "GIS (ArcGIS / QGIS)",
+        "Laboratory quality (ISO 17025)"
+      ],
+      "salary_source": "Paylab Nigeria – Agricultural Technologist"
+    },
+    "sound-engineer": {
+      "title": "Sound Engineer / Music Producer",
+      "summary": "Records, mixes and produces music, film and live sound.",
+      "salary": {
+        "min": 160000,
+        "max": 380000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 1.5,
+        "ideal": 2.4
+      },
+      "certifications": [
+        "Avid Pro Tools",
+        "Ableton Certified Training",
+        "Dante Level 1 (live audio)"
+      ],
+      "salary_source": "Paylab Nigeria – Sound Engineer"
+    },
+    "state-counsel": {
+      "title": "State Counsel / Prosecutor",
+      "summary": "Prosecutes cases and advises government ministries.",
+      "salary": {
+        "min": 190000,
+        "max": 570000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "Call to the Nigerian Bar",
+        "NBA membership",
+        "Litigation and advocacy training"
+      ],
+      "salary_source": "Paylab Nigeria – Prosecutor"
+    },
+    "statistician": {
+      "title": "Statistician",
+      "summary": "Designs surveys and analyses data for government, research and business.",
+      "salary": {
+        "min": 170000,
+        "max": 540000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 4.0
+      },
+      "certifications": [
+        "Chartered Institute of Statisticians of Nigeria (CISON)",
+        "SAS Certified Specialist",
+        "R or Python for statistics"
+      ],
+      "salary_source": "Paylab Nigeria – Statistician"
+    },
+    "structural-engineer": {
+      "title": "Structural Engineer",
+      "summary": "Calculates how buildings and bridges carry loads safely.",
+      "salary": {
+        "min": 140000,
+        "max": 570000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "NIStructE membership",
+        "ETABS / Tekla / Revit"
+      ],
+      "salary_source": "Paylab Nigeria – Structural Engineer"
+    },
+    "tax-consultant": {
+      "title": "Tax Consultant",
+      "summary": "Advises companies and individuals on tax planning, filing and FIRS compliance.",
+      "salary": {
+        "min": 230000,
+        "max": 710000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "CITN (Chartered Institute of Taxation of Nigeria)",
+        "ICAN",
+        "ACCA"
+      ],
+      "salary_source": "Paylab Nigeria – Tax Advisor"
+    },
+    "telecom-engineer": {
+      "title": "Telecommunications Engineer",
+      "summary": "Plans, installs and optimises mobile and data networks.",
+      "salary": {
+        "min": 210000,
+        "max": 570000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 3.0,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "COREN registration",
+        "Cisco CCNA",
+        "Huawei HCIA"
+      ],
+      "salary_source": "Paylab Nigeria – Telecommunication Specialist"
+    },
+    "translator": {
+      "title": "Translator & Interpreter",
+      "summary": "Translates documents and interprets between languages for embassies, companies and NGOs.",
+      "salary": {
+        "min": 140000,
+        "max": 460000,
+        "period": "month"
+      },
+      "cgpa": {
+        "min": 2.4,
+        "ideal": 3.5
+      },
+      "certifications": [
+        "DALF C1 (French)",
+        "NITI (Nigerian Institute of Translators and Interpreters)",
+        "CAT tools (Trados)"
+      ],
+      "salary_source": "Paylab Nigeria – Translator"
+    }
+  },
+  "programmes": [
+    {
+      "id": "history-international-studies",
+      "name": "B.A. (Hons) History and International Studies",
+      "school": "School of Education & Humanities",
+      "department": "History and International Studies",
+      "match": [
+        "history",
+        "international studies"
+      ],
+      "careers": [
+        "foreign-service-officer",
+        "policy-analyst",
+        "heritage-officer",
+        {
+          "career": "lecturer",
+          "title": "History Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "english-studies",
+      "name": "B.A. (Hons) English Studies",
+      "school": "School of Education & Humanities",
+      "department": "Languages and Literary Studies",
+      "match": [
+        "english studies",
+        "english"
+      ],
+      "careers": [
+        "content-writer",
+        "editor",
+        "pr-officer",
+        {
+          "career": "lecturer",
+          "title": "English Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "french-studies",
+      "name": "B.A. (Hons) French Studies",
+      "school": "School of Education & Humanities",
+      "department": "Languages and Literary Studies",
+      "match": [
+        "french"
+      ],
+      "careers": [
+        "translator",
+        "foreign-service-officer",
+        {
+          "career": "lecturer",
+          "title": "French Lecturer"
+        },
+        "content-writer"
+      ]
+    },
+    {
+      "id": "christian-religious-studies",
+      "name": "B.A. (Hons) Christian Religious Studies",
+      "school": "School of Education & Humanities",
+      "department": "Religious Studies",
+      "match": [
+        "christian religious",
+        "religious studies",
+        "religion",
+        "theology"
+      ],
+      "careers": [
+        "pastor",
+        "counsellor",
+        {
+          "career": "lecturer",
+          "title": "Religious Studies Lecturer"
+        },
+        "ngo-programme-officer"
+      ]
+    },
+    {
+      "id": "music",
+      "name": "B.A. (Hons) Music",
+      "school": "School of Education & Humanities",
+      "department": "Music and Creative Arts",
+      "match": [
+        "music"
+      ],
+      "careers": [
+        "musician",
+        "sound-engineer",
+        {
+          "career": "lecturer",
+          "title": "Music Lecturer"
+        },
+        "broadcast-producer"
+      ]
+    },
+    {
+      "id": "business-education",
+      "name": "B.Sc. (Ed.) (Hons) Business Education",
+      "school": "School of Education & Humanities",
+      "department": "Education",
+      "match": [
+        "business education"
+      ],
+      "careers": [
+        {
+          "career": "lecturer",
+          "title": "Business Education Lecturer"
+        },
+        "corporate-trainer",
+        "hr-officer",
+        "civil-servant"
+      ]
+    },
+    {
+      "id": "economics-education",
+      "name": "B.Sc. (Ed.) (Hons) Economics Education",
+      "school": "School of Education & Humanities",
+      "department": "Education",
+      "match": [
+        "economics education"
+      ],
+      "careers": [
+        {
+          "career": "lecturer",
+          "title": "Economics Lecturer"
+        },
+        "economist",
+        "data-analyst",
+        "corporate-trainer"
+      ]
+    },
+    {
+      "id": "educational-administration",
+      "name": "B.Ed. (Hons) Educational Administration and Planning",
+      "school": "School of Education & Humanities",
+      "department": "Education",
+      "match": [
+        "educational administration",
+        "educational planning",
+        "education administration"
+      ],
+      "careers": [
+        "school-administrator",
+        "education-coordinator",
+        "hr-officer",
+        {
+          "career": "lecturer",
+          "title": "Education Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "guidance-counselling",
+      "name": "B.Ed. (Hons) Guidance and Counselling",
+      "school": "School of Education & Humanities",
+      "department": "Education",
+      "match": [
+        "guidance and counsel",
+        "guidance",
+        "counselling",
+        "counseling"
+      ],
+      "careers": [
+        "counsellor",
+        "hr-officer",
+        "social-worker",
+        "corporate-trainer"
+      ]
+    },
+    {
+      "id": "english-education",
+      "name": "B.A. (Ed.) (Hons) English Education",
+      "school": "School of Education & Humanities",
+      "department": "Education",
+      "match": [
+        "english education",
+        "english language education"
+      ],
+      "careers": [
+        {
+          "career": "lecturer",
+          "title": "English Lecturer"
+        },
+        "editor",
+        "content-writer",
+        "corporate-trainer"
+      ]
+    },
+    {
+      "id": "accounting",
+      "name": "B.Sc. (Hons) Accounting",
+      "school": "School of Management Sciences",
+      "department": "Accounting",
+      "match": [
+        "accounting",
+        "accountancy"
+      ],
+      "careers": [
+        "accountant",
+        "auditor",
+        "tax-consultant",
+        "financial-analyst"
+      ]
+    },
+    {
+      "id": "finance",
+      "name": "B.Sc. (Hons) Finance",
+      "school": "School of Management Sciences",
+      "department": "Finance",
+      "match": [
+        "finance",
+        "banking and finance"
+      ],
+      "careers": [
+        "financial-analyst",
+        "investment-analyst",
+        "risk-analyst",
+        "relationship-manager"
+      ]
+    },
+    {
+      "id": "business-administration",
+      "name": "B.Sc. (Hons) Business Administration",
+      "school": "School of Management Sciences",
+      "department": "Business Administration and Marketing",
+      "match": [
+        "business administration",
+        "business management"
+      ],
+      "careers": [
+        "business-analyst",
+        "project-officer",
+        "hr-officer",
+        "sales-executive"
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "B.Sc. (Hons) Marketing",
+      "school": "School of Management Sciences",
+      "department": "Business Administration and Marketing",
+      "match": [
+        "marketing"
+      ],
+      "careers": [
+        "marketing-executive",
+        "digital-marketer",
+        "brand-manager",
+        "market-research-analyst"
+      ]
+    },
+    {
+      "id": "information-resources-management",
+      "name": "B.Sc. (Hons) Information Resources Management",
+      "school": "School of Management Sciences",
+      "department": "Information Resources Management",
+      "match": [
+        "information resources management",
+        "information resource management",
+        "library"
+      ],
+      "careers": [
+        "records-manager",
+        "data-analyst",
+        "librarian",
+        "it-officer"
+      ]
+    },
+    {
+      "id": "agricultural-economics-extension",
+      "name": "B.Agric. (Hons) Agricultural Economics and Extension",
+      "school": "School of Science & Technology",
+      "department": "Agriculture and Industrial Technology",
+      "match": [
+        "agricultural economics",
+        "agricultural extension",
+        "agric economics"
+      ],
+      "careers": [
+        "agricultural-economist",
+        "agri-finance-officer",
+        "extension-officer",
+        "data-analyst"
+      ]
+    },
+    {
+      "id": "crop-soil-science",
+      "name": "B.Agric. (Hons) Crop Science and Soil Science",
+      "school": "School of Science & Technology",
+      "department": "Agriculture and Industrial Technology",
+      "match": [
+        "crop science",
+        "soil science",
+        "crop and soil"
+      ],
+      "careers": [
+        "agronomist",
+        "soil-scientist",
+        "food-technologist",
+        "extension-officer"
+      ]
+    },
+    {
+      "id": "animal-science",
+      "name": "B.Agric. (Hons) Animal Science",
+      "school": "School of Science & Technology",
+      "department": "Agriculture and Industrial Technology",
+      "match": [
+        "animal science",
+        "animal production"
+      ],
+      "careers": [
+        "livestock-specialist",
+        "feed-nutritionist",
+        "food-technologist",
+        "extension-officer"
+      ]
+    },
+    {
+      "id": "mathematics",
+      "name": "B.Sc. (Hons) Mathematics",
+      "school": "School of Science & Technology",
+      "department": "Basic Sciences",
+      "match": [
+        "mathematics",
+        "maths"
+      ],
+      "careers": [
+        "data-analyst",
+        "actuary",
+        "statistician",
+        {
+          "career": "lecturer",
+          "title": "Mathematics Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "chemistry",
+      "name": "B.Sc. (Hons) Chemistry",
+      "school": "School of Science & Technology",
+      "department": "Basic Sciences",
+      "match": [
+        "chemistry",
+        "industrial chemistry"
+      ],
+      "careers": [
+        "industrial-chemist",
+        "qc-analyst",
+        "regulatory-affairs",
+        {
+          "career": "lecturer",
+          "title": "Chemistry Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "biology",
+      "name": "B.Sc. (Hons) Biology",
+      "school": "School of Science & Technology",
+      "department": "Basic Sciences",
+      "match": [
+        "biology"
+      ],
+      "careers": [
+        "environmental-officer",
+        "research-scientist",
+        "qc-analyst",
+        {
+          "career": "lecturer",
+          "title": "Biology Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "microbiology",
+      "name": "B.Sc. (Hons) Microbiology",
+      "school": "School of Science & Technology",
+      "department": "Microbiology",
+      "match": [
+        "microbiology"
+      ],
+      "careers": [
+        "microbiologist",
+        "qc-analyst",
+        "food-technologist",
+        "public-health-officer"
+      ]
+    },
+    {
+      "id": "medicine-surgery",
+      "name": "MBBS Medicine and Surgery",
+      "school": "School of Basic Medical Sciences",
+      "department": "Medicine",
+      "match": [
+        "medicine and surgery",
+        "mbbs",
+        "medicine"
+      ],
+      "careers": [
+        "medical-doctor",
+        "clinical-research-associate",
+        "medical-advisor",
+        "public-health-officer"
+      ]
+    },
+    {
+      "id": "human-anatomy",
+      "name": "B.Sc. (Hons) Human Anatomy",
+      "school": "School of Basic Medical Sciences",
+      "department": "Human Anatomy",
+      "match": [
+        "anatomy"
+      ],
+      "careers": [
+        "clinical-research-associate",
+        "medical-sales-rep",
+        "research-scientist",
+        {
+          "career": "lecturer",
+          "title": "Anatomy Lecturer"
+        }
+      ]
+    },
+    {
+      "id": "physiology",
+      "name": "B.Sc. (Hons) Physiology",
+      "school": "School of Basic Medical Sciences",
+      "department": "Physiology",
+      "match": [
+        "physiology"
+      ],
+      "careers": [
+        "clinical-research-associate",
+        "medical-sales-rep",
+        "regulatory-affairs",
+        "research-scientist"
+      ]
+    },
+    {
+      "id": "biochemistry",
+      "name": "B.Sc. (Hons) Biochemistry",
+      "school": "School of Basic Medical Sciences",
+      "department": "Biochemistry",
+      "match": [
+        "biochemistry"
+      ],
+      "careers": [
+        "qc-analyst",
+        "regulatory-affairs",
+        "medical-sales-rep",
+        "research-scientist"
+      ]
+    },
+    {
+      "id": "nursing-science",
+      "name": "B.N.Sc. (Hons) Nursing Science",
+      "school": "School of Nursing Science",
+      "department": "Nursing Science",
+      "match": [
+        "nursing"
+      ],
+      "careers": [
+        "registered-nurse",
+        "occupational-health-nurse",
+        "midwife",
+        "public-health-officer"
+      ]
+    },
+    {
+      "id": "law",
+      "name": "LL.B. (Hons) Law",
+      "school": "School of Law & Security Studies",
+      "department": "Law",
+      "match": [
+        "law",
+        "laws",
+        "llb",
+        "jurisprudence"
+      ],
+      "careers": [
+        "barrister",
+        "legal-adviser",
+        "compliance-officer",
+        "state-counsel"
+      ]
+    },
+    {
+      "id": "economics",
+      "name": "B.Sc. (Hons) Economics",
+      "school": "School of Social Sciences",
+      "department": "Economics",
+      "match": [
+        "economics"
+      ],
+      "careers": [
+        "economist",
+        "financial-analyst",
+        "data-analyst",
+        "policy-analyst"
+      ]
+    },
+    {
+      "id": "mass-communication",
+      "name": "B.Sc. (Hons) Mass Communication",
+      "school": "School of Social Sciences",
+      "department": "Mass Communication",
+      "match": [
+        "mass communication",
+        "mass comm",
+        "journalism"
+      ],
+      "careers": [
+        "journalist",
+        "pr-officer",
+        "broadcast-producer",
+        "social-media-manager"
+      ]
+    },
+    {
+      "id": "political-science",
+      "name": "B.Sc. (Hons) Political Science",
+      "school": "School of Social Sciences",
+      "department": "Political Science and Public Administration",
+      "match": [
+        "political science"
+      ],
+      "careers": [
+        "policy-analyst",
+        "foreign-service-officer",
+        "civil-servant",
+        "ngo-programme-officer"
+      ]
+    },
+    {
+      "id": "public-administration",
+      "name": "B.Sc. (Hons) Public Administration",
+      "school": "School of Social Sciences",
+      "department": "Political Science and Public Administration",
+      "match": [
+        "public administration"
+      ],
+      "careers": [
+        "civil-servant",
+        "policy-analyst",
+        "hr-officer",
+        "ngo-programme-officer"
+      ]
+    },
+    {
+      "id": "social-work",
+      "name": "B.SW. (Hons) Social Work",
+      "school": "School of Social Sciences",
+      "department": "Social Work",
+      "match": [
+        "social work",
+        "human services"
+      ],
+      "careers": [
+        "social-worker",
+        "ngo-programme-officer",
+        "counsellor",
+        "hr-officer"
+      ]
+    },
+    {
+      "id": "computer-science",
+      "name": "B.Sc. (Hons) Computer Science",
+      "school": "School of Computing",
+      "department": "Computer Science",
+      "match": [
+        "computer science"
+      ],
+      "careers": [
+        "software-engineer",
+        "data-scientist",
+        "cybersecurity-analyst",
+        "cloud-engineer"
+      ]
+    },
+    {
+      "id": "software-engineering",
+      "name": "B.Sc. (Hons) Software Engineering",
+      "school": "School of Computing",
+      "department": "Software Engineering",
+      "match": [
+        "software engineering"
+      ],
+      "careers": [
+        "software-engineer",
+        "mobile-developer",
+        "cloud-engineer",
+        "qa-engineer"
+      ]
+    },
+    {
+      "id": "information-technology",
+      "name": "B.Sc. (Hons) Information Technology",
+      "school": "School of Computing",
+      "department": "Information Technology",
+      "match": [
+        "information technology"
+      ],
+      "careers": [
+        "network-administrator",
+        "cybersecurity-analyst",
+        "cloud-engineer",
+        "it-support"
+      ]
+    },
+    {
+      "id": "human-nutrition-dietetics",
+      "name": "B.Sc. (Hons) Human Nutrition and Dietetics",
+      "school": "School of Public & Allied Health",
+      "department": "Human Nutrition and Dietetics",
+      "match": [
+        "nutrition",
+        "dietetics"
+      ],
+      "careers": [
+        "dietitian",
+        "food-technologist",
+        "public-health-officer",
+        "medical-sales-rep"
+      ]
+    },
+    {
+      "id": "public-health",
+      "name": "B.Sc. (Hons) Public Health",
+      "school": "School of Public & Allied Health",
+      "department": "Public Health",
+      "match": [
+        "public health"
+      ],
+      "careers": [
+        "public-health-officer",
+        "epidemiologist",
+        "ngo-programme-officer",
+        "hse-officer"
+      ]
+    },
+    {
+      "id": "medical-laboratory-science",
+      "name": "BMLS (Hons) Medical Laboratory Science",
+      "school": "School of Public & Allied Health",
+      "department": "Medical Laboratory Science",
+      "match": [
+        "medical laboratory",
+        "laboratory science",
+        "bmls"
+      ],
+      "careers": [
+        "medical-lab-scientist",
+        "qc-analyst",
+        "research-scientist",
+        "medical-sales-rep"
+      ]
+    },
+    {
+      "id": "computer-engineering",
+      "name": "B.Eng. Computer Engineering",
+      "school": "School of Engineering",
+      "department": "Computer Engineering",
+      "match": [
+        "computer engineering"
+      ],
+      "careers": [
+        "embedded-engineer",
+        "software-engineer",
+        "telecom-engineer",
+        "network-administrator"
+      ]
+    },
+    {
+      "id": "civil-engineering",
+      "name": "B.Eng. Civil Engineering",
+      "school": "School of Engineering",
+      "department": "Civil Engineering",
+      "match": [
+        "civil engineering"
+      ],
+      "careers": [
+        "civil-engineer",
+        "structural-engineer",
+        "construction-manager",
+        "hse-officer"
+      ]
+    },
+    {
+      "id": "mechanical-engineering",
+      "name": "B.Eng. Mechanical Engineering",
+      "school": "School of Engineering",
+      "department": "Mechanical Engineering",
+      "match": [
+        "mechanical engineering"
+      ],
+      "careers": [
+        "mechanical-engineer",
+        "maintenance-engineer",
+        "process-engineer",
+        "automation-engineer"
+      ]
+    },
+    {
+      "id": "electrical-electronics-engineering",
+      "name": "B.Eng. Electrical & Electronics Engineering",
+      "school": "School of Engineering",
+      "department": "Electrical Engineering",
+      "match": [
+        "electrical",
+        "electronics engineering"
+      ],
+      "careers": [
+        "electrical-engineer",
+        "power-engineer",
+        "telecom-engineer",
+        "automation-engineer"
+      ]
+    },
+    {
+      "id": "architecture",
+      "name": "B.Sc. Architecture",
+      "school": "School of Environmental Sciences",
+      "department": "Architecture",
+      "match": [
+        "architecture"
+      ],
+      "careers": [
+        "architect",
+        "bim-specialist",
+        "interior-designer",
+        "construction-manager"
+      ]
+    },
+    {
+      "id": "estate-management",
+      "name": "B.Sc. Estate Management",
+      "school": "School of Environmental Sciences",
+      "department": "Estate Management",
+      "match": [
+        "estate management"
+      ],
+      "careers": [
+        "estate-surveyor",
+        "property-manager",
+        "facility-manager",
+        "estate-agent"
+      ]
+    }
+  ],
+  "fallback": {
+    "name": "Any programme",
+    "careers": [
+      "data-analyst",
+      "project-officer",
+      "hr-officer",
+      "digital-marketer"
+    ]
+  }
+}
