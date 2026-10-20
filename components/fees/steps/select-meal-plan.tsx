@@ -16,19 +16,25 @@ const MEAL_IMAGE_MAP: Record<string, string> = {
 
 /**
  * Returns the fee value for a meal plan option from general charges.
- * 2-meal options (BL, BS, LS): meal2fees
- * 3-meal option (BLS): meal3fees
+ * 2-meal options (BL, BS, LS): fullmeal2fees (full session) or meal2fees (semester)
+ * 3-meal option (BLS): fullmeal3fees (full session) or meal3fees (semester)
  */
 export function getMealPlanPrice(
   mealType: string,
-  generalCharges: FinanceGeneralCharges | null | undefined
+  generalCharges: FinanceGeneralCharges | null | undefined,
+  isFullSession: boolean = false
 ): number {
-  if (!generalCharges) return 0;
+  if (!generalCharges || mealType === "NONE") return 0;
+  if (isFullSession) {
+    if (mealType === "BLS") {
+      return generalCharges.fullmeal3fees || 0;
+    }
+    return generalCharges.fullmeal2fees || 0;
+  }
   if (mealType === "BLS") {
     return generalCharges.meal3fees || 0;
-  } else {
-    return generalCharges.meal2fees || 0;
   }
+  return generalCharges.meal2fees || 0;
 }
 
 
@@ -57,6 +63,7 @@ interface SelectMealPlanProps {
   generalCharges?: FinanceGeneralCharges | null;
   isLoading?: boolean;
   error?: string | null;
+  isFullSession?: boolean;
 }
 
 export function SelectMealPlan({
@@ -66,6 +73,7 @@ export function SelectMealPlan({
   generalCharges = null,
   isLoading = false,
   error = null,
+  isFullSession = false,
 }: SelectMealPlanProps) {
   return (
     <div className="w-full max-w-[1200px] h-[79vh] overflow-y-auto flex flex-col gap-5 p-1.5">
@@ -90,7 +98,7 @@ export function SelectMealPlan({
           mealTypes.map((meal) => {
             const isSelected =
               selectedId === String(meal.qselectionid) || selectedId === meal.mealtype;
-            const price = getMealPlanPrice(meal.mealtype, generalCharges);
+            const price = getMealPlanPrice(meal.mealtype, generalCharges, isFullSession);
             const imageSrc = MEAL_IMAGE_MAP[meal.mealtype] || "/images/meals/breakfast-lunch.webp";
 
             return (

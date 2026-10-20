@@ -13,6 +13,7 @@ vi.mock("@/lib/logger", () => ({
 
 import { getFinanceRegistrationAction } from "@/app/actions/registration-finance";
 import { getResidenceImages, deriveHallType } from "@/components/fees/steps/select-residence";
+import { getMealPlanPrice } from "@/components/fees/steps/select-meal-plan";
 import { loggedFetch } from "@/lib/logger";
 
 describe("getFinanceRegistrationAction", () => {
@@ -181,6 +182,93 @@ describe("getResidenceImages and deriveHallType helpers", () => {
     expect(deriveHallType("Type: Premium\n")).toBe("PREMIUM");
     expect(deriveHallType("Type: Classic")).toBe("CLASSIC");
     expect(deriveHallType("Classic Plus")).toBe("CLASSIC+");
+  });
+});
+
+describe("Dynamic fee handling: Full Session vs 1st Semester", () => {
+  const generalCharges = {
+    fullfees: 540000,
+    fullmeal2fees: 952000,
+    fullmeal3fees: 1428000,
+    fees: 340000,
+    meal2fees: 476000,
+    meal3fees: 714000,
+  };
+
+  it("calculates meal prices correctly for 1st semester registration", () => {
+    expect(getMealPlanPrice("BL", generalCharges, false)).toBe(476000);
+    expect(getMealPlanPrice("BS", generalCharges, false)).toBe(476000);
+    expect(getMealPlanPrice("LS", generalCharges, false)).toBe(476000);
+    expect(getMealPlanPrice("BLS", generalCharges, false)).toBe(714000);
+    expect(getMealPlanPrice("NONE", generalCharges, false)).toBe(0);
+  });
+
+  it("calculates meal prices correctly for Full Session registration", () => {
+    expect(getMealPlanPrice("BL", generalCharges, true)).toBe(952000);
+    expect(getMealPlanPrice("BS", generalCharges, true)).toBe(952000);
+    expect(getMealPlanPrice("LS", generalCharges, true)).toBe(952000);
+    expect(getMealPlanPrice("BLS", generalCharges, true)).toBe(1428000);
+    expect(getMealPlanPrice("NONE", generalCharges, true)).toBe(0);
+  });
+
+  it("computes full session registration total using fullfees, full_charges, and fullmealfees", () => {
+    const hall = {
+      qresidenceid: 6308,
+      residenceoption: "Full",
+      full_charges: 526568,
+      charges: 263284,
+      residenceid: "CRST",
+      residencename: "Crystal1",
+      sex: "F",
+      min_level: 200,
+      max_level: 500,
+      majors: "Hall Type: Classic",
+      blockname: "B",
+      capacity: 508,
+      roomsize: 4,
+      org_id: 0,
+      residence_images: [],
+    };
+
+    const isFullSession = true;
+    const baseFees = isFullSession ? generalCharges.fullfees : generalCharges.fees;
+    const hallCost = isFullSession ? (hall.full_charges ?? hall.charges) : hall.charges;
+    const mealCost = getMealPlanPrice("BLS", generalCharges, isFullSession);
+
+    expect(baseFees).toBe(540000);
+    expect(hallCost).toBe(526568);
+    expect(mealCost).toBe(1428000);
+    expect(baseFees + hallCost + mealCost).toBe(2494568);
+  });
+
+  it("computes 1st semester registration total using fees, charges, and mealfees", () => {
+    const hall = {
+      qresidenceid: 6308,
+      residenceoption: "Full",
+      full_charges: 526568,
+      charges: 263284,
+      residenceid: "CRST",
+      residencename: "Crystal1",
+      sex: "F",
+      min_level: 200,
+      max_level: 500,
+      majors: "Hall Type: Classic",
+      blockname: "B",
+      capacity: 508,
+      roomsize: 4,
+      org_id: 0,
+      residence_images: [],
+    };
+
+    const isFullSession = false;
+    const baseFees = isFullSession ? generalCharges.fullfees : generalCharges.fees;
+    const hallCost = isFullSession ? (hall.full_charges ?? hall.charges) : hall.charges;
+    const mealCost = getMealPlanPrice("BLS", generalCharges, isFullSession);
+
+    expect(baseFees).toBe(340000);
+    expect(hallCost).toBe(263284);
+    expect(mealCost).toBe(714000);
+    expect(baseFees + hallCost + mealCost).toBe(1317284);
   });
 });
 

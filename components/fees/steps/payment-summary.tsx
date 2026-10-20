@@ -45,6 +45,7 @@ interface PaymentSummaryProps {
   isWorshipLocked?: boolean;
   /** Unix timestamp (ms) when the worship lock expires — displayed in the lock badge. */
   worshipLockedUntil?: number | null;
+  isFullSession?: boolean;
 }
 
 export function PaymentSummary({
@@ -57,12 +58,19 @@ export function PaymentSummary({
   isWorshipAutoAssigned = false,
   isWorshipLocked = false,
   worshipLockedUntil = null,
+  isFullSession = false,
 }: PaymentSummaryProps) {
   // Mandatory basic fees directly from API
-  const mandatoryTotal = generalCharges?.fees || 0;
+  const mandatoryTotal = isFullSession
+    ? generalCharges?.fullfees || 0
+    : generalCharges?.fees || 0;
 
   // Residence cost
-  const residencePrice = isOffCampus ? 0 : selectedResidence?.charges || 0;
+  const residencePrice = isOffCampus
+    ? 0
+    : isFullSession
+    ? selectedResidence?.full_charges ?? selectedResidence?.charges ?? 0
+    : selectedResidence?.charges || 0;
   const residenceName = isOffCampus
     ? "Off Campus Residence"
     : selectedResidence?.residencename || "Not selected";
@@ -80,7 +88,7 @@ export function PaymentSummary({
   // Meal plan cost (0 for off-campus — they have no meal plan)
   const mealPrice =
     !isOffCampus && selectedMealType
-      ? getMealPlanPrice(selectedMealType.mealtype, generalCharges)
+      ? getMealPlanPrice(selectedMealType.mealtype, generalCharges, isFullSession)
       : 0;
 
   // Total cost

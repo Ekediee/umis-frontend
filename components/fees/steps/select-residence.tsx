@@ -75,6 +75,7 @@ interface SelectResidenceProps {
   residences?: FinanceResidence[];
   isLoading?: boolean;
   error?: string | null;
+  isFullSession?: boolean;
 }
 
 export function SelectResidence({
@@ -83,6 +84,7 @@ export function SelectResidence({
   residences = [],
   isLoading = false,
   error = null,
+  isFullSession = false,
 }: SelectResidenceProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -239,7 +241,7 @@ export function SelectResidence({
                         {hallType === "CLASSIC+" ? "Classic+" : hallType === "REGULAR" ? "Regular" : hallType}
                       </span>
                       <span className="text-[14px] md:text-[16px] font-bold text-[#003cbb] dark:text-[#4d82ff] tracking-tight">
-                        {formatPrice(hall.charges)}
+                        {formatPrice(isFullSession ? (hall.full_charges ?? hall.charges) : hall.charges)}
                       </span>
                     </div>
 
