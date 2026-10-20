@@ -134,6 +134,43 @@ describe("getFinanceRegistrationAction", () => {
     expect(ogden?.majors).toBe("Hall Type: Regular");
     expect(ogden?.residence_images).toEqual([]);
   });
+
+  it("handles general_charges when returned as a single object with string or snake_case values", async () => {
+    const mockApiResponse = {
+      status: true,
+      message: "Registration data retrieved successfully!",
+      data: {
+        residence: [],
+        general_charges: {
+          full_fees: "540,000",
+          full_meal_2_fees: "952000",
+          fullmeal3fees: 1428000,
+          fees: "340000",
+          meal_2_fees: 476000,
+          meal3fees: "714,000.00",
+        },
+        meal_types: [],
+        worship_centers: [],
+      },
+    };
+
+    vi.mocked(loggedFetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    const result = await getFinanceRegistrationAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.data?.general_charges).toEqual({
+      fullfees: 540000,
+      fullmeal2fees: 952000,
+      fullmeal3fees: 1428000,
+      fees: 340000,
+      meal2fees: 476000,
+      meal3fees: 714000,
+    });
+  });
 });
 
 describe("getResidenceImages and deriveHallType helpers", () => {

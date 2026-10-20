@@ -177,19 +177,46 @@ export const getFinanceRegistrationAction =
         ? json.data.residence
         : [];
 
-      const rawChargesArr: RawFinanceGeneralCharges[] = Array.isArray(
-        json?.data?.general_charges
-      )
-        ? json.data.general_charges
-        : [];
-      const rawCharges: RawFinanceGeneralCharges = rawChargesArr[0] ?? {
-        fullfees: 0,
-        fullmeal2fees: 0,
-        fullmeal3fees: 0,
-        fees: 0,
-        meal2fees: 0,
-        meal3fees: 0,
+      // Extract general_charges whether returned as an array [ { ... } ] or a single object { ... }
+      const rawGeneralCharges = json?.data?.general_charges;
+      const rawChargeObj: Record<string, unknown> = Array.isArray(rawGeneralCharges)
+        ? ((rawGeneralCharges[0] as unknown as Record<string, unknown>) ?? {})
+        : rawGeneralCharges && typeof rawGeneralCharges === "object"
+        ? (rawGeneralCharges as unknown as Record<string, unknown>)
+        : {};
+
+      const parseFee = (...keys: string[]): number => {
+        for (const k of keys) {
+          const val = rawChargeObj[k];
+          if (typeof val === "number" && !isNaN(val)) return val;
+          if (typeof val === "string") {
+            const parsed = parseFloat(val.replace(/,/g, "").trim());
+            if (!isNaN(parsed)) return parsed;
+          }
+        }
+        return 0;
       };
+
+      const parsedCharges: FinanceGeneralCharges = {
+        fullfees: parseFee("fullfees", "full_fees", "fullFees"),
+        fullmeal2fees: parseFee("fullmeal2fees", "full_meal_2_fees", "fullmeal2_fees", "fullMeal2Fees"),
+        fullmeal3fees: parseFee("fullmeal3fees", "full_meal_3_fees", "fullmeal3_fees", "fullMeal3Fees"),
+        fees: parseFee("fees", "tuition_fees", "tuition", "base_fees", "basefees"),
+        meal2fees: parseFee("meal2fees", "meal_2_fees", "meal2_fees", "meal2Fees"),
+        meal3fees: parseFee("meal3fees", "meal_3_fees", "meal3_fees", "meal3Fees"),
+      };
+
+      if (
+        parsedCharges.fees === 0 &&
+        parsedCharges.fullfees === 0 &&
+        parsedCharges.meal2fees === 0 &&
+        parsedCharges.meal3fees === 0
+      ) {
+        console.warn(
+          "[registration-finance] Warning: All general_charges parsed to 0. Raw API general_charges was:",
+          JSON.stringify(rawGeneralCharges)
+        );
+      }
 
       const rawMeals: RawFinanceMealType[] = Array.isArray(
         json?.data?.meal_types
@@ -225,14 +252,7 @@ export const getFinanceRegistrationAction =
               residence_images: Array.isArray(r.residence_images) ? r.residence_images : [],
             };
           }),
-          general_charges: {
-            fullfees: rawCharges.fullfees,
-            fullmeal2fees: rawCharges.fullmeal2fees,
-            fullmeal3fees: rawCharges.fullmeal3fees,
-            fees: rawCharges.fees,
-            meal2fees: rawCharges.meal2fees,
-            meal3fees: rawCharges.meal3fees,
-          },
+          general_charges: parsedCharges,
           meal_types: rawMeals.map((m) => ({
             qselectionid: m.qselectionid,
             mealtype: m.mealtype,
