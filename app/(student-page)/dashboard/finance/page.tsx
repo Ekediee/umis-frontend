@@ -341,18 +341,18 @@ function FinancePageContent() {
           <p className="text-[15px] font-medium text-gray-600 dark:text-gray-400">Financial Approval</p>
           <div className="flex items-center justify-start flex-1 mt-4">
             <div className={cn(
-              "px-4 py-3 rounded-[16px] text-[15px] font-bold inline-flex items-center gap-2 border transition-colors w-full justify-center",
+              "px-4 py-3 rounded-[16px] text-[15px] font-bold inline-flex items-start gap-2 leading-snug border transition-colors w-full justify-center",
               isFinancialApproved
                 ? "bg-[#ECFDF3] dark:bg-[#10B981]/15 text-[#12B76A] dark:text-[#4ade80] border-[#D1FADF] dark:border-[#10B981]/25"
                 : "bg-[#FFF4ED] dark:bg-[#F79009]/15 text-[#B54708] dark:text-[#FDB022] border-[#FEDF89] dark:border-[#F79009]/25"
             )}>
               {isFinancialApproved ? (
                 <>
-                  <ThumbsUp className="w-5 h-5 text-[#12B76A] dark:text-[#4ade80]" fill="currentColor" /> Approved
+                  <ThumbsUp className="w-5 h-5 shrink-0 text-[#12B76A] dark:text-[#4ade80]" fill="currentColor" /> <span>Approved</span>
                 </>
               ) : (
                 <>
-                  <Clock className="w-5 h-5 text-[#B54708] dark:text-[#FDB022]" /> Pending Approval
+                  <Clock className="w-5 h-5 shrink-0 text-[#B54708] dark:text-[#FDB022]" /> <span>Pending Approval</span>
                 </>
               )}
             </div>
@@ -497,7 +497,7 @@ function FinancePageContent() {
         {/* Banner Cards */}
         <div className="grid grid-cols-1 @[44rem]:grid-cols-2 gap-6 mt-2">
           {/* Card 1 */}
-          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
+          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-clip min-h-[220px] dark:border dark:border-gray-800 transition-colors">
             <div className="relative z-10 max-w-[60%] flex flex-col justify-center">
               <h3 className="text-[18px] @[24rem]:text-[20px] font-bold leading-snug text-gray-900 dark:text-gray-100 mb-6 @[24rem]:mb-8">Pay outstanding fees</h3>
               <Button 
@@ -530,7 +530,7 @@ function FinancePageContent() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-[#E9DFFB] dark:bg-gradient-to-br dark:from-[#2e234a]/85 dark:to-[#1e1430]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
+          <div className="bg-[#E9DFFB] dark:bg-gradient-to-br dark:from-[#2e234a]/85 dark:to-[#1e1430]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-clip min-h-[220px] dark:border dark:border-gray-800 transition-colors">
             <div className="relative z-10 max-w-[60%] flex flex-col justify-center">
               <h3 className="text-[18px] @[24rem]:text-[20px] font-bold leading-snug text-gray-900 dark:text-gray-100 mb-6 @[24rem]:mb-8">Pay for current semester</h3>
               <Link href="/dashboard/finance/fees">
