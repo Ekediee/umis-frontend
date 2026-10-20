@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { forgetDefaultPassword } from "@/lib/student/default-password";
 import { X, KeyRound, Eye, EyeOff, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -284,6 +285,8 @@ export function ChangePasswordModal({ isOpen, onClose, matricNo, email }: Change
     }
 
     toast.success(result?.message || "Password changed successfully!");
+    // No more "still using your default password?" prompts for this student
+    forgetDefaultPassword(matricNo);
     notify({
       key: actionKey("password-changed"),
       type: "SECURITY_PASSWORD_CHANGED",

@@ -267,3 +267,19 @@ export async function getStudentFeesAction(): Promise<GetStudentFeesResult> {
   }
 }
 
+
+/**
+ * Pays outstanding fees from the student's wallet.
+ *
+ * NOT CONNECTED YET: the backend has no wallet-debit endpoint for outstanding fees
+ * (only /wallet/fund, /wallet/balance and /payment/initialise exist). Rather than
+ * pretend a payment went through, this reports that it isn't available. Once the
+ * endpoint exists, call it here (amount in NGN) and return its message.
+ */
+export async function payOutstandingFromWalletAction(amount: number): Promise<{ success: boolean; message?: string; error?: string }> {
+  if (!(amount > 0)) return { success: false, error: "Enter an amount to pay." };
+  return {
+    success: false,
+    error: "Paying outstanding fees from your wallet isn't available yet. Please try again later or contact the bursary.",
+  };
+}
