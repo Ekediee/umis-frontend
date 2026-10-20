@@ -56,6 +56,41 @@ const paymentHistoryData = [
   },
 ];
 
+// School fee payments. Sample records like the payment history above: the backend has no
+// school-fee payment history endpoint yet.
+const schoolFeesHistoryData = [
+  {
+    id: "SF-2026-091901",
+    reference: "FLW-SF-730215",
+    date: "Sep 19, 2026",
+    time: "09:12 AM",
+    year: "2025/2026",
+    semesterId: "2",
+    amount: 2000000,
+    channel: "Wallet",
+  },
+  {
+    id: "SF-2026-091102",
+    reference: "FLW-SF-881342",
+    date: "Sep 11, 2026",
+    time: "02:40 PM",
+    year: "2025/2026",
+    semesterId: "2",
+    amount: 2000000,
+    channel: "Wallet",
+  },
+  {
+    id: "SF-2026-020303",
+    reference: "FLW-SF-412987",
+    date: "Feb 3, 2026",
+    time: "11:05 AM",
+    year: "2025/2026",
+    semesterId: "1",
+    amount: 4800000,
+    channel: "Card",
+  },
+];
+
 function formatFee(amount: number | null | undefined): string {
   if (amount === null || amount === undefined || isNaN(amount)) return "₦0";
   const absAmount = Math.abs(amount);
@@ -82,7 +117,7 @@ function FinancePageContent() {
   const [showWalletBalance, setShowWalletBalance] = useState(true);
   const [successAmount, setSuccessAmount] = useState<number | undefined>(undefined);
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
-  const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "wallet">("payment");
+  const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fees" | "wallet">("payment");
   const [walletFundingHistory, setWalletFundingHistory] = useState<WalletFundingRecord[]>([]);
 
   const loadStudentFees = useCallback(() => {
@@ -326,18 +361,18 @@ function FinancePageContent() {
       </div>
 
       {/* Stats Row */}
-      <div className="bg-white dark:bg-gray-900 rounded-[24px] flex flex-col justify-between p-6 gap-6 border border-gray-100 dark:border-gray-800 transition-colors">
+      <div className="@container bg-white dark:bg-gray-900 rounded-[24px] flex flex-col justify-between p-6 gap-6 border border-gray-100 dark:border-gray-800 transition-colors">
         {/* The wallet keeps a minimum width so the balance is always readable; the fee summary takes the rest */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] gap-6 items-stretch">
 
           {/* Left: Fees Summary — stacks when its own column gets narrow (container query) */}
           <div className="@container min-w-0">
-          <div className="flex flex-col @[30rem]:flex-row @[30rem]:items-center justify-between gap-6 py-2 h-full">
+          <div className="flex flex-col @[40rem]:flex-row @[40rem]:items-center justify-between gap-6 py-2 h-full">
 
             {/* Estimated Full Session Fee */}
-            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 pr-4">
+            <div className="flex-1 min-w-0 @[40rem]:border-r border-gray-100 dark:border-gray-800 pr-4">
               <div className="flex items-center">
-                <span className="text-gray-500 dark:text-gray-400 font-medium text-[13px] mb-2">Estimated Full Session Fee</span>
+                <span className="text-gray-500 dark:text-gray-400 font-medium text-[13px] @[40rem]:text-[12px] @[64rem]:text-[13px] mb-2">Estimated Full Session Fee</span>
                 <button
                   type="button"
                   onClick={toggleFullfee}
@@ -348,33 +383,33 @@ function FinancePageContent() {
                 </button>
               </div>
               {mounted && !showFullfee ? (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">
                   {isLoadingFees && !studentFees ? "₦..." : formatFee(studentFees?.estimated_full_session_fee)}
                 </p>
               )}
             </div>
 
             {/* Estimated Semester Fee */}
-            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 @[30rem]:pr-4">
-              <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Estimated Semester Fee</p>
+            <div className="flex-1 min-w-0 @[40rem]:border-r border-gray-100 dark:border-gray-800 @[40rem]:pr-4">
+              <p className="text-[13px] @[40rem]:text-[12px] @[64rem]:text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Estimated Semester Fee</p>
               {mounted && !showFullfee ? (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">
                   {isLoadingFees && !studentFees ? "₦..." : formatFee(studentFees?.estimated_semester_fee)}
                 </p>
               )}
             </div>
 
             {/* Amount Paid For Semester */}
-            <div className="flex-1 min-w-0 @[30rem]:border-r border-gray-100 dark:border-gray-800 @[30rem]:pr-4">
-              <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Amount Paid For Semester</p>
+            <div className="flex-1 min-w-0 @[40rem]:border-r border-gray-100 dark:border-gray-800 @[40rem]:pr-4">
+              <p className="text-[13px] @[40rem]:text-[12px] @[64rem]:text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Amount Paid For Semester</p>
               {mounted && !showFullfee ? (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">
                   {isLoadingFees && !studentFees ? "₦..." : formatFee(studentFees?.amount_paid_for_semester)}
                 </p>
               )}
@@ -382,11 +417,11 @@ function FinancePageContent() {
 
             {/* Outstanding Payment */}
             <div className="flex-1 min-w-0 px-0">
-              <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Outstanding Payment</p>
+              <p className="text-[13px] @[40rem]:text-[12px] @[64rem]:text-[13px] font-medium text-gray-500 dark:text-gray-400 mb-2">Outstanding Payment</p>
               {mounted && !showFullfee ? (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">****</p>
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[20px] xl:text-[22px] font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">
                   {isLoadingFees && !studentFees ? "₦..." : formatFee(outstandingAmount)}
                 </p>
               )}
@@ -460,11 +495,11 @@ function FinancePageContent() {
         </div>
 
         {/* Banner Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+        <div className="grid grid-cols-1 @[44rem]:grid-cols-2 gap-6 mt-2">
           {/* Card 1 */}
-          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
-            <div className="relative z-10 w-4/5 flex flex-col justify-center">
-              <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-8">Pay outstanding fees</h3>
+          <div className="bg-[#E4E9FC] dark:bg-gradient-to-br dark:from-[#1b2a4a]/85 dark:to-[#111c30]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
+            <div className="relative z-10 max-w-[60%] flex flex-col justify-center">
+              <h3 className="text-[18px] @[24rem]:text-[20px] font-bold leading-snug text-gray-900 dark:text-gray-100 mb-6 @[24rem]:mb-8">Pay outstanding fees</h3>
               <Button 
                 disabled={!hasOutstandingFees}
                 onClick={() => {
@@ -472,7 +507,7 @@ function FinancePageContent() {
                   if (hasOutstandingFees) setIsPayOutstandingOpen(true);
                 }}
                 className={cn(
-                  "w-[160px] rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
+                  "w-fit px-6 whitespace-nowrap rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
                   hasOutstandingFees 
                     ? "bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002BCC] dark:hover:bg-[#1D4ED8] text-white cursor-pointer shadow-sm" 
                     : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
@@ -482,7 +517,7 @@ function FinancePageContent() {
               </Button>
             </div>
             
-            <div className="absolute right-[-60px] md:right-[0px] bottom-[-60px] w-[250px] h-[250px] pointer-events-none">
+            <div className="absolute -right-8 @[26rem]:right-0 bottom-[-48px] @[26rem]:bottom-[-60px] w-[190px] h-[190px] @[26rem]:w-[250px] @[26rem]:h-[250px] pointer-events-none">
               <Image
                 className="w-full h-auto dark:opacity-85"
                 src="/images/HandSuccessPay.png"
@@ -495,16 +530,16 @@ function FinancePageContent() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-[#E9DFFB] dark:bg-gradient-to-br dark:from-[#2e234a]/85 dark:to-[#1e1430]/85 rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
-            <div className="relative z-10 w-4/5 flex flex-col justify-center">
-              <h3 className="text-[20px] font-bold text-gray-900 dark:text-gray-100 mb-8">Pay for current semester</h3>
+          <div className="bg-[#E9DFFB] dark:bg-gradient-to-br dark:from-[#2e234a]/85 dark:to-[#1e1430]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-hidden min-h-[220px] dark:border dark:border-gray-800 transition-colors">
+            <div className="relative z-10 max-w-[60%] flex flex-col justify-center">
+              <h3 className="text-[18px] @[24rem]:text-[20px] font-bold leading-snug text-gray-900 dark:text-gray-100 mb-6 @[24rem]:mb-8">Pay for current semester</h3>
               <Link href="/dashboard/finance/fees">
-                <Button className="w-[180px] bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 backdrop-blur-sm">
+                <Button className="w-fit px-5 whitespace-nowrap bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 backdrop-blur-sm">
                   Pay School Fees <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
             </div>
-            <div className="absolute right-[0px] md:right-8 bottom-[-60px] w-[250px] h-[250px] pointer-events-none">
+            <div className="absolute -right-6 @[26rem]:right-8 bottom-[-48px] @[26rem]:bottom-[-60px] w-[190px] h-[190px] @[26rem]:w-[250px] @[26rem]:h-[250px] pointer-events-none">
               <Image
                 className="w-full h-auto dark:opacity-85"
                 src="/images/HandPay.png"
@@ -523,56 +558,50 @@ function FinancePageContent() {
       {/* Transaction & Funding History Section */}
       <div className="mt-4 flex flex-col gap-6">
         {/* Tab Switcher Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
-          <div className="flex items-center gap-2 p-1.5 bg-[#f6f8fa] dark:bg-gray-800/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 w-fit">
-            <button
-              type="button"
-              onClick={() => setActiveHistoryTab("payment")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold transition-all duration-200",
-                activeHistoryTab === "payment"
-                  ? "bg-white dark:bg-gray-900 text-[#003cbb] dark:text-[#4d82ff] shadow-xs"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              )}
-            >
-              <span>Payment History</span>
-              <span className={cn(
-                "px-2 py-0.5 rounded-full text-[11px] font-bold",
-                activeHistoryTab === "payment"
-                  ? "bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]"
-                  : "bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-              )}>
-                {paymentHistoryData.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveHistoryTab("wallet")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold transition-all duration-200",
-                activeHistoryTab === "wallet"
-                  ? "bg-white dark:bg-gray-900 text-[#003cbb] dark:text-[#4d82ff] shadow-xs"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              )}
-            >
-              <span>Wallet Funding History</span>
-              <span className={cn(
-                "px-2 py-0.5 rounded-full text-[11px] font-bold",
-                activeHistoryTab === "wallet"
-                  ? "bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]"
-                  : "bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-              )}>
-                {walletFundingHistory.length}
-              </span>
-            </button>
+        {/* Wide row: full tab names with the description beside (or below) them.
+            Narrow row (tablets with the sidebar, phones): short names sharing the width, no description. */}
+        <div className="@container border-b border-gray-100 dark:border-gray-800 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="flex items-center gap-1.5 @[40rem]:gap-2 p-1.5 bg-[#f6f8fa] dark:bg-gray-800/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/60 w-full @[40rem]:w-fit">
+            {([
+              { id: "payment", label: "Payment History", short: "Payments", count: paymentHistoryData.length },
+              { id: "school-fees", label: "School Fees History", short: "School Fees", count: schoolFeesHistoryData.length },
+              { id: "wallet", label: "Wallet Funding History", short: "Wallet", count: walletFundingHistory.length },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveHistoryTab(tab.id)}
+                aria-label={tab.label}
+                className={cn(
+                  "flex-1 @[40rem]:flex-none min-w-0 flex items-center justify-center gap-1.5 @[40rem]:gap-2 px-2 @[40rem]:px-4 py-2 rounded-xl text-[13px] @[40rem]:text-[14px] font-semibold whitespace-nowrap transition-all duration-200",
+                  activeHistoryTab === tab.id
+                    ? "bg-white dark:bg-gray-900 text-[#003cbb] dark:text-[#4d82ff] shadow-xs"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                )}
+              >
+                <span className="@[40rem]:hidden">{tab.short}</span>
+                <span className="hidden @[40rem]:inline">{tab.label}</span>
+                <span className={cn(
+                  "px-2 py-0.5 rounded-full text-[11px] font-bold",
+                  activeHistoryTab === tab.id
+                    ? "bg-[#eaf0ff] dark:bg-[#003cbb]/20 text-[#003cbb] dark:text-[#4d82ff]"
+                    : "bg-gray-200/70 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                )}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
 
-          <p className="text-[12px] text-gray-500 dark:text-gray-400">
+          <p className="hidden @[40rem]:block text-[12px] text-gray-500 dark:text-gray-400">
             {activeHistoryTab === "payment"
               ? "Official semester invoice records and tuition clearance receipts"
+              : activeHistoryTab === "school-fees"
+              ? "School fee payments made from your wallet or card, with receipts"
               : "Verifiable student digital wallet credits and top-up receipts"}
           </p>
+        </div>
         </div>
 
         {/* TAB 1: Payment History */}
@@ -670,7 +699,135 @@ function FinancePageContent() {
           </div>
         )}
 
-        {/* TAB 2: Wallet Funding History */}
+        {/* TAB 2: School Fees History */}
+        {activeHistoryTab === "school-fees" && (
+          <div>
+            {/* Desktop View: Table */}
+            <div className="hidden md:block w-full overflow-x-auto">
+              <div className="min-w-[800px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 border-b-0 transition-colors">
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Reference</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Date &amp; Time</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Semester</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Amount Paid</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400">Paid With</div>
+                  <div className="text-[13px] font-medium text-gray-500 dark:text-gray-400 text-center">Receipt Actions</div>
+                </div>
+
+                {/* Table Rows */}
+                <div className="flex flex-col gap-2 mt-2">
+                  {schoolFeesHistoryData.length === 0 ? (
+                    <div className="p-8 text-center bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400">
+                      No school fee payments recorded yet.
+                    </div>
+                  ) : (
+                    schoolFeesHistoryData.map((row) => {
+                      const receiptHref = `/dashboard/finance/receipt?status=success&ref=${encodeURIComponent(row.reference)}&amount=${row.amount}&gateway=${encodeURIComponent(row.channel)}`;
+                      return (
+                        <div key={row.id} className="grid grid-cols-6 gap-4 px-6 py-5 bg-white dark:bg-gray-900 rounded-[20px] items-center border border-gray-100 dark:border-gray-800 transition-colors">
+                          <div className="font-mono text-[13.5px] font-bold text-gray-900 dark:text-gray-100 truncate">
+                            {row.reference}
+                          </div>
+                          <div className="text-[13px] text-gray-600 dark:text-gray-300">
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{row.date}</p>
+                            <p className="text-[11px] text-gray-400 dark:text-gray-500">{row.time}</p>
+                          </div>
+                          <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
+                            {row.year}<span className="text-orange-500">.{row.semesterId}</span>
+                          </div>
+                          <div className="text-[15px] font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+                            {formatFee(row.amount)}
+                          </div>
+                          <div>
+                            <span className="text-[12px] font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-lg border border-gray-200/60 dark:border-gray-700">
+                              {row.channel}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            <Link
+                              href={receiptHref}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                              title="View Receipt"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                            <Link
+                              href={`${receiptHref}&action=download`}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                              title="Download Receipt PDF"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile View: Cards */}
+            <div className="md:hidden flex flex-col gap-4">
+              {schoolFeesHistoryData.length === 0 ? (
+                <div className="p-6 text-center bg-white dark:bg-gray-900 rounded-[20px] border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400">
+                  No school fee payments recorded yet.
+                </div>
+              ) : (
+                schoolFeesHistoryData.map((row) => {
+                  const receiptHref = `/dashboard/finance/receipt?status=success&ref=${encodeURIComponent(row.reference)}&amount=${row.amount}&gateway=${encodeURIComponent(row.channel)}`;
+                  return (
+                    <div key={row.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[20px] p-5 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-bold text-[15px] text-gray-900 dark:text-gray-100">
+                            {row.year}<span className="text-orange-500">.{row.semesterId}</span>
+                          </div>
+                          <h4 className="font-mono text-[13px] font-bold text-gray-700 dark:text-gray-300 mt-0.5">{row.reference}</h4>
+                          <p className="text-[12px] text-gray-500 dark:text-gray-400">{row.date} • {row.time}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link
+                            href={receiptHref}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            title="View Receipt"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                          <Link
+                            href={`${receiptHref}&action=download`}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 text-[#003cbb] dark:text-[#4d82ff] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            title="Download Receipt"
+                          >
+                            <Download className="w-5 h-5" />
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="bg-[#F8F9FB] dark:bg-gray-950 rounded-[16px] p-4 mt-4 flex flex-col gap-3 transition-colors">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[14px] text-gray-500 dark:text-gray-400">Amount Paid</span>
+                          <span className="bg-white dark:bg-gray-900 rounded-full px-4 py-1.5 font-bold text-[#1E293B] dark:text-gray-100 text-[15px] border dark:border-gray-850">
+                            {formatFee(row.amount)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[14px] text-gray-500 dark:text-gray-400">Paid With</span>
+                          <span className="text-[12px] font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 px-2.5 py-1 rounded-lg border border-gray-200/60 dark:border-gray-700">
+                            {row.channel}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: Wallet Funding History */}
         {activeHistoryTab === "wallet" && (
           <div>
             {/* Desktop View: Table */}
