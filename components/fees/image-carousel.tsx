@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { ImageLightbox } from "./image-lightbox";
@@ -9,11 +9,17 @@ interface ImageCarouselProps {
   images: string[];
   alt: string;
   className?: string;
+  fallbackSrc?: string;
 }
 
-export function ImageCarousel({ images, alt, className }: ImageCarouselProps) {
+export function ImageCarousel({ images, alt, className, fallbackSrc }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [failedIndices, setFailedIndices] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    setFailedIndices({});
+  }, [images]);
 
   // Touch/swipe state
   const touchStartX = useRef(0);
@@ -103,20 +109,31 @@ export function ImageCarousel({ images, alt, className }: ImageCarouselProps) {
             className="relative w-full h-full cursor-pointer"
             type="button"
           >
-            <Image
-              src={images[currentIndex]}
-              alt={`${alt} - image ${currentIndex + 1}`}
-              fill
-              unoptimized
-              className="object-cover"
-              style={{
-                transition: isTransitioning ? "opacity 0.3s ease" : "none",
-                width: "100%",
-                height: "100%",
-              }}
-              priority
-              sizes="(max-width: 768px) 50vw, 270px"
-            />
+            {(() => {
+              const currentSrc = failedIndices[currentIndex]
+                ? fallbackSrc || "/off-campus-image.png"
+                : images[currentIndex];
+
+              return (
+                <Image
+                  src={currentSrc}
+                  alt={`${alt} - image ${currentIndex + 1}`}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                  onError={() => {
+                    setFailedIndices((prev) => ({ ...prev, [currentIndex]: true }));
+                  }}
+                  style={{
+                    transition: isTransitioning ? "opacity 0.3s ease" : "none",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  priority
+                  sizes="(max-width: 768px) 50vw, 270px"
+                />
+              );
+            })()}
           </button>
         </div>
 
@@ -164,6 +181,7 @@ export function ImageCarousel({ images, alt, className }: ImageCarouselProps) {
       <ImageLightbox
         images={images}
         initialIndex={currentIndex}
+        fallbackSrc={fallbackSrc}
         alt={alt}
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}

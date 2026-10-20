@@ -16,6 +16,7 @@ const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
   CLASSIC: { bg: "bg-[#cac2ff] dark:bg-[#cac2ff]/10", text: "text-[#2b1664] dark:text-[#b4aefc]" },
   PREMIUM: { bg: "bg-[#c2d6ff] dark:bg-[#c2d6ff]/10", text: "text-[#162664] dark:text-[#a0c2ff]" },
   "CLASSIC+": { bg: "bg-[#c2f5e9] dark:bg-[#c2f5e9]/10", text: "text-[#164564] dark:text-[#86efac]" },
+  REGULAR: { bg: "bg-[#fef0c7] dark:bg-[#fef0c7]/10", text: "text-[#b54708] dark:text-[#fde68a]" },
 };
 
 function formatPrice(price: number): string {
@@ -73,7 +74,7 @@ export function PaymentSummary({
   const residenceImages = isOffCampus
     ? ["/off-campus-image.png"]
     : selectedResidence
-    ? getResidenceImages(selectedResidence.residenceid)
+    ? getResidenceImages(selectedResidence)
     : [];
 
   // Meal plan cost (0 for off-campus — they have no meal plan)
