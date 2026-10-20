@@ -26,10 +26,11 @@ const RESIDENCE_IMAGE_MAP: Record<string, string[]> = {
 };
 
 /** Derive a badge type from the majors string returned by the API */
-function deriveHallType(majors: string): "CLASSIC" | "PREMIUM" | "CLASSIC+" {
-  const m = majors.toLowerCase();
+function deriveHallType(majors: string): "CLASSIC" | "PREMIUM" | "CLASSIC+" | "REGULAR" {
+  const m = (majors || "").toLowerCase();
   if (m.includes("premium")) return "PREMIUM";
   if (m.includes("classic plus") || m.includes("classic+")) return "CLASSIC+";
+  if (m.includes("regular")) return "REGULAR";
   return "CLASSIC";
 }
 
@@ -37,6 +38,7 @@ const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
   CLASSIC:   { bg: "bg-[#cac2ff] dark:bg-[#cac2ff]/10", text: "text-[#2b1664] dark:text-[#b4aefc]" },
   PREMIUM:   { bg: "bg-[#c2d6ff] dark:bg-[#c2d6ff]/10", text: "text-[#162664] dark:text-[#a0c2ff]" },
   "CLASSIC+": { bg: "bg-[#c2f5e9] dark:bg-[#c2f5e9]/10", text: "text-[#164564] dark:text-[#86efac]" },
+  REGULAR:   { bg: "bg-[#fef0c7] dark:bg-[#fef0c7]/10", text: "text-[#b54708] dark:text-[#fde68a]" },
 };
 
 function formatPrice(price: number): string {
@@ -73,6 +75,7 @@ interface SelectResidenceProps {
   residences?: FinanceResidence[];
   isLoading?: boolean;
   error?: string | null;
+  isFullSession?: boolean;
 }
 
 export function SelectResidence({
@@ -81,6 +84,7 @@ export function SelectResidence({
   residences = [],
   isLoading = false,
   error = null,
+  isFullSession = false,
 }: SelectResidenceProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -195,9 +199,10 @@ export function SelectResidence({
               const isSelected = selectedId === String(hall.qresidenceid);
               const hallType = deriveHallType(hall.majors);
               const badge = BADGE_STYLES[hallType] || BADGE_STYLES.CLASSIC;
-              const images =
-                RESIDENCE_IMAGE_MAP[hall.residenceid] ||
-                RESIDENCE_IMAGE_MAP._OFF_CAMPUS;
+              const images = getResidenceImages(hall);
+              const fallbackImage =
+                RESIDENCE_IMAGE_MAP[hall.residenceid]?.[0] ||
+                RESIDENCE_IMAGE_MAP._OFF_CAMPUS[0];
 
               return (
                 <div
@@ -213,6 +218,7 @@ export function SelectResidence({
                   {/* Image Carousel */}
                   <ImageCarousel
                     images={images}
+                    fallbackSrc={fallbackImage}
                     alt={hall.residencename}
                     className="h-[120px] md:h-[152px] w-full"
                   />
@@ -232,10 +238,10 @@ export function SelectResidence({
                           badge.text
                         )}
                       >
-                        {hallType === "CLASSIC+" ? "Classic+" : hallType}
+                        {hallType === "CLASSIC+" ? "Classic+" : hallType === "REGULAR" ? "Regular" : hallType}
                       </span>
                       <span className="text-[14px] md:text-[16px] font-bold text-[#003cbb] dark:text-[#4d82ff] tracking-tight">
-                        {formatPrice(hall.charges)}
+                        {formatPrice(isFullSession ? (hall.full_charges ?? hall.charges) : hall.charges)}
                       </span>
                     </div>
 
@@ -271,10 +277,37 @@ export function SelectResidence({
 
 // ── Exported helpers for use by summary/parent ────────────────────────────────
 
-/** Look up images for a given API residenceid */
-export function getResidenceImages(residenceid: string): string[] {
+/** Look up images for a given API residence or residenceid */
+export function getResidenceImages(residence: FinanceResidence | string): string[] {
+  if (typeof residence === "object" && residence !== null) {
+    const apiImages = residence.residence_images
+      ?.map((img) => img.image_path)
+      .filter((src): src is string => typeof src === "string" && src.trim().length > 0)
+      .map((src) => {
+        const trimmed = src.trim();
+        // If it's already a relative frontend static asset, keep it
+        if (
+          (trimmed.startsWith("/") && !trimmed.startsWith("/storage/") && !trimmed.startsWith("/uploads/")) ||
+          trimmed.startsWith("data:")
+        ) {
+          return trimmed;
+        }
+        // If already proxied, don't double-proxy
+        if (trimmed.startsWith("/api/image-proxy")) {
+          return trimmed;
+        }
+        // Proxy through /api/image-proxy to bypass expired SSL / mixed content issues on umis-sb.babcock.edu.ng
+        return `/api/image-proxy?url=${encodeURIComponent(trimmed)}`;
+      });
+
+    if (apiImages && apiImages.length > 0) {
+      return apiImages;
+    }
+    return RESIDENCE_IMAGE_MAP[residence.residenceid] || RESIDENCE_IMAGE_MAP._OFF_CAMPUS;
+  }
+
   return (
-    RESIDENCE_IMAGE_MAP[residenceid] || RESIDENCE_IMAGE_MAP._OFF_CAMPUS
+    RESIDENCE_IMAGE_MAP[residence] || RESIDENCE_IMAGE_MAP._OFF_CAMPUS
   );
 }
 

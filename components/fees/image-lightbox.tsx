@@ -10,11 +10,17 @@ interface ImageLightboxProps {
   alt: string;
   isOpen: boolean;
   onClose: () => void;
+  fallbackSrc?: string;
 }
 
-export function ImageLightbox({ images, initialIndex = 0, alt, isOpen, onClose }: ImageLightboxProps) {
+export function ImageLightbox({ images, initialIndex = 0, alt, isOpen, onClose, fallbackSrc }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [failedIndices, setFailedIndices] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    setFailedIndices({});
+  }, [images]);
 
   // Touch/swipe state
   const touchStartX = useRef(0);
@@ -145,7 +151,11 @@ export function ImageLightbox({ images, initialIndex = 0, alt, isOpen, onClose }
           }}
         >
           <Image
-            src={images[currentIndex]}
+            src={
+              failedIndices[currentIndex]
+                ? fallbackSrc || "/off-campus-image.png"
+                : images[currentIndex]
+            }
             alt={`${alt} - image ${currentIndex + 1}`}
             width={1200}
             height={800}
@@ -156,6 +166,9 @@ export function ImageLightbox({ images, initialIndex = 0, alt, isOpen, onClose }
             draggable={false}
             unoptimized
             priority
+            onError={() => {
+              setFailedIndices((prev) => ({ ...prev, [currentIndex]: true }));
+            }}
           />
         </div>
       </div>

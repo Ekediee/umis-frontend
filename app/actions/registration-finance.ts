@@ -5,6 +5,10 @@ import { loggedFetch } from "@/lib/logger";
 
 // ── Raw API shapes ─────────────────────────────────────────────────────────────
 
+interface RawFinanceResidenceImage {
+  image_path: string;
+}
+
 interface RawFinanceResidence {
   qresidenceid: number;
   residenceoption: string;
@@ -16,6 +20,11 @@ interface RawFinanceResidence {
   min_level: number;
   max_level: number;
   majors: string;
+  blockname?: string;
+  capacity?: number;
+  roomsize?: number;
+  org_id?: number;
+  residence_images?: RawFinanceResidenceImage[];
 }
 
 interface RawFinanceGeneralCharges {
@@ -51,21 +60,32 @@ interface RawFinanceRegistrationResponse {
     general_charges: RawFinanceGeneralCharges[];
     meal_types: RawFinanceMealType[];
     worship_centers: RawFinanceWorshipCenter[];
+    matric_no?: string;
   };
 }
 
 // ── Normalised shapes used by the UI ─────────────────────────────────────────
 
+export interface ResidenceImage {
+  image_path: string;
+}
+
 export interface FinanceResidence {
   qresidenceid: number;
   residenceoption: string;
   charges: number;
+  full_charges?: number;
   residenceid: string;
   residencename: string;
   sex: string;
   min_level: number;
   max_level: number;
   majors: string;
+  blockname?: string;
+  capacity?: number;
+  roomsize?: number;
+  org_id?: number;
+  residence_images?: ResidenceImage[];
 }
 
 export interface FinanceGeneralCharges {
@@ -185,17 +205,26 @@ export const getFinanceRegistrationAction =
 
       return {
         data: {
-          residence: rawResidences.map((r) => ({
-            qresidenceid: r.qresidenceid,
-            residenceoption: r.residenceoption,
-            charges: r.charges,
-            residenceid: r.residenceid,
-            residencename: r.residencename,
-            sex: r.sex,
-            min_level: r.min_level,
-            max_level: r.max_level,
-            majors: r.majors,
-          })),
+          residence: rawResidences.map((r) => {
+            const trimmedMajors = r.majors ? r.majors.trim() : "";
+            return {
+              qresidenceid: r.qresidenceid,
+              residenceoption: trimmedMajors || r.residenceoption,
+              charges: r.charges,
+              full_charges: r.full_charges,
+              residenceid: r.residenceid,
+              residencename: r.residencename,
+              sex: r.sex,
+              min_level: r.min_level,
+              max_level: r.max_level,
+              majors: trimmedMajors,
+              blockname: r.blockname,
+              capacity: r.capacity,
+              roomsize: r.roomsize,
+              org_id: r.org_id,
+              residence_images: Array.isArray(r.residence_images) ? r.residence_images : [],
+            };
+          }),
           general_charges: {
             fullfees: rawCharges.fullfees,
             fullmeal2fees: rawCharges.fullmeal2fees,

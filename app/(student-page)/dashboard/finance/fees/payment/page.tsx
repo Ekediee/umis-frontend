@@ -119,6 +119,7 @@ function PaymentFlowContent() {
   const academicInfo = `Academic Year 2025/2026 - ${currentSemester} ${academicLevel}`;
 
   const sessionLabel = "2025/2026";
+  const isFullSession = paymentType === "full";
   const typeLabel = paymentType === "semester" ? "1st Semester Registration" : "Full Session Registration";
 
   // ── Core derived flags — read directly from state, no intermediate variable ─
@@ -417,12 +418,18 @@ function PaymentFlowContent() {
   // ── Total computation ─────────────────────────────────────────────────────
 
   const computeTotal = () => {
-    const mandatory = financeData?.general_charges?.fees || 0;
-    const residenceCost = isOffCampus ? 0 : (selectedResidenceObj?.charges || 0);
+    const mandatory = isFullSession
+      ? financeData?.general_charges?.fullfees || 0
+      : financeData?.general_charges?.fees || 0;
+    const residenceCost = isOffCampus
+      ? 0
+      : isFullSession
+      ? selectedResidenceObj?.full_charges ?? selectedResidenceObj?.charges ?? 0
+      : selectedResidenceObj?.charges || 0;
     // Off-campus students have no meal plan
     const mealCost =
       !isOffCampus && selectedMealTypeObj
-        ? getMealPlanPrice(selectedMealTypeObj.mealtype, financeData?.general_charges)
+        ? getMealPlanPrice(selectedMealTypeObj.mealtype, financeData?.general_charges, isFullSession)
         : 0;
     return mandatory + residenceCost + mealCost;
   };
@@ -486,6 +493,7 @@ function PaymentFlowContent() {
             residences={financeData?.residence || []}
             isLoading={isLoading}
             error={error}
+            isFullSession={isFullSession}
           />
         )}
 
@@ -518,6 +526,7 @@ function PaymentFlowContent() {
             generalCharges={financeData?.general_charges || null}
             isLoading={isLoading}
             error={error}
+            isFullSession={isFullSession}
           />
         )}
 
@@ -532,6 +541,7 @@ function PaymentFlowContent() {
             isWorshipAutoAssigned={false}
             isWorshipLocked={isWorshipLocked}
             worshipLockedUntil={worshipCenterLockedUntil}
+            isFullSession={isFullSession}
           />
         )}
 
