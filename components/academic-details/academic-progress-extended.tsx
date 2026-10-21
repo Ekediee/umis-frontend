@@ -1,15 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TrendingUp, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import GPAMetric from "@/components/dashboard/gpa-metric";
 import { GPAWhatIfSimulator } from "@/components/academic-details/gpa-what-if-simulator";
 import { useUserData } from "@/contexts/user-data-context";
+import {
+  CourseItem,
+  getHasSubmittedCoursesAction,
+  getRegisteredCoursesAction,
+} from "@/app/actions/registration";
+
+const MAX_SEMESTER_UNITS = 24;
 
 export function AcademicProgressExtended() {
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isLoadingUnits, setIsLoadingUnits] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSemesterUnits() {
+      setIsLoadingUnits(true);
+      try {
+        const [submissionRes, coursesRes] = await Promise.all([
+          getHasSubmittedCoursesAction(),
+          getRegisteredCoursesAction(),
+        ]);
+
+        if (cancelled) return;
+
+        const submitted = submissionRes.data
+          ? submissionRes.data.hasSubmitted
+          : (coursesRes.data?.length ?? 0) > 0;
+
+        setHasSubmitted(submitted);
+        setCourses(submitted && coursesRes.data ? coursesRes.data : []);
+      } catch (error) {
+        console.error("Failed to load semester units:", error);
+        if (!cancelled) {
+          setHasSubmitted(false);
+          setCourses([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingUnits(false);
+        }
+      }
+    }
+
+    loadSemesterUnits();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // The layout already fetches the profile server-side and populates
   // UserDataProvider — no second fetch needed here. A duplicate
@@ -24,6 +72,19 @@ export function AcademicProgressExtended() {
     userData?.user_data?.current_level ??
     userData?.user_data?.academic_information?.study_level ??
     null;
+
+  const activeCourses = hasSubmitted ? courses : [];
+  const rawTotalUnits = activeCourses.reduce(
+    (sum, course) => sum + (Number(course.units) || 0),
+    0
+  );
+  const semesterUnits = Number.isInteger(rawTotalUnits)
+    ? rawTotalUnits
+    : Number(rawTotalUnits.toFixed(1));
+  const semesterLoadPercent = Math.min(
+    100,
+    Math.round((semesterUnits / MAX_SEMESTER_UNITS) * 100)
+  );
 
   return (
     <>
@@ -52,12 +113,19 @@ export function AcademicProgressExtended() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[14px] font-medium text-[#364153] dark:text-gray-300">Semester Units</span>
-                <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100">17 / 24</span>
+                <span className="text-[14px] font-medium text-[#0a0a0a] dark:text-gray-100">
+                  {isLoadingUnits ? `— / ${MAX_SEMESTER_UNITS}` : `${semesterUnits} / ${MAX_SEMESTER_UNITS}`}
+                </span>
               </div>
               <div className="h-2 w-full bg-[#e5e7eb] dark:bg-gray-800 rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-[#003cbb] dark:bg-[#4d82ff] rounded-full" style={{ width: "71%" }}></div>
+                <div
+                  className="h-full bg-[#003cbb] dark:bg-[#4d82ff] rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${isLoadingUnits ? 0 : semesterLoadPercent}%` }}
+                ></div>
               </div>
-              <div className="text-[12px] text-[#6a7282] dark:text-gray-400 font-normal">71% of max load</div>
+              <div className="text-[12px] text-[#6a7282] dark:text-gray-400 font-normal">
+                {isLoadingUnits ? "—% of max load" : `${semesterLoadPercent}% of max load`}
+              </div>
             </div>
           </div>
 
