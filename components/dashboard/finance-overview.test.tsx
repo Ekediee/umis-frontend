@@ -35,6 +35,26 @@ describe("FinanceOverview Component", () => {
       expect(screen.getByText("₦2,250,000")).toBeDefined();
       expect(screen.getByText("₦1,500,000")).toBeDefined();
       expect(screen.getByText("₦1,252,059.40")).toBeDefined();
+      expect(screen.getByText("Credit")).toBeDefined();
+    });
+  });
+
+  it("shows Debt badge when total_outstanding_fees is positive", async () => {
+    vi.mocked(paymentActions.getStudentFeesAction).mockResolvedValueOnce({
+      success: true,
+      data: {
+        estimated_full_session_fee: 4500000,
+        estimated_semester_fee: 2250000,
+        amount_paid_for_semester: 1500000,
+        total_outstanding_fees: 750000,
+      },
+    });
+
+    render(<FinanceOverview />);
+
+    await waitFor(() => {
+      expect(screen.getByText("₦750,000")).toBeDefined();
+      expect(screen.getByText("Debt")).toBeDefined();
     });
   });
 

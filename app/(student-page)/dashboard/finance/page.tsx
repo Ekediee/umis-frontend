@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { Info, ChevronRight, ThumbsUp, Eye, Download, EyeOff, Clock } from "lucide-react";
+import { Info, ChevronRight, ThumbsUp, Eye, Download, EyeOff, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -242,8 +242,11 @@ function FinancePageContent() {
   }, []);
 
   const paidAmount = studentFees?.amount_paid_for_semester ?? 0;
-  const outstandingAmount = studentFees ? Math.abs(studentFees.total_outstanding_fees) : 0;
-  const hasOutstandingFees = outstandingAmount > 0;
+  const rawOutstanding = studentFees?.total_outstanding_fees ?? 0;
+  const outstandingAmount = studentFees ? Math.abs(rawOutstanding) : 0;
+  const isCredit = studentFees !== null && rawOutstanding < 0;
+  const isDebt = studentFees !== null && rawOutstanding > 0;
+  const hasOutstandingFees = isDebt;
 
   // Option 1: Holistic Net Obligation Evaluation
   // Total obligation accounts for amount already paid + total remaining outstanding debt (past + current)
@@ -421,9 +424,23 @@ function FinancePageContent() {
               {mounted && !showFullfee ? (
                 <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">****</p>
               ) : (
-                <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">
-                  {isLoadingFees && !studentFees ? "₦..." : formatFee(outstandingAmount)}
-                </p>
+                <div className="flex items-center flex-wrap gap-2">
+                  <p className="text-[20px] @[40rem]:text-[18px] @[52rem]:text-[20px] @[64rem]:text-[22px] font-bold tabular-nums whitespace-nowrap text-gray-900 dark:text-gray-100">
+                    {isLoadingFees && !studentFees ? "₦..." : formatFee(outstandingAmount)}
+                  </p>
+                  {isCredit && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#ECFDF3] dark:bg-[#12B76A]/20 text-[#12B76A] dark:text-[#4ade80] border border-[#D1FADF] dark:border-[#12B76A]/30 whitespace-nowrap transition-colors">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      Credit
+                    </span>
+                  )}
+                  {isDebt && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FEE4E2] dark:bg-[#D92D20]/20 text-[#D92D20] dark:text-[#F87171] border border-[#FECDCA] dark:border-[#D92D20]/30 whitespace-nowrap transition-colors">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      Debt
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
