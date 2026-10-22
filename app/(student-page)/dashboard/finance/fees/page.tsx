@@ -1,20 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
+import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
 
 export default function FeesPage() {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<"full" | "semester" | null>(null);
 
-  // Read semester info from the shared store — populated by the registration page.
-  // No fetch is triggered here; the store is the single source of truth.
-  const { semesterInfo } = useRegistrationStore();
+  const { semesterInfo, setSemesterInfo } = useRegistrationStore();
+
+  useEffect(() => {
+    let cancelled = false;
+    getSemesterRegistrationStatusAction()
+      .then((res) => {
+        if (!cancelled && res.data) {
+          setSemesterInfo(res.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [setSemesterInfo]);
 
   const handleBack = () => {
     router.back();

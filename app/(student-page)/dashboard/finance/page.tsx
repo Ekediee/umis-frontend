@@ -14,6 +14,8 @@ import { PayOutstandingModal } from "@/components/fees/pay-outstanding-modal";
 import { fundWalletAction, getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
+import { useRegistrationStore } from "@/hooks/use-registration-store";
+import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
 import { toast } from "sonner";
 import { notify } from "@/lib/notifications/bus";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -109,6 +111,8 @@ function FinancePageContent() {
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const { balance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
+  const { semesterInfo, setSemesterInfo } = useRegistrationStore();
+  const isRegisteredForSemester = Boolean(semesterInfo?.check);
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
@@ -142,6 +146,13 @@ function FinancePageContent() {
   useEffect(() => {
     getUserData().then(setUserData);
     fetchBalance();
+    getSemesterRegistrationStatusAction().then((res) => {
+      if (res.data) {
+        setSemesterInfo(res.data);
+      }
+    }).catch((err) => {
+      console.warn("Failed to load semester registration status:", err);
+    });
     getStudentFeesAction().then((res) => {
       if (res.success && res.data) {
         setStudentFees(res.data);
@@ -156,7 +167,7 @@ function FinancePageContent() {
     }).catch((err) => {
       console.warn("Failed to load wallet funding history:", err);
     });
-  }, [fetchBalance]);
+  }, [fetchBalance, setSemesterInfo]);
 
   // Open a modal from the URL: ?action=fund (Fund Wallet) or ?action=pay-outstanding (from registration)
   useEffect(() => {
@@ -550,11 +561,20 @@ function FinancePageContent() {
           <div className="bg-[#E9DFFB] dark:bg-gradient-to-br dark:from-[#2e234a]/85 dark:to-[#1e1430]/85 @container rounded-[24px] p-6 flex justify-between relative overflow-clip min-h-[220px] dark:border dark:border-gray-800 transition-colors">
             <div className="relative z-10 max-w-[60%] flex flex-col justify-center">
               <h3 className="text-[18px] @[24rem]:text-[20px] font-bold leading-snug text-gray-900 dark:text-gray-100 mb-6 @[24rem]:mb-8">Pay for current semester</h3>
-              <Link href="/dashboard/finance/fees">
-                <Button className="w-fit px-5 whitespace-nowrap bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 backdrop-blur-sm">
-                  Pay School Fees <ChevronRight className="w-4 h-4" />
-                </Button>
-              </Link>
+              <Button
+                disabled={!isRegisteredForSemester}
+                onClick={() => {
+                  if (isRegisteredForSemester) router.push("/dashboard/finance/fees");
+                }}
+                className={cn(
+                  "w-fit px-5 whitespace-nowrap rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
+                  isRegisteredForSemester
+                    ? "bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 backdrop-blur-sm cursor-pointer"
+                    : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
+                )}
+              >
+                Pay School Fees <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
             <div className="absolute -right-6 @[26rem]:right-8 bottom-[-48px] @[26rem]:bottom-[-60px] w-[190px] h-[190px] @[26rem]:w-[250px] @[26rem]:h-[250px] pointer-events-none">
               <Image
