@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, UtensilsCrossed, Church, GraduationCap, Lock } from "lucide-react";
+import { Building2, UtensilsCrossed, Church, GraduationCap, Lock, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import type {
@@ -46,6 +46,7 @@ interface PaymentSummaryProps {
   /** Unix timestamp (ms) when the worship lock expires — displayed in the lock badge. */
   worshipLockedUntil?: number | null;
   isFullSession?: boolean;
+  isLocked?: boolean;
 }
 
 export function PaymentSummary({
@@ -59,6 +60,7 @@ export function PaymentSummary({
   isWorshipLocked = false,
   worshipLockedUntil = null,
   isFullSession = false,
+  isLocked = false,
 }: PaymentSummaryProps) {
   // Mandatory basic fees directly from API
   const mandatoryTotal = isFullSession
@@ -184,12 +186,18 @@ export function PaymentSummary({
                   <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
                     {formatPrice(residencePrice)}
                   </span>
-                  <button
-                    onClick={() => onChangeStep(1)}
-                    className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
-                  >
-                    Change
-                  </button>
+                  {isLocked ? (
+                    <span className="text-[12px] font-medium text-[#525866] dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> Locked
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => onChangeStep(1)}
+                      className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
+                    >
+                      Change
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -253,7 +261,11 @@ export function PaymentSummary({
                   <span className="text-[14px] font-bold text-[#38c793] dark:text-[#4ade80] transition-colors">
                     Included
                   </span>
-                  {isWorshipLocked ? (
+                  {isLocked ? (
+                    <span className="text-[12px] font-medium text-[#525866] dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> Locked
+                    </span>
+                  ) : isWorshipLocked ? (
                     /* 2-year lock in effect — show expiry date, no change allowed */
                     <span className="flex items-center gap-1 text-[12px] font-medium text-amber-600 dark:text-amber-400">
                       <Lock className="w-3 h-3" />
@@ -274,6 +286,14 @@ export function PaymentSummary({
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* 2-Year Lock Information Text */}
+              <div className="mt-3 flex items-center gap-2 text-[12px] text-[#525866] dark:text-gray-400 bg-[#f8f9fb] dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 rounded-[8px] px-3 py-2 transition-colors">
+                <Info className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff] shrink-0" />
+                <span>
+                  Worship center selection is locked for <strong className="font-semibold text-[#0a0d14] dark:text-gray-200">2 years</strong> and can only be changed after 2 years.
+                </span>
               </div>
             </div>
           </div>
@@ -302,12 +322,18 @@ export function PaymentSummary({
                     <span className="text-[18px] md:text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">
                       {formatPrice(mealPrice)}
                     </span>
-                    <button
-                      onClick={() => onChangeStep(3)}
-                      className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
-                    >
-                      Change
-                    </button>
+                    {isLocked ? (
+                      <span className="text-[12px] font-medium text-[#525866] dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Locked
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onChangeStep(3)}
+                        className="text-[13px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors"
+                      >
+                        Change
+                      </button>
+                    )}
                   </div>
                 </div>
 

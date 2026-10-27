@@ -55,6 +55,7 @@ export default function RegistrationPage() {
 
   const regState = isMounted ? store.regState : "not_started";
   const payState = isMounted ? store.payState : "not_started";
+  const isFinancialSubmitted = isMounted ? store.isFinancialSubmitted : false;
 
   // ── Semester info from store ───────────────────────────────────────────────
   const {
@@ -202,11 +203,11 @@ if (!isRegisteredForSemester) {
         disabled: false,
       };
     }
-    if (payState === "in_progress") {
+    if (payState === "in_progress" || isFinancialSubmitted) {
       return {
-        buttonText: "Complete Payment",
+        buttonText: "Pay School Fees",
         buttonVariant: "primary" as const,
-        description: "Your payment is in progress. Complete it to clear your finance requirement.",
+        description: "Your financial selections have been submitted and locked. Proceed to pay your school fees.",
         disabled: false,
       };
     }
@@ -288,10 +289,12 @@ if (!semesterInfo?.check) {
           disabled={payProps.disabled}
           onClick={() => {
             if (payProps.disabled) return;
-            if (payState !== "completed") {
-              router.push("/dashboard/finance/fees");
-            } else {
+            if (payState === "completed") {
               router.push("/dashboard/finance/receipt");
+            } else if (payState === "in_progress" || isFinancialSubmitted) {
+              router.push("/dashboard/finance/fees/payment?step=5");
+            } else {
+              router.push("/dashboard/finance/fees");
             }
           }}
         />
@@ -336,7 +339,7 @@ if (!semesterInfo?.check) {
             icon={CreditCard}
             title="Finance"
             description="Tuition and fee clearance from Bursary"
-            status={payState === "completed" ? "approved" : (payState === "in_progress" ? "pending" : "not_approved")}
+            status={payState === "completed" ? "approved" : (payState === "in_progress" || isFinancialSubmitted ? "pending" : "not_approved")}
             actionText="Fund Wallet"
             onAction={() => setIsFundWalletModalOpen(true)}
           />

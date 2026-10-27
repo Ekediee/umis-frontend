@@ -2,7 +2,7 @@
 
 import { useState, useMemo, Suspense, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PaymentStepper } from "@/components/fees/payment-stepper";
@@ -19,6 +19,8 @@ import { PaymentProgressSheet } from "@/components/fees/payment-progress-sheet";
 import { PaymentMethodSheet } from "@/components/fees/payment-method-sheet";
 import { ProcessingOverlay } from "@/components/fees/processing-overlay";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
+import { fundWalletAction } from "@/app/actions/payment";
+import { toast } from "sonner";
 import { FinancialConfirmationModal } from "@/components/fees/financial-confirmation-modal";
 import { FinancialSuccessModal } from "@/components/registration/registration-status-modals";
 import { useUserData } from "@/contexts/user-data-context";
@@ -89,6 +91,10 @@ function PaymentFlowContent() {
     lockedWorshipCenterId,
     worshipCenterLockedUntil,
     setWorshipCenterLock,
+    isFinancialSubmitted,
+    setIsFinancialSubmitted,
+    payState,
+    setPayState,
   } = useRegistrationStore();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -110,6 +116,42 @@ function PaymentFlowContent() {
   useEffect(() => {
     fetchBalance();
   }, [fetchBalance]);
+
+  // Handle return from merchant payment callback
+  useEffect(() => {
+    const txRef = searchParams.get("transaction_reference") || searchParams.get("data");
+    if (!txRef) return;
+
+    // Clean callback params from address bar
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete("transaction_reference");
+    currentUrl.searchParams.delete("data");
+    currentUrl.searchParams.delete("status");
+    window.history.replaceState({}, "", currentUrl.toString());
+
+    setCurrentStep(5);
+
+    fundWalletAction(txRef)
+      .then((res) => {
+        if (res.success) {
+          toast.success(res.message || "Wallet funded successfully!");
+          fetchBalance();
+        } else {
+          toast.error(res.error || "Failed to confirm wallet funding.");
+        }
+      })
+      .catch(() => {
+        toast.error("Failed to confirm wallet funding.");
+      });
+  }, [searchParams, fetchBalance]);
+
+  // If navigated here with ?step=5 or selections are submitted, land directly on step 5
+  useEffect(() => {
+    const stepParam = searchParams.get("step");
+    if (stepParam === "5" || isFinancialSubmitted || payState === "in_progress") {
+      setCurrentStep(5);
+    }
+  }, [searchParams, isFinancialSubmitted, payState]);
 
   const studentName = userData?.user_data?.student_name || userData?.entity_name || "Student";
   const academicLevel = userData?.user_data?.academic_information?.study_level || "200L";
@@ -272,7 +314,7 @@ function PaymentFlowContent() {
           if (draft.selectedWorshipCenterId !== undefined) setSelectedWorshipCenterId(draft.selectedWorshipCenterId);
           if (draft.selectedMealPlan !== undefined) setSelectedMealPlan(draft.selectedMealPlan);
           if (draft.customAmount !== undefined) setCustomAmount(draft.customAmount);
-          if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 4) {
+          if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 5) {
             setCurrentStep(draft.currentStep);
           }
         }
@@ -299,7 +341,7 @@ function PaymentFlowContent() {
   useEffect(() => {
     if (!isRestored) return;
     const draft: FinanceRegistrationDraft = {
-      currentStep: currentStep <= 4 ? currentStep : 4,
+      currentStep: currentStep,
       selectedResidence,
       selectedWorshipCenterId,
       selectedMealPlan,
@@ -401,6 +443,8 @@ function PaymentFlowContent() {
     if (selectedWorshipCenterId && !isWorshipLocked) {
       setWorshipCenterLock(selectedWorshipCenterId, Date.now() + TWO_YEARS_MS);
     }
+    setIsFinancialSubmitted(true);
+    setPayState("in_progress");
     setIsFinancialSuccessOpen(true);
   };
 
@@ -412,7 +456,11 @@ function PaymentFlowContent() {
 
   const handleCancelPayment = () => {
     setCustomAmount(null);
-    setCurrentStep(4);
+    if (isFinancialSubmitted || payState === "in_progress") {
+      router.push("/dashboard/finance");
+    } else {
+      setCurrentStep(4);
+    }
   };
 
   // ── Total computation ─────────────────────────────────────────────────────
@@ -440,6 +488,8 @@ function PaymentFlowContent() {
     setTimeout(() => {
       setIsProcessing(false);
       setStoreWalletBalance(Math.max(0, walletBalance - total));
+      setPayState("completed");
+      setIsFinancialSubmitted(false);
       clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch(() => {});
       router.push(
         `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=Wallet`
@@ -542,6 +592,7 @@ function PaymentFlowContent() {
             isWorshipLocked={isWorshipLocked}
             worshipLockedUntil={worshipCenterLockedUntil}
             isFullSession={isFullSession}
+            isLocked={isFinancialSubmitted || payState === "in_progress"}
           />
         )}
 
@@ -554,6 +605,7 @@ function PaymentFlowContent() {
             onCancelPayment={handleCancelPayment}
             onPayNow={handlePayNow}
             onFundWallet={() => setIsFundWalletModalOpen(true)}
+            onViewSelection={() => setCurrentStep(4)}
           />
         )}
       </div>
@@ -576,18 +628,33 @@ function PaymentFlowContent() {
           <div className="flex items-center justify-between max-w-[1200px] mx-auto">
             <Button
               variant="outline"
-              onClick={handlePrevious}
-              className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+              onClick={() => {
+                if (isFinancialSubmitted || payState === "in_progress") {
+                  setCurrentStep(5);
+                } else {
+                  handlePrevious();
+                }
+              }}
+              className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline-block">Previous</span>
+              <span className="hidden sm:inline-block">
+                {isFinancialSubmitted || payState === "in_progress" ? "Back to payment" : "Previous"}
+              </span>
             </Button>
             <div className="flex-1 md:flex-none flex items-center justify-end pl-3 md:pl-0">
               <Button
-                onClick={handleFullPayment}
-                className="w-full md:w-auto rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all"
+                onClick={() => {
+                  if (isFinancialSubmitted || payState === "in_progress") {
+                    setCurrentStep(5);
+                  } else {
+                    handleFullPayment();
+                  }
+                }}
+                className="w-full md:w-auto rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                Submit selection
+                <span>{isFinancialSubmitted || payState === "in_progress" ? "Proceed to payment" : "Submit selection"}</span>
+                {isFinancialSubmitted || payState === "in_progress" ? <ChevronRight className="w-4 h-4" /> : null}
               </Button>
             </div>
           </div>
@@ -623,7 +690,12 @@ function PaymentFlowContent() {
       <FundWalletModal
         isOpen={isFundWalletModalOpen}
         onClose={() => setIsFundWalletModalOpen(false)}
-        onSuccess={(amount) => setStoreWalletBalance(walletBalance + amount)}
+        defaultAmount={Math.max(0, (customAmount ?? computeTotal()) - walletBalance) || undefined}
+        returnPath={`/dashboard/finance/fees/payment?type=${paymentType || "semester"}&step=5`}
+        onSuccess={(amount) => {
+          setStoreWalletBalance(walletBalance + amount);
+          fetchBalance();
+        }}
       />
 
       <FinancialConfirmationModal
@@ -637,6 +709,7 @@ function PaymentFlowContent() {
         isOpen={isFinancialSuccessOpen}
         onClose={() => setIsFinancialSuccessOpen(false)}
         onPrimaryAction={handleProceedToPayment}
+        walletBalance={walletBalance}
       />
 
       <ProcessingOverlay isVisible={isProcessing} />

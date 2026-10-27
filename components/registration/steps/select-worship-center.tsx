@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useContext, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Lock, Church } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Lock, Church, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -243,6 +243,21 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
           onChange={(e) => handleSearch(e.target.value)}
           className="flex-1 text-[14px] text-[#0a0d14] dark:text-gray-100 placeholder:text-[#525866] dark:placeholder:text-gray-500 outline-none bg-transparent"
         />
+      </div>
+
+      {/* 2-Year Lock Information Banner */}
+      <div className="flex items-start gap-3 bg-[#eef3fd] dark:bg-[#1e3a8a]/15 border border-[#ccdaf9] dark:border-[#1e3a8a]/40 rounded-[12px] p-3.5 md:p-4 transition-colors">
+        <div className="w-5 h-5 rounded-full bg-[#003cbb] dark:bg-[#3b82f6] text-white flex items-center justify-center shrink-0 mt-0.5">
+          <Info className="w-3.5 h-3.5" />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[14px] font-semibold text-[#0a0d14] dark:text-gray-100">
+            2-Year Worship Center Policy
+          </span>
+          <p className="text-[13px] text-[#525866] dark:text-gray-300 leading-relaxed">
+            Please choose carefully. Your selected worship center is locked for <strong className="font-semibold text-[#003cbb] dark:text-[#60a5fa]">2 years</strong> and can only be changed after 2 years.
+          </p>
+        </div>
       </div>
 
       {/* Error State */}

@@ -111,7 +111,7 @@ function FinancePageContent() {
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const { balance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
-  const { semesterInfo, setSemesterInfo } = useRegistrationStore();
+  const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
   const isRegisteredForSemester = Boolean(semesterInfo?.check);
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
@@ -123,6 +123,9 @@ function FinancePageContent() {
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
   const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fees" | "wallet">("payment");
   const [walletFundingHistory, setWalletFundingHistory] = useState<WalletFundingRecord[]>([]);
+
+  const amountParam = searchParams.get("amount");
+  const defaultFundAmount = amountParam && !isNaN(parseFloat(amountParam)) ? parseFloat(amountParam) : undefined;
 
   const loadStudentFees = useCallback(() => {
     getStudentFeesAction().then((res) => {
@@ -564,7 +567,13 @@ function FinancePageContent() {
               <Button
                 disabled={!isRegisteredForSemester}
                 onClick={() => {
-                  if (isRegisteredForSemester) router.push("/dashboard/finance/fees");
+                  if (isRegisteredForSemester) {
+                    if (payState === "in_progress" || isFinancialSubmitted) {
+                      router.push("/dashboard/finance/fees/payment?step=5");
+                    } else {
+                      router.push("/dashboard/finance/fees");
+                    }
+                  }
                 }}
                 className={cn(
                   "w-fit px-5 whitespace-nowrap rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
@@ -1022,6 +1031,7 @@ function FinancePageContent() {
           loadStudentFees();
         }}
         initialStep={fundWalletStep}
+        defaultAmount={defaultFundAmount}
         successAmount={successAmount}
         successMessage={successMessage}
       />

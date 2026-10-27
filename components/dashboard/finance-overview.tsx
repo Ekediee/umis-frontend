@@ -5,6 +5,9 @@ import { Wallet, CheckCircle2, AlertCircle, ArrowRight, Eye, EyeOff, Clock } fro
 import Link from "next/link";
 import { getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
+import { useWalletStore } from "@/hooks/use-wallet-store";
+import { useRegistrationStore } from "@/hooks/use-registration-store";
+import { getOfflineDraft, OFFLINE_FINANCE_REG_KEY, FinanceRegistrationDraft } from "@/lib/offline-storage";
 
 function formatFee(amount: number | null | undefined): string {
   if (amount === null || amount === undefined || isNaN(amount)) return "₦0";
@@ -22,6 +25,30 @@ export function FinanceOverview() {
 
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
+  const { balance, fetchBalance } = useWalletStore();
+  const { isFinancialSubmitted, payState } = useRegistrationStore();
+  const [hasCompletedSelections, setHasCompletedSelections] = useState(false);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
+
+  useEffect(() => {
+    getOfflineDraft<FinanceRegistrationDraft>(OFFLINE_FINANCE_REG_KEY)
+      .then((draft) => {
+        if (draft) {
+          const hasAll = Boolean(
+            draft.selectedResidence &&
+            draft.selectedWorshipCenterId &&
+            (draft.selectedResidence === "OFF_CAMPUS" || draft.selectedMealPlan)
+          );
+          if (hasAll || (draft.currentStep && draft.currentStep >= 4)) {
+            setHasCompletedSelections(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     getStudentFeesAction()
@@ -49,6 +76,12 @@ export function FinanceOverview() {
     : (outstandingAmount === 0 && paidAmount > 0 ? 100 : 0);
 
   const isFinancialApproved = progressPercent >= 75;
+
+  const walletBalance = balance ?? 0;
+  const estimatedSemesterFee = studentFees?.estimated_semester_fee ?? 0;
+  const hasEnoughForSemester = estimatedSemesterFee > 0 && walletBalance >= estimatedSemesterFee;
+  const hasSelectedAll = isFinancialSubmitted || payState === "in_progress" || hasCompletedSelections;
+  const shortfall = Math.max(0, estimatedSemesterFee - walletBalance);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">
@@ -151,10 +184,16 @@ export function FinanceOverview() {
           <span className="text-[11px] md:text-[12px] text-gray-600 dark:text-gray-400 font-medium leading-tight">Pay for a previous or current semester</span>
         </div>
         <Link 
-          href="/dashboard/finance?action=fund"
+          href={
+            hasEnoughForSemester
+              ? (hasSelectedAll
+                  ? "/dashboard/finance/fees/payment?step=5"
+                  : "/dashboard/finance/fees")
+              : `/dashboard/finance?action=fund${shortfall > 0 ? `&amount=${shortfall}` : ""}`
+          }
           className="bg-[#003cbb] hover:bg-[#002470] dark:bg-[#2563EB] dark:hover:bg-[#1D4ED8] text-white rounded-[10px] px-4 md:px-5 py-2.5 text-[13px] md:text-[14px] font-bold flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto transition-colors active:scale-[0.98]"
         >
-          Fund your wallet
+          {hasEnoughForSemester ? "Pay School Fees" : "Fund your wallet"}
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>

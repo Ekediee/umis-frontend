@@ -12,7 +12,14 @@ export default function FeesPage() {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<"full" | "semester" | null>(null);
 
-  const { semesterInfo, setSemesterInfo } = useRegistrationStore();
+  const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
+
+  useEffect(() => {
+    // If financial registration has already been submitted, proceed directly to summary payment
+    if ((isFinancialSubmitted || payState === "in_progress") && payState !== "completed") {
+      router.replace("/dashboard/finance/fees/payment?step=5");
+    }
+  }, [isFinancialSubmitted, payState, router]);
 
   useEffect(() => {
     let cancelled = false;

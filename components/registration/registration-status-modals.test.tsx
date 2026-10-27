@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SuccessModal } from './registration-status-modals';
+import { SuccessModal, FinancialSuccessModal } from './registration-status-modals';
 
 const push = vi.fn();
 vi.mock('next/navigation', () => ({
@@ -20,8 +20,6 @@ describe('SuccessModal (course registration locked in)', () => {
   it('sends the student to registration home when they click outside the modal', () => {
     const onClose = vi.fn();
     render(<SuccessModal isOpen onClose={onClose} />);
-    // The backdrop is the first child of the fixed overlay
-    // The modal is portalled to <body>
     const backdrop = document.body.querySelector('.fixed > div') as HTMLElement;
     fireEvent.click(backdrop);
     expect(onClose).toHaveBeenCalled();
@@ -34,5 +32,23 @@ describe('SuccessModal (course registration locked in)', () => {
     expect(push).toHaveBeenCalledWith('/dashboard/finance/fees/payment');
     fireEvent.click(screen.getByText('Return to Dashboard'));
     expect(push).toHaveBeenCalledWith('/dashboard');
+  });
+});
+
+describe('FinancialSuccessModal (financial selections locked in)', () => {
+  beforeEach(() => push.mockClear());
+
+  it('shows "Pay now" when student has money in their wallet', () => {
+    render(<FinancialSuccessModal isOpen walletBalance={50000} />);
+    expect(screen.getByText('Financial Selections Locked In')).toBeInTheDocument();
+    expect(screen.getByText('Pay now')).toBeInTheDocument();
+    expect(screen.queryByText('Fund wallet and pay now')).toBeNull();
+  });
+
+  it('shows "Fund wallet and pay now" when student has 0 wallet balance', () => {
+    render(<FinancialSuccessModal isOpen walletBalance={0} />);
+    expect(screen.getByText('Financial Selections Locked In')).toBeInTheDocument();
+    expect(screen.getByText('Fund wallet and pay now')).toBeInTheDocument();
+    expect(screen.queryByText('Pay now')).toBeNull();
   });
 });
