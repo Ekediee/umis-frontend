@@ -122,7 +122,7 @@ export function Footer() {
         </div>
 
         {/* Giant Watermark Display — Styled like Amini.ai with "BU Pulse" (Pulse in inter serif) */}
-        <div className="w-full overflow-hidden flex justify-center items-center pt-8 sm:pt-12 pb-2 select-none pointer-events-none">
+        <div className="w-full overflow-visible flex justify-center items-center pt-8 sm:pt-12 pb-2 select-none pointer-events-none">
           <div 
             className="w-full text-center whitespace-nowrap text-[15vw] sm:text-[14vw] md:text-[13vw] font-black leading-none tracking-tight bg-gradient-to-b from-[#101828]/15 via-[#101828]/5 to-transparent dark:from-white/20 dark:via-white/10 dark:to-transparent bg-clip-text text-transparent [--footer-stroke:rgba(16,24,40,0.08)] dark:[--footer-stroke:rgba(255,255,255,0.08)]"
             style={{
@@ -130,7 +130,7 @@ export function Footer() {
             }}
           >
             <span className="font-sans font-extrabold tracking-tight">BU</span>{" "}
-            <span className="font-serif italic font-normal" style={{ fontFamily: "Georgia, serif" }}>Pulse</span>
+            <span className="font-serif italic font-normal inline-block pr-[0.18em]" style={{ fontFamily: "Georgia, serif" }}>Pulse</span>
           </div>
         </div>
 
