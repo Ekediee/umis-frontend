@@ -9,7 +9,7 @@ import { PaymentStepper } from "@/components/fees/payment-stepper";
 import type { StepDefinition } from "@/components/fees/payment-stepper";
 import { MobileFlowHeader } from "@/components/registration/mobile-flow-header";
 import { BottomActionBar } from "@/components/registration/bottom-action-bar";
-import { SelectResidence } from "@/components/fees/steps/select-residence";
+import { SelectResidence, isOffCampusHall, OFF_CAMPUS_ID } from "@/components/fees/steps/select-residence";
 import { SelectWorshipCenter } from "@/components/registration/steps/select-worship-center";
 import { SelectMealPlan, getMealPlanPrice } from "@/components/fees/steps/select-meal-plan";
 import { PaymentSummary } from "@/components/fees/steps/payment-summary";
@@ -168,7 +168,18 @@ function PaymentFlowContent() {
   // NOTE: These are plain constants recomputed on every render.
   // Do NOT wrap them in useMemo; that would delay the update by one render tick
   // when the dependency comparison runs stale.
-  const isOffCampus = selectedResidence === "OFF_CAMPUS";
+  const isOffCampus = Boolean(
+    selectedResidence &&
+    (selectedResidence === OFF_CAMPUS_ID ||
+      selectedResidence.toLowerCase() === "off_campus" ||
+      selectedResidence.toLowerCase() === "off-campus" ||
+      selectedResidence.toLowerCase() === "off" ||
+      (financeData?.residence?.some(
+        (r) =>
+          (String(r.qresidenceid) === selectedResidence || r.residenceid === selectedResidence) &&
+          isOffCampusHall(r)
+      ) ?? false))
+  );
 
   const isWorshipLocked =
     !!lockedWorshipCenterId &&
@@ -257,18 +268,18 @@ function PaymentFlowContent() {
   // ─────────────────────────────────────────────────────────────────────────
 
   const getNextStep = (step: number): number => {
-    const offCampus = selectedResidence === "OFF_CAMPUS";
+
     if (step === 1) return 2;
-    if (step === 2) return offCampus ? 4 : 3;
+    if (step === 2) return isOffCampus ? 4 : 3;
     if (step === 3) return 4;
     return step;
   };
 
   const getPrevStep = (step: number): number => {
-    const offCampus = selectedResidence === "OFF_CAMPUS";
+
     
 
-    if (step === 4) return offCampus ? 2 : 3;         // skip back over meal when off-campus
+    if (step === 4) return isOffCampus ? 2 : 3;         // skip back over meal when off-campus
     if (step === 3) return 2;
     if (step === 2) return 1;
     return step;
@@ -288,7 +299,7 @@ function PaymentFlowContent() {
   // Re-derived from the raw state variables (not from derived booleans) so
   // React's useMemo dependency tracking is as direct as possible.
   const visibleSteps = useMemo((): StepDefinition[] => {
-    const offCampus = selectedResidence === "OFF_CAMPUS";
+
     
 
     return [
@@ -298,10 +309,10 @@ function PaymentFlowContent() {
       { id: 4, title: "Summary" },
     ].filter((s) => {
       
-      if (s.id === 3 && offCampus) return false;     // off-campus → hide meal step
+      if (s.id === 3 && isOffCampus) return false;     // off-campus → hide meal step
       return true;
     });
-  }, [selectedResidence, hallAssignedWC]);
+  }, [isOffCampus]);
 
   // ── Restore draft from offline storage ────────────────────────────────────
   useEffect(() => {
@@ -310,12 +321,16 @@ function PaymentFlowContent() {
       try {
         const draft = await getOfflineDraft<FinanceRegistrationDraft>(OFFLINE_FINANCE_REG_KEY);
         if (draft && isMounted) {
+          const isDraftOff =
+            draft.selectedResidence === OFF_CAMPUS_ID ||
+            draft.selectedResidence?.toLowerCase() === "off_campus" ||
+            draft.selectedResidence?.toLowerCase() === "off-campus";
           if (draft.selectedResidence !== undefined) setSelectedResidence(draft.selectedResidence);
           if (draft.selectedWorshipCenterId !== undefined) setSelectedWorshipCenterId(draft.selectedWorshipCenterId);
-          if (draft.selectedMealPlan !== undefined) setSelectedMealPlan(draft.selectedMealPlan);
+          if (draft.selectedMealPlan !== undefined) setSelectedMealPlan(isDraftOff ? null : draft.selectedMealPlan);
           if (draft.customAmount !== undefined) setCustomAmount(draft.customAmount);
           if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 5) {
-            setCurrentStep(draft.currentStep);
+            setCurrentStep(isDraftOff && draft.currentStep === 3 ? 4 : draft.currentStep);
           }
         }
       } catch (err) {
@@ -344,14 +359,14 @@ function PaymentFlowContent() {
       currentStep: currentStep,
       selectedResidence,
       selectedWorshipCenterId,
-      selectedMealPlan,
+      selectedMealPlan: isOffCampus ? null : selectedMealPlan,
       customAmount,
       updatedAt: Date.now(),
     };
     saveOfflineDraft(OFFLINE_FINANCE_REG_KEY, draft).catch((err) => {
       console.warn("Failed to save finance draft:", err);
     });
-  }, [isRestored, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
+  }, [isRestored, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount, isOffCampus]);
 
   const hasProgress = useMemo(() => {
     return (
@@ -377,7 +392,16 @@ function PaymentFlowContent() {
     (id: string) => {
       setSelectedResidence(id);
       // Off-campus has no meal plan
-      if (id === "OFF_CAMPUS") {
+      const isOff =
+        id === OFF_CAMPUS_ID ||
+        id.toLowerCase() === "off_campus" ||
+        id.toLowerCase() === "off-campus" ||
+        (financeData?.residence?.some(
+          (r) =>
+            (String(r.qresidenceid) === id || r.residenceid === id) &&
+            isOffCampusHall(r)
+        ) ?? false);
+      if (isOff) {
         setSelectedMealPlan(null);
       }
       // Clear worship when residence changes (unless the 2-year lock holds it)
@@ -385,7 +409,7 @@ function PaymentFlowContent() {
         setSelectedWorshipCenterId(null);
       }
     },
-    [isWorshipLocked]
+    [isWorshipLocked, financeData?.residence]
   );
 
   // ── Navigation handlers ────────────────────────────────────────────────────
@@ -710,6 +734,7 @@ function PaymentFlowContent() {
         onClose={() => setIsFinancialSuccessOpen(false)}
         onPrimaryAction={handleProceedToPayment}
         walletBalance={walletBalance}
+        isOffCampus={isOffCampus}
       />
 
       <ProcessingOverlay isVisible={isProcessing} />

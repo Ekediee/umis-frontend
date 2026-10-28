@@ -40,7 +40,7 @@ export function FinanceOverview() {
           const hasAll = Boolean(
             draft.selectedResidence &&
             draft.selectedWorshipCenterId &&
-            (draft.selectedResidence === "OFF_CAMPUS" || draft.selectedMealPlan)
+            (draft.selectedResidence === "OFF_CAMPUS" || draft.selectedResidence?.toLowerCase().includes("off") || draft.selectedMealPlan)
           );
           if (hasAll || (draft.currentStep && draft.currentStep >= 4)) {
             setHasCompletedSelections(true);

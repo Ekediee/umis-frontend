@@ -47,7 +47,22 @@ function formatPrice(price: number): string {
 }
 
 // ── Off-Campus sentinel object ────────────────────────────────────────────────
-const OFF_CAMPUS_ID = "OFF_CAMPUS";
+export const OFF_CAMPUS_ID = "OFF_CAMPUS";
+
+export function isOffCampusHall(hall: FinanceResidence): boolean {
+  const name = (hall.residencename || "").toLowerCase();
+  const opt = (hall.residenceoption || "").toLowerCase();
+  const code = (hall.residenceid || "").toLowerCase();
+  return (
+    name.includes("off campus") ||
+    name.includes("off-campus") ||
+    opt.includes("off campus") ||
+    opt.includes("off-campus") ||
+    code === "off" ||
+    code === "off_campus" ||
+    code === "offcampus"
+  );
+}
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 function ResidenceCardSkeleton() {
@@ -89,7 +104,8 @@ export function SelectResidence({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Sort alphabetically by residencename; Off-Campus is always pinned first
-  const sorted = [...residences].sort((a, b) =>
+  const onCampusResidences = residences.filter((h) => !isOffCampusHall(h));
+  const sorted = [...onCampusResidences].sort((a, b) =>
     a.residencename.localeCompare(b.residencename)
   );
 
@@ -153,7 +169,14 @@ export function SelectResidence({
 
           {/* Off-Campus card — always pinned first */}
           {!isLoading && showOffCampus && (() => {
-            const isSelected = selectedId === OFF_CAMPUS_ID;
+            const isSelected =
+              selectedId === OFF_CAMPUS_ID ||
+              (selectedId !== null &&
+                residences.some(
+                  (r) =>
+                    (String(r.qresidenceid) === selectedId || r.residenceid === selectedId) &&
+                    isOffCampusHall(r)
+                ));
             return (
               <div
                 key={OFF_CAMPUS_ID}
@@ -176,7 +199,7 @@ export function SelectResidence({
                   </p>
                   <button
                     className="bg-[#e5ecfc] dark:bg-gray-800 text-[#375dfb] dark:text-[#4d82ff] rounded-[10px] px-3 py-2.5 text-[14px] font-medium flex items-center justify-center gap-1 hover:bg-[#dbe5fc] dark:hover:bg-gray-750 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={() => onSelect(OFF_CAMPUS_ID)}
                   >
                     Fill Off Campus Form
                     <ChevronRight className="w-5 h-5" />
