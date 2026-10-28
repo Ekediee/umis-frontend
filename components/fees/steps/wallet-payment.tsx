@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet, Info, ShieldCheck, ChevronRight, AlertCircle, PlusCircle } from "lucide-react";
+import { Wallet, Info, ShieldCheck, ChevronRight, AlertCircle, PlusCircle, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function formatPrice(price: number): string {
@@ -15,6 +15,7 @@ interface WalletPaymentProps {
   onCancelPayment: () => void;
   onPayNow: () => void;
   onFundWallet: () => void;
+  onViewSelection?: () => void;
 }
 
 export function WalletPayment({
@@ -25,6 +26,7 @@ export function WalletPayment({
   onCancelPayment,
   onPayNow,
   onFundWallet,
+  onViewSelection,
 }: WalletPaymentProps) {
   const isSufficient = walletBalance >= totalAmount;
   const shortfall = isSufficient ? 0 : totalAmount - walletBalance;
@@ -45,13 +47,23 @@ export function WalletPayment({
           </span>
         </div>
 
-        <div className="flex flex-col md:items-end gap-0.5">
+        <div className="flex flex-col md:items-end gap-1">
           <span className="text-[11px] font-bold text-white/60 uppercase tracking-wider">
             Total Amount Due
           </span>
           <span className="text-[28px] md:text-[36px] font-bold text-white tracking-tight leading-tight">
             {formatPrice(totalAmount)}
           </span>
+          {onViewSelection && (
+            <button
+              type="button"
+              onClick={onViewSelection}
+              className="mt-0.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-white/20 hover:bg-white/30 text-white text-[12px] font-semibold transition-all backdrop-blur-sm cursor-pointer"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              View Selection
+            </button>
+          )}
         </div>
       </div>
 
@@ -127,12 +139,27 @@ export function WalletPayment({
 
       {/* Bottom Actions */}
       <div className="flex items-center justify-between mt-auto pt-4 shrink-0">
-        <button
-          onClick={onCancelPayment}
-          className="text-[14px] font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
-        >
-          Cancel Payment
-        </button>
+        <div className="flex items-center gap-3 md:gap-4">
+          <button
+            onClick={onCancelPayment}
+            className="text-[14px] font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors cursor-pointer"
+          >
+            Cancel Payment
+          </button>
+          {onViewSelection && (
+            <>
+              <span className="text-gray-300 dark:text-gray-700">·</span>
+              <button
+                type="button"
+                onClick={onViewSelection}
+                className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff] hover:underline transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Eye className="w-4 h-4" />
+                View Selection
+              </button>
+            </>
+          )}
+        </div>
 
         <button
           onClick={onPayNow}

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { AlertCircle, CheckCircle, KeyRound, XCircle, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useWalletStore } from "@/hooks/use-wallet-store";
 
 interface ModalProps {
   isOpen: boolean;
@@ -45,6 +46,8 @@ interface BaseModalProps {
   secondaryActionText: string;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
+  hasWalletBalance?: boolean;
+  walletBalance?: number;
   isLoading?: boolean;
   /** Optional block between the description and the buttons (e.g. a helpful notice) */
   aside?: React.ReactNode;
@@ -266,13 +269,21 @@ export function FinancialSuccessModal({
   onClose,
   onPrimaryAction,
   onSecondaryAction,
+  hasWalletBalance,
+  walletBalance,
 }: {
   isOpen: boolean;
   onClose?: () => void;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
+  hasWalletBalance?: boolean;
+  walletBalance?: number;
 }) {
   const router = useRouter();
+  const storeWalletBalance = useWalletStore((state) => state.balance);
+  const effectiveBalance = walletBalance !== undefined ? walletBalance : (storeWalletBalance ?? 0);
+  const hasFunds = hasWalletBalance !== undefined ? hasWalletBalance : effectiveBalance > 0;
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -283,10 +294,12 @@ export function FinancialSuccessModal({
       title="Financial Selections Locked In"
       description={
         <p className="text-[13.5px] leading-relaxed text-[#525866] dark:text-gray-300">
-          Your hall residence, worship center, and meal plan selections have been locked in successfully. Please proceed to fund your wallet and pay to complete your registration.
+          {hasFunds
+            ? "Your hall residence, worship center, and meal plan selections have been locked in successfully. Please proceed to pay to complete your registration."
+            : "Your hall residence, worship center, and meal plan selections have been locked in successfully. Please proceed to fund your wallet and pay to complete your registration."}
         </p>
       }
-      primaryActionText="Fund wallet and pay now"
+      primaryActionText={hasFunds ? "Pay now" : "Fund wallet and pay now"}
       secondaryActionText="Register courses"
       onPrimaryAction={onPrimaryAction}
       onSecondaryAction={onSecondaryAction || (() => router.push("/registration/courses"))}

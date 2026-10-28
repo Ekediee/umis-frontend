@@ -44,6 +44,10 @@ export interface FundWalletModalProps {
   successAmount?: number;
   /** Message from the /wallet/fund API to display on the success screen. */
   successMessage?: string;
+  /** Pre-fill the funding amount input (e.g. calculated shortfall) */
+  defaultAmount?: number;
+  /** Page path to return to after payment callback (e.g. /dashboard/finance/fees/payment) */
+  returnPath?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -55,9 +59,11 @@ export function FundWalletModal({
   initialStep = "amount",
   successAmount,
   successMessage,
+  defaultAmount,
+  returnPath,
 }: FundWalletModalProps) {
   const [step, setStep] = useState<FundWalletStep>(initialStep);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(defaultAmount ? String(defaultAmount) : "");
   const [selectedMethodCode, setSelectedMethodCode] = useState<string | null>("FLW");
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([CONNECTED_PAYMENT_CHANNEL]);
   const [isLoadingMethods, setIsLoadingMethods] = useState(false);
@@ -74,7 +80,7 @@ export function FundWalletModal({
       const timer = setTimeout(() => {
         setStep(initialStep);
         if (initialStep === "amount") {
-          setAmount("");
+          setAmount(defaultAmount ? String(defaultAmount) : "");
           setSelectedMethodCode("FLW");
           setPaymentMethods([CONNECTED_PAYMENT_CHANNEL]);
           setMethodsError(null);
@@ -83,7 +89,7 @@ export function FundWalletModal({
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initialStep]);
+  }, [isOpen, initialStep, defaultAmount]);
 
   // Trigger confetti celebration when opening at or transitioning to the "success" step
   useEffect(() => {
@@ -181,10 +187,15 @@ export function FundWalletModal({
     setIsInitialisingPayment(true);
     setInitialisationError(null);
 
-    // Build the callback URL from the actual running origin so dev (port 3000)
-    // and prod both receive the correct address — the backend forwards this to
-    // the merchant so it knows where to redirect after checkout.
-    const redirectUrl = `${window.location.origin}/api/v1/payment/status`;
+    // Determine return destination
+    const effectiveReturnPath = returnPath || (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/dashboard/finance");
+
+    if (typeof document !== "undefined") {
+      document.cookie = `payment_return_to=${encodeURIComponent(effectiveReturnPath)}; path=/; max-age=3600; SameSite=Lax`;
+    }
+
+    // Build the callback URL with return destination
+    const redirectUrl = `${window.location.origin}/api/v1/payment/status?return_to=${encodeURIComponent(effectiveReturnPath)}`;
 
     const result = await initialisePaymentAction({
       amount: parsedAmount,

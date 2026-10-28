@@ -9,6 +9,8 @@ interface RegistrationState {
   payState: RegistrationStatusState;
   setRegState: (state: RegistrationStatusState) => void;
   setPayState: (state: RegistrationStatusState) => void;
+  isFinancialSubmitted: boolean;
+  setIsFinancialSubmitted: (submitted: boolean) => void;
   resetStore: () => void;
 
   // ── Semester Info ──────────────────────────────────────────────────────────
@@ -51,7 +53,9 @@ export const useRegistrationStore = create<RegistrationState>()(
       payState: "not_started",
       setRegState: (state) => set({ regState: state }),
       setPayState: (state) => set({ payState: state }),
-      resetStore: () => set({ regState: "not_started", payState: "not_started" }),
+      isFinancialSubmitted: false,
+      setIsFinancialSubmitted: (submitted) => set({ isFinancialSubmitted: submitted }),
+      resetStore: () => set({ regState: "not_started", payState: "not_started", isFinancialSubmitted: false }),
 
       // ── Semester Info ──────────────────────────────────────────────────────
       semesterInfo: null,
