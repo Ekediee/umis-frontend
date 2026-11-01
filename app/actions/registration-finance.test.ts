@@ -11,7 +11,11 @@ vi.mock("@/lib/logger", () => ({
   sanitize: (data: unknown) => data,
 }));
 
-import { getFinanceRegistrationAction } from "@/app/actions/registration-finance";
+import {
+  getFinanceRegistrationAction,
+  getFinancialRegSummaryAction,
+  submitFinanceRegistrationAction,
+} from "@/app/actions/registration-finance";
 import { getResidenceImages, deriveHallType } from "@/components/fees/steps/select-residence";
 import { getMealPlanPrice } from "@/components/fees/steps/select-meal-plan";
 import { loggedFetch } from "@/lib/logger";
@@ -55,6 +59,8 @@ describe("getFinanceRegistrationAction", () => {
             capacity: 508,
             roomsize: 4,
             org_id: 0,
+            occupied_space: 299,
+            space_left: 209,
             residence_images: [
               {
                 image_path: "http://umis-sb.babcock.edu.ng/storage/01M5CHKG7EH4MGN6WWG400DVCB.jpeg",
@@ -76,6 +82,8 @@ describe("getFinanceRegistrationAction", () => {
             capacity: 230,
             roomsize: 4,
             org_id: 0,
+            occupied_space: 100,
+            space_left: 130,
             residence_images: [],
           },
         ],
@@ -105,6 +113,7 @@ describe("getFinanceRegistrationAction", () => {
             declared_capacity: 280,
             occupied_space: 252,
             space_left: 28,
+            residenceid: "BC",
           },
         ],
       },
@@ -125,6 +134,9 @@ describe("getFinanceRegistrationAction", () => {
     // residenceoption is replaced with majors
     expect(crystal?.residenceoption).toBe("Hall Type: Classic");
     expect(crystal?.majors).toBe("Hall Type: Classic");
+    expect(crystal?.capacity).toBe(508);
+    expect(crystal?.occupied_space).toBe(299);
+    expect(crystal?.space_left).toBe(209);
     expect(crystal?.residence_images).toEqual([
       { image_path: "http://umis-sb.babcock.edu.ng/storage/01M5CHKG7EH4MGN6WWG400DVCB.jpeg" },
     ]);
@@ -133,6 +145,8 @@ describe("getFinanceRegistrationAction", () => {
     expect(ogden?.residenceoption).toBe("Hall Type: Regular");
     expect(ogden?.majors).toBe("Hall Type: Regular");
     expect(ogden?.residence_images).toEqual([]);
+
+    expect(result.data?.worship_centers[0]?.residenceid).toBe("BC");
   });
 
   it("handles general_charges when returned as a single object with string or snake_case values", async () => {
@@ -308,4 +322,197 @@ describe("Dynamic fee handling: Full Session vs 1st Semester", () => {
     expect(baseFees + hallCost + mealCost).toBe(1317284);
   });
 });
+
+describe("getFinancialRegSummaryAction", () => {
+  const originalApiUrl = process.env.API_URL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.API_URL = "https://api.example.com";
+  });
+
+  afterEach(() => {
+    process.env.API_URL = originalApiUrl;
+  });
+
+  it("parses populated financial-reg-summary payload accurately", async () => {
+    const mockSummaryPayload = {
+      status: true,
+      message: "Financial registration summary retrieved successfully",
+      data: {
+        meal_type: {
+          meal_type: "Lunch and Supper",
+          meal_description: "Select this for a resident student who takes Lunch and Supper.",
+          semester_meal_charge: 476000,
+        },
+        worship_center: {
+          worship_center_name: "Testimony Chapel",
+          location_on_campus: "Crystal Hall Auditorium",
+          pastor_in_charge: "Joseph Monday A",
+        },
+        semester_residence: {
+          residence_name: "Sapphire Classic Hall",
+          residence_charges: 263284,
+          residence_images: [],
+          residence_dean: "Mercy Odii-Francis",
+          majors: "Type: Classic",
+        },
+        lock_financial_reg: false,
+      },
+    };
+
+    vi.mocked(loggedFetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockSummaryPayload,
+    } as Response);
+
+    const result = await getFinancialRegSummaryAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.data).toEqual({
+      meal_type: {
+        meal_type: "Lunch and Supper",
+        meal_description: "Select this for a resident student who takes Lunch and Supper.",
+        semester_meal_charge: 476000,
+      },
+      worship_center: {
+        worship_center_name: "Testimony Chapel",
+        location_on_campus: "Crystal Hall Auditorium",
+        pastor_in_charge: "Joseph Monday A",
+      },
+      semester_residence: {
+        residence_name: "Sapphire Classic Hall",
+        residence_charges: 263284,
+        residence_images: [],
+        residence_dean: "Mercy Odii-Francis",
+        majors: "Type: Classic",
+      },
+      lock_financial_reg: false,
+    });
+  });
+
+  it("handles null fields and lock_financial_reg: true", async () => {
+    const mockSummaryPayload = {
+      status: true,
+      message: "Financial registration summary retrieved successfully",
+      data: {
+        meal_type: null,
+        worship_center: {
+          worship_center_name: "Testimony Chapel",
+          location_on_campus: "Crystal Hall Auditorium",
+          pastor_in_charge: "Joseph Monday A",
+        },
+        semester_residence: null,
+        lock_financial_reg: true,
+      },
+    };
+
+    vi.mocked(loggedFetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockSummaryPayload,
+    } as Response);
+
+    const result = await getFinancialRegSummaryAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.data).toEqual({
+      meal_type: null,
+      worship_center: {
+        worship_center_name: "Testimony Chapel",
+        location_on_campus: "Crystal Hall Auditorium",
+        pastor_in_charge: "Joseph Monday A",
+      },
+      semester_residence: null,
+      lock_financial_reg: true,
+    });
+  });
+
+  it("returns default empty summary when endpoint returns 404", async () => {
+    vi.mocked(loggedFetch).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ status: false, message: "Not found" }),
+    } as Response);
+
+    const result = await getFinancialRegSummaryAction();
+
+    expect(result.error).toBeUndefined();
+    expect(result.data).toEqual({
+      meal_type: null,
+      worship_center: null,
+      semester_residence: null,
+      lock_financial_reg: false,
+    });
+  });
+});
+
+describe("submitFinanceRegistrationAction", () => {
+  const originalApiUrl = process.env.API_URL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.API_URL = "https://api.example.com";
+  });
+
+  afterEach(() => {
+    process.env.API_URL = originalApiUrl;
+  });
+
+  it("posts qresidenceid, meal_type short code, and sabbath_class_id to /api/v1/student/submit-finance-registration", async () => {
+    vi.mocked(loggedFetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: true,
+        message: "Financial registration submitted successfully",
+      }),
+    } as Response);
+
+    const payload = {
+      qresidenceid: 6327,
+      meal_type: "LS",
+      sabbath_class_id: 40,
+    };
+
+    const result = await submitFinanceRegistrationAction(payload);
+
+    expect(result).toEqual({
+      success: true,
+      message: "Financial registration submitted successfully",
+    });
+    expect(loggedFetch).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/student/submit-finance-registration",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    );
+  });
+
+  it("returns error when submission fails", async () => {
+    vi.mocked(loggedFetch).mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        status: false,
+        message: "Selected residence is already full",
+      }),
+    } as Response);
+
+    const result = await submitFinanceRegistrationAction({
+      qresidenceid: 6327,
+      meal_type: "LS",
+      sabbath_class_id: 40,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Selected residence is already full",
+    });
+  });
+});
+
+
 

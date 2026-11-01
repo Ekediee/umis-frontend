@@ -26,6 +26,7 @@ interface MappedWorshipCenter {
   pastor: string;
   declaredCapacity: number;
   spacesLeft: number;
+  residenceid?: string | null;
 }
 
 interface SelectWorshipCenterProps {
@@ -42,6 +43,8 @@ interface SelectWorshipCenterProps {
   lockedCenter?: { name: string; location: string; pastor: string } | null;
   /** ID of a worship center to hide from the list (e.g. the hall's chapel when off-campus). */
   excludedId?: string | null;
+  /** Residence ID of the selected residence to filter out matching worship centers. */
+  selectedResidenceId?: string | null;
 }
 
 function formatLockDate(ts: number | null | undefined): string {
@@ -134,17 +137,24 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const filtered = useMemo(() => {
+    const targetResId = props.selectedResidenceId?.trim().toLowerCase();
     return worshipCenters.filter((wc) => {
-      // Exclude specific ID if provided (e.g. hiding the hall's pre-assigned chapel)
-      if (props.excludedId && wc.id === props.excludedId) return false;
-      
+      if (wc.id !== selectedId) {
+        // Exclude specific ID if provided
+        if (props.excludedId && wc.id === props.excludedId) return false;
+        // Exclude worship centers matching the selected residence's residenceid
+        if (targetResId && wc.residenceid && String(wc.residenceid).trim().toLowerCase() === targetResId) {
+          return false;
+        }
+      }
+
       return (
         wc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         wc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
         wc.pastor.toLowerCase().includes(searchQuery.toLowerCase())
       );
     });
-  }, [searchQuery, worshipCenters, props.excludedId]);
+  }, [searchQuery, worshipCenters, props.excludedId, props.selectedResidenceId, selectedId]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedDesktop = filtered.slice(
@@ -177,7 +187,9 @@ export function SelectWorshipCenter(props: SelectWorshipCenterProps) {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[15px] font-semibold text-amber-900 dark:text-amber-200">
-              Selection Locked Until {formatLockDate(props.lockedUntil)}
+              {props.lockedUntil
+                ? `Selection Locked Until ${formatLockDate(props.lockedUntil)}`
+                : "Selection Locked"}
             </span>
             <span className="text-[13px] text-amber-700 dark:text-amber-400/80">
               University policy requires maintaining the same worship center for a minimum of 2 years after selection. You will be able to change it after the lock expires.

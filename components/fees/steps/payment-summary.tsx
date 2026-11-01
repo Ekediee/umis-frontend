@@ -47,6 +47,7 @@ interface PaymentSummaryProps {
   worshipLockedUntil?: number | null;
   isFullSession?: boolean;
   isLocked?: boolean;
+  amountPaidForSemester?: number;
 }
 
 export function PaymentSummary({
@@ -61,6 +62,7 @@ export function PaymentSummary({
   worshipLockedUntil = null,
   isFullSession = false,
   isLocked = false,
+  amountPaidForSemester = 0,
 }: PaymentSummaryProps) {
   // Mandatory basic fees directly from API
   const mandatoryTotal = isFullSession
@@ -110,7 +112,11 @@ export function PaymentSummary({
 
       {/* Mobile: Total Cost Banner at top */}
       <div className="md:hidden">
-        <TotalCostBanner total={totalCost} />
+        <TotalCostBanner
+          total={totalCost}
+          isLocked={isLocked}
+          amountPaid={amountPaidForSemester}
+        />
       </div>
 
       {/* Summary Cards */}
@@ -353,14 +359,30 @@ export function PaymentSummary({
 
       {/* Desktop: Total Cost Banner at bottom */}
       <div className="hidden md:block">
-        <TotalCostBanner total={totalCost} />
+        <TotalCostBanner
+          total={totalCost}
+          isLocked={isLocked}
+          amountPaid={amountPaidForSemester}
+        />
       </div>
     </div>
   );
 }
 
 // Shared Total Cost Banner
-function TotalCostBanner({ total }: { total: number }) {
+function TotalCostBanner({
+  total,
+  isLocked = false,
+  amountPaid = 0,
+}: {
+  total: number;
+  isLocked?: boolean;
+  amountPaid?: number;
+}) {
+  const isSettled = isLocked && total > 0 && amountPaid >= total;
+  const remainingCredit = isSettled ? amountPaid - total : 0;
+  const balanceDue = isLocked && amountPaid > 0 && amountPaid < total ? total - amountPaid : 0;
+
   return (
     <div className="bg-[#e5ecfc] dark:bg-[#003cbb]/10 border border-[#003cbb] dark:border-[#4d82ff] rounded-[16px] p-5 md:p-6 flex items-center justify-between dark:shadow-[0_0_15px_rgba(77,130,255,0.05)] transition-colors">
       <div className="flex flex-col gap-1">
@@ -368,15 +390,26 @@ function TotalCostBanner({ total }: { total: number }) {
           Total Registration Cost
         </span>
         <span className="text-[13px] text-[#525866] dark:text-gray-400 transition-colors">
-          Due before semester commencement
+          {isSettled
+            ? `Covered by semester payment (${formatPrice(amountPaid)})${remainingCredit > 0 ? ` · Credit: ${formatPrice(remainingCredit)}` : ""}`
+            : balanceDue > 0
+            ? `Amount Paid: ${formatPrice(amountPaid)} · Balance to Complete: ${formatPrice(balanceDue)}`
+            : "Due before semester commencement"}
         </span>
       </div>
 
       <div className="flex flex-col items-end gap-3">
-        <span className="inline-flex items-center gap-1 bg-[#fff7ed] dark:bg-[#f97316]/10 text-[#f97316] dark:text-[#fb923c] text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] dark:bg-[#fb923c]" />
-          Pending Payment
-        </span>
+        {isSettled ? (
+          <span className="inline-flex items-center gap-1 bg-[#ECFDF3] dark:bg-[#10b981]/15 text-[#12B76A] dark:text-[#4ade80] text-[10px] font-medium px-2.5 py-0.5 rounded-full transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A] dark:bg-[#4ade80]" />
+            Paid
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 bg-[#fff7ed] dark:bg-[#f97316]/10 text-[#f97316] dark:text-[#fb923c] text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] dark:bg-[#fb923c]" />
+            Pending Payment
+          </span>
+        )}
         <span className="text-[24px] md:text-[28px] font-bold text-[#0a0d14] dark:text-gray-100 tracking-tight transition-colors">
           {formatPrice(total)}
         </span>

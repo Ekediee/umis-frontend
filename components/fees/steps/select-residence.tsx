@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Check, ChevronRight } from "lucide-react";
+import { Search, Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ImageCarousel } from "../image-carousel";
 import type { FinanceResidence, FinanceGeneralCharges } from "@/app/actions/registration";
@@ -46,24 +46,6 @@ function formatPrice(price: number): string {
   return `₦${price.toLocaleString()}`;
 }
 
-// ── Off-Campus sentinel object ────────────────────────────────────────────────
-export const OFF_CAMPUS_ID = "OFF_CAMPUS";
-
-export function isOffCampusHall(hall: FinanceResidence): boolean {
-  const name = (hall.residencename || "").toLowerCase();
-  const opt = (hall.residenceoption || "").toLowerCase();
-  const code = (hall.residenceid || "").toLowerCase();
-  return (
-    name.includes("off campus") ||
-    name.includes("off-campus") ||
-    opt.includes("off campus") ||
-    opt.includes("off-campus") ||
-    code === "off" ||
-    code === "off_campus" ||
-    code === "offcampus"
-  );
-}
-
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 function ResidenceCardSkeleton() {
   return (
@@ -84,13 +66,14 @@ function ResidenceCardSkeleton() {
 
 // ── Component props ───────────────────────────────────────────────────────────
 interface SelectResidenceProps {
-  /** qresidenceid as string, or OFF_CAMPUS_ID, or null */
+  /** qresidenceid as string, or null */
   selectedId: string | null;
   onSelect: (id: string) => void;
   residences?: FinanceResidence[];
   isLoading?: boolean;
   error?: string | null;
   isFullSession?: boolean;
+  isLocked?: boolean;
 }
 
 export function SelectResidence({
@@ -100,24 +83,18 @@ export function SelectResidence({
   isLoading = false,
   error = null,
   isFullSession = false,
+  isLocked = false,
 }: SelectResidenceProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Sort alphabetically by residencename; Off-Campus is always pinned first
-  const onCampusResidences = residences.filter((h) => !isOffCampusHall(h));
-  const sorted = [...onCampusResidences].sort((a, b) =>
+  // Sort alphabetically by residencename
+  const sorted = [...residences].sort((a, b) =>
     a.residencename.localeCompare(b.residencename)
   );
 
   const filteredHalls = sorted.filter((h) =>
     h.residencename.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Off-campus passes filter independently
-  const showOffCampus =
-    searchQuery === "" ||
-    "off campus".includes(searchQuery.toLowerCase()) ||
-    "off-campus".includes(searchQuery.toLowerCase());
 
   return (
     <div className="w-full max-w-[1200px] pb-36 flex flex-col gap-5">
@@ -158,6 +135,18 @@ export function SelectResidence({
         </div>
       )}
 
+      {/* Locked Banner */}
+      {isLocked && (
+        <div className="rounded-[12px] bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+          </div>
+          <span className="text-[13px] md:text-[14px] font-medium text-amber-900 dark:text-amber-200">
+            Your residence selection has been locked and cannot be changed.
+          </span>
+        </div>
+      )}
+
       {/* Card Grid */}
       <div className="md:overflow-y-scroll overflow-y-auto p-1.5">
         <div className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
@@ -166,55 +155,6 @@ export function SelectResidence({
             Array.from({ length: 8 }).map((_, i) => (
               <ResidenceCardSkeleton key={i} />
             ))}
-
-          {/* Off-Campus card — always pinned first */}
-          {!isLoading && showOffCampus && (() => {
-            const isSelected =
-              selectedId === OFF_CAMPUS_ID ||
-              (selectedId !== null &&
-                residences.some(
-                  (r) =>
-                    (String(r.qresidenceid) === selectedId || r.residenceid === selectedId) &&
-                    isOffCampusHall(r)
-                ));
-            return (
-              <div
-                key={OFF_CAMPUS_ID}
-                className={cn(
-                  "relative bg-white dark:bg-gray-900 rounded-[12px] border-2 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
-                  isSelected
-                    ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
-                    : "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
-                )}
-                onClick={() => onSelect(OFF_CAMPUS_ID)}
-              >
-                <ImageCarousel
-                  images={RESIDENCE_IMAGE_MAP._OFF_CAMPUS}
-                  alt="Off Campus Residence"
-                  className="h-[120px] md:h-[152px] w-full"
-                />
-                <div className="flex flex-col gap-2">
-                  <p className="text-[16px] md:text-[18px] font-semibold text-[#0a0d14] dark:text-gray-100 leading-tight truncate transition-colors">
-                    Off Campus Residence
-                  </p>
-                  <button
-                    className="bg-[#e5ecfc] dark:bg-gray-800 text-[#375dfb] dark:text-[#4d82ff] rounded-[10px] px-3 py-2.5 text-[14px] font-medium flex items-center justify-center gap-1 hover:bg-[#dbe5fc] dark:hover:bg-gray-750 transition-colors"
-                    onClick={() => onSelect(OFF_CAMPUS_ID)}
-                  >
-                    Fill Off Campus Form
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-                {isSelected && (
-                  <div className="absolute top-0 left-0 bg-[#003cbb] dark:bg-[#4d82ff] rounded-tl-[10px] rounded-br-[8px] p-1.5 z-10">
-                    <div className="w-5 h-5 rounded-[4px] bg-[#ebf1ff] dark:bg-gray-900 flex items-center justify-center shadow-[inset_0px_2px_2px_0px_rgba(22,38,100,0.32)]">
-                      <Check className="w-3.5 h-3.5 text-[#003cbb] dark:text-[#4d82ff]" strokeWidth={3} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
 
           {/* API-driven residence cards */}
           {!isLoading &&
@@ -231,12 +171,18 @@ export function SelectResidence({
                 <div
                   key={hall.qresidenceid}
                   className={cn(
-                    "relative bg-white dark:bg-gray-900 rounded-[12px] border-2 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
+                    "relative bg-white dark:bg-gray-900 rounded-[12px] border-2 flex flex-col gap-2 pt-2 px-2 pb-3 transition-all",
+                    isLocked ? "cursor-not-allowed" : "cursor-pointer",
                     isSelected
                       ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
-                      : "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
+                      : cn(
+                          "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none",
+                          isLocked ? "opacity-60" : "hover:shadow-md dark:hover:border-gray-700"
+                        )
                   )}
-                  onClick={() => onSelect(String(hall.qresidenceid))}
+                  onClick={() => {
+                    if (!isLocked) onSelect(String(hall.qresidenceid));
+                  }}
                 >
                   {/* Image Carousel */}
                   <ImageCarousel
@@ -268,7 +214,7 @@ export function SelectResidence({
                       </span>
                     </div>
 
-                    {/* Level range */}
+                    {/* Level range & Available space */}
                     <div className="flex flex-col gap-1">
                       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                         <span className="text-[11px] md:text-[12px] text-[#525866] dark:text-gray-400 leading-[16px]">
@@ -276,6 +222,14 @@ export function SelectResidence({
                         </span>
                         <span className="text-[12px] md:text-[14px] font-medium text-[#0a0d14] dark:text-gray-100 leading-[20px]">
                           {hall.min_level}L – {hall.max_level}L
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                        <span className="text-[11px] md:text-[12px] text-[#525866] dark:text-gray-400 leading-[16px]">
+                          Available space
+                        </span>
+                        <span className="text-[12px] md:text-[14px] font-medium text-[#0a0d14] dark:text-gray-100 leading-[20px]">
+                          {hall.space_left ?? 0} / {hall.capacity ?? 0}
                         </span>
                       </div>
                     </div>

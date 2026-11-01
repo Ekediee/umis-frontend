@@ -19,6 +19,7 @@ interface PaymentStepperProps {
   typeLabel?: string;
   hasProgress?: boolean;
   onCancelProgress?: () => void;
+  onStepClick?: (stepId: number) => void;
 }
 
 export function PaymentStepper({
@@ -28,6 +29,7 @@ export function PaymentStepper({
   typeLabel = "Full Session Registration",
   hasProgress = false,
   onCancelProgress,
+  onStepClick,
 }: PaymentStepperProps) {
   const router = useRouter();
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -70,7 +72,15 @@ export function PaymentStepper({
 
               return (
                 <div key={step.id} className="flex items-center gap-1.5 @[60rem]:gap-2">
-                  <div className="flex items-center gap-1.5" title={step.fullTitle || step.title}>
+                  <button
+                    type="button"
+                    onClick={() => onStepClick?.(step.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg px-1 py-0.5 transition-colors",
+                      onStepClick && "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                    )}
+                    title={step.fullTitle || step.title}
+                  >
                     {isCompleted ? (
                       <div className="w-5 h-5 rounded-full bg-[#38c793] flex items-center justify-center shrink-0">
                         <Check className="w-3 h-3 text-white" strokeWidth={3} />
@@ -95,7 +105,7 @@ export function PaymentStepper({
                       {/* Full title once there is room for it */}
                       <span className="hidden @[80rem]:inline">{step.fullTitle || step.title}</span>
                     </span>
-                  </div>
+                  </button>
                   {index < steps.length - 1 && (
                     <ChevronRight className="w-3.5 h-3.5 @[60rem]:w-4 @[60rem]:h-4 text-[#cdd0d5] dark:text-gray-600 shrink-0" />
                   )}

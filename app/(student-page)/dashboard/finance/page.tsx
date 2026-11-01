@@ -17,7 +17,10 @@ import { isSuccessfulPaymentStatus } from "@/lib/payments/payment-status";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
-import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
+import {
+  getSemesterRegistrationStatusAction,
+  getFinancialRegSummaryAction,
+} from "@/app/actions/registration";
 import { toast } from "sonner";
 import { notify } from "@/lib/notifications/bus";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -26,6 +29,11 @@ import {
   recordWalletFundingEvent, 
   WalletFundingRecord 
 } from "@/lib/wallet-history";
+import {
+  getOfflineDraft,
+  OFFLINE_FINANCE_REG_KEY,
+  type FinanceRegistrationDraft,
+} from "@/lib/offline-storage";
 
 const paymentHistoryData = [
   {
@@ -115,6 +123,12 @@ function FinancePageContent() {
   const { balance, isLoading: isWalletLoading, error: walletError, fetchBalance } = useWalletStore();
 const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
   const isRegisteredForSemester = Boolean(semesterInfo?.check);
+  const [hasFinanceDraft, setHasFinanceDraft] = useState(false);
+  const [hasBackendFinanceSelections, setHasBackendFinanceSelections] = useState(false);
+  const isFinancialRegInProgress =
+    hasBackendFinanceSelections ||
+    ((hasFinanceDraft || isFinancialSubmitted || payState === "in_progress") &&
+      payState !== "completed");
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
@@ -173,6 +187,34 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
     }).catch((err) => {
       console.warn("Failed to load wallet funding history:", err);
     });
+    getOfflineDraft<FinanceRegistrationDraft>(OFFLINE_FINANCE_REG_KEY)
+      .then((draft) => {
+        if (
+          draft &&
+          (draft.currentStep > 1 ||
+            Boolean(draft.selectedResidence) ||
+            Boolean(draft.selectedWorshipCenterId) ||
+            Boolean(draft.selectedMealPlan) ||
+            draft.customAmount !== null)
+        ) {
+          setHasFinanceDraft(true);
+        } else {
+          setHasFinanceDraft(false);
+        }
+      })
+      .catch(() => setHasFinanceDraft(false));
+    getFinancialRegSummaryAction()
+      .then((res) => {
+        if (res.data) {
+          const hasSelections = Boolean(
+            res.data.semester_residence ||
+              res.data.worship_center ||
+              res.data.meal_type
+          );
+          setHasBackendFinanceSelections(hasSelections);
+        }
+      })
+      .catch(() => {});
   }, [fetchBalance, setSemesterInfo]);
 
   // Open a modal from the URL: ?action=fund (Fund Wallet) or ?action=pay-outstanding (from registration)
@@ -585,11 +627,7 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
                 disabled={!isRegisteredForSemester}
                 onClick={() => {
                   if (isRegisteredForSemester) {
-                    if (payState === "in_progress" || isFinancialSubmitted) {
-                      router.push("/dashboard/finance/fees/payment?step=5");
-                    } else {
-                      router.push("/dashboard/finance/fees");
-                    }
+                    router.push("/dashboard/finance/fees");
                   }
                 }}
                 className={cn(
@@ -599,7 +637,10 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
                     : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
                 )}
               >
-                Pay School Fees <ChevronRight className="w-4 h-4" />
+                {isFinancialRegInProgress
+                  ? "Complete Financial Registration"
+                  : "Start Financial Registration"}{" "}
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
             <div className="absolute -right-6 @[26rem]:right-8 bottom-[-48px] @[26rem]:bottom-[-60px] w-[190px] h-[190px] @[26rem]:w-[250px] @[26rem]:h-[250px] pointer-events-none">

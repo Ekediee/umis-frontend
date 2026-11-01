@@ -474,8 +474,12 @@ export const getHasSubmittedCoursesAction = async (): Promise<HasSubmittedCourse
       return { error: errorMessage };
     }
 
-    // The backend can answer 200 with an empty body, which isn't a connection problem
-    const json: RawHasSubmittedCoursesResponse | null = await response.json().catch(() => null);
+    let json: RawHasSubmittedCoursesResponse;
+    try {
+      json = await response.json();
+    } catch {
+      return { error: "Unexpected response while checking course submission status" };
+    }
     if (typeof json?.data?.has_submitted !== "boolean") {
       return { error: "Unexpected response while checking course submission status" };
     }
