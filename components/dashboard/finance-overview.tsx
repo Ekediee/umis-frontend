@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
+import { paymentProgress, semesterAmountDue } from "@/lib/payments/fee-progress";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { getOfflineDraft, OFFLINE_FINANCE_REG_KEY, FinanceRegistrationDraft } from "@/lib/offline-storage";
 
@@ -25,8 +26,8 @@ export function FinanceOverview() {
 
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
-  const { balance, fetchBalance } = useWalletStore();
-  const { isFinancialSubmitted, payState } = useRegistrationStore();
+  const { balance, error: walletError, fetchBalance } = useWalletStore();
+const { isFinancialSubmitted, payState } = useRegistrationStore();
   const [hasCompletedSelections, setHasCompletedSelections] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function FinanceOverview() {
           const hasAll = Boolean(
             draft.selectedResidence &&
             draft.selectedWorshipCenterId &&
-            (draft.selectedResidence === "OFF_CAMPUS" || draft.selectedMealPlan)
+            (draft.selectedResidence === "OFF_CAMPUS" || draft.selectedResidence?.toLowerCase().includes("off") || draft.selectedMealPlan)
           );
           if (hasAll || (draft.currentStep && draft.currentStep >= 4)) {
             setHasCompletedSelections(true);
@@ -69,19 +70,18 @@ export function FinanceOverview() {
   const outstandingAmount = studentFees ? Math.abs(rawOutstanding) : 0;
   const isCredit = studentFees !== null && rawOutstanding < 0;
   const isDebt = studentFees !== null && rawOutstanding > 0;
-  const totalObligation = paidAmount + outstandingAmount;
-
-  const progressPercent = totalObligation > 0
-    ? Math.min(100, Math.max(0, Math.round((paidAmount / totalObligation) * 100)))
-    : (outstandingAmount === 0 && paidAmount > 0 ? 100 : 0);
+  const estimatedSemesterFee = studentFees?.estimated_semester_fee ?? 0;
+  const progressPercent = paymentProgress(estimatedSemesterFee, paidAmount, outstandingAmount);
 
   const isFinancialApproved = progressPercent >= 75;
 
   const walletBalance = balance ?? 0;
-  const estimatedSemesterFee = studentFees?.estimated_semester_fee ?? 0;
-  const hasEnoughForSemester = estimatedSemesterFee > 0 && walletBalance >= estimatedSemesterFee;
-  const hasSelectedAll = isFinancialSubmitted || payState === "in_progress" || hasCompletedSelections;
-  const shortfall = Math.max(0, estimatedSemesterFee - walletBalance);
+  // What's left after any payments, the same figure the payment flow asks for
+  const amountDue = semesterAmountDue(estimatedSemesterFee, paidAmount);
+  const hasEnoughForSemester = estimatedSemesterFee > 0 && walletBalance >= amountDue;
+const hasSelectedAll = isFinancialSubmitted || payState === "in_progress" || hasCompletedSelections;
+  // An unreadable balance says nothing about the shortfall, so no amount is pre-filled
+  const shortfall = walletError ? 0 : Math.max(0, amountDue - walletBalance);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">

@@ -12,11 +12,13 @@ import { UMISResponse } from "@/lib/session";
 import { CourseItem, getWorshipCentersAction, getRegisteredCoursesAction, getHasSubmittedCoursesAction } from "@/app/actions/registration";
 import { getOfflineDraft, OFFLINE_COURSE_CART_KEY } from "@/lib/offline-storage";
 import { useStudentAvatar, DEFAULT_AVATAR } from "@/hooks/use-student-avatar";
+import { useAcademicSession } from "@/hooks/use-academic-session";
 import { isPlaceholderAvatar } from "@/lib/student/placeholder-avatar";
 import { getStudentFeesAction } from "@/app/actions/payment";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 
 function CourseFormContent() {
+  const { semester } = useAcademicSession();
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
@@ -302,7 +304,7 @@ function CourseFormContent() {
                 <Image src="/images/bu_logo_full.png" alt="Babcock University" width={875} height={973} priority className="w-[88px] h-auto shrink-0 print:w-[76px]" />
                 <div className="flex flex-col">
                   <h1 className="text-[26px] md:text-[32px] font-bold text-[#1e3a8a] tracking-tight print:text-[26px]">BABCOCK UNIVERSITY</h1>
-                  <p className="text-[13px] sm:text-[14px] font-semibold text-gray-500 tracking-[1.5px] uppercase">2025/2026.2 REGISTRATION FORM</p>
+                  <p className="text-[13px] sm:text-[14px] font-semibold text-gray-500 tracking-[1.5px] uppercase">{semester ?? ""} REGISTRATION FORM</p>
                 </div>
               </div>
               

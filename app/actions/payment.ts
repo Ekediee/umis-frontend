@@ -71,6 +71,13 @@ export async function getPaymentRequirementsAction(): Promise<GetPaymentRequirem
   }
 }
 
+/** The backend's own verdict in the response body, which can differ from the HTTP status */
+function isRefused(json: { status?: unknown } | null): boolean {
+  const status = json?.status;
+  if (status === false || status === 0) return true;
+  return typeof status === "string" && ["false", "0", "failed", "failure", "error"].includes(status.toLowerCase());
+}
+
 /**
  * Initialises a wallet-funding payment session.
  * POST /api/v1/payment/initialise
@@ -146,7 +153,8 @@ export async function fundWalletAction(
 
     const json = await response.json().catch(() => null);
 
-    if (!response.ok) {
+    // The backend can answer 200 and still refuse: { "status": false, "message": "…" }
+    if (!response.ok || isRefused(json)) {
       return {
         success: false,
         error: json?.message ?? "Wallet funding failed.",
@@ -193,13 +201,21 @@ export async function getWalletBalanceAction(): Promise<GetWalletBalanceResult> 
     }
 
     const rawBalance =
-      json?.data?.balance !== undefined ? String(json.data.balance) : undefined;
+      json?.data?.balance !== undefined && json.data.balance !== null ? String(json.data.balance) : undefined;
     const numericBalance =
-      rawBalance !== undefined ? parseFloat(rawBalance.replace(/,/g, "")) : 0;
+      rawBalance !== undefined ? parseFloat(rawBalance.replace(/,/g, "")) : NaN;
+
+    // No readable balance isn't a balance of zero
+    if (isRefused(json) || isNaN(numericBalance)) {
+      return {
+        success: false,
+        error: json?.message ?? "Failed to fetch wallet balance.",
+      };
+    }
 
     return {
       success: true,
-      balance: isNaN(numericBalance) ? 0 : numericBalance,
+      balance: numericBalance,
       rawBalance,
     };
   } catch (err) {

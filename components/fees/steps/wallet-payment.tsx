@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet, Info, ShieldCheck, ChevronRight, AlertCircle, PlusCircle, Eye } from "lucide-react";
+import { Wallet, Info, ShieldCheck, ChevronRight, AlertCircle, PlusCircle, Eye, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function formatPrice(price: number): string {
@@ -9,8 +9,11 @@ function formatPrice(price: number): string {
 
 interface WalletPaymentProps {
   walletBalance: number;
+  /** The balance couldn't be read, so it can't be compared with what's due */
+  balanceUnavailable?: boolean;
+  onRetryBalance?: () => void;
   totalAmount: number;
-  studentName?: string;
+studentName?: string;
   academicInfo?: string;
   onCancelPayment: () => void;
   onPayNow: () => void;
@@ -20,16 +23,18 @@ interface WalletPaymentProps {
 
 export function WalletPayment({
   walletBalance,
+  balanceUnavailable = false,
+  onRetryBalance,
   totalAmount,
-  studentName = "Yakubu Onome Joy",
+studentName = "Yakubu Onome Joy",
   academicInfo = "Academic Year 2024/2025 - First Semester 200L",
   onCancelPayment,
   onPayNow,
   onFundWallet,
   onViewSelection,
 }: WalletPaymentProps) {
-  const isSufficient = walletBalance >= totalAmount;
-  const shortfall = isSufficient ? 0 : totalAmount - walletBalance;
+  const isSufficient = !balanceUnavailable && walletBalance >= totalAmount;
+const shortfall = isSufficient ? 0 : totalAmount - walletBalance;
 
   return (
     <div className="w-full max-w-[700px] md:h-[90%] h-[78vh] flex flex-col gap-5">
@@ -104,7 +109,7 @@ export function WalletPayment({
               </div>
               <div className="flex flex-col">
                 <span className="text-[13px] text-[#525866] dark:text-gray-400 font-medium">Available Balance</span>
-                <span className="text-[20px] font-bold text-[#0a0d14] dark:text-gray-100">{formatPrice(walletBalance)}</span>
+                <span className="text-[20px] font-bold text-[#0a0d14] dark:text-gray-100">{balanceUnavailable ? "Unavailable" : formatPrice(walletBalance)}</span>
               </div>
             </div>
 
@@ -117,9 +122,27 @@ export function WalletPayment({
             )}
           </div>
 
-          {!isSufficient && (
+          {balanceUnavailable && (
             <div className="flex flex-col gap-3 mt-2 pt-4 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-[#f97316] shrink-0 mt-0.5" />
+                <p className="text-[13px] text-[#c2410c] dark:text-[#f97316] leading-relaxed">
+                  We couldn&apos;t load your wallet balance. Please try again before paying.
+                </p>
+              </div>
+              <button
+                onClick={onRetryBalance}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#f8faff] dark:bg-[#1e3a8a]/20 text-[#003cbb] dark:text-[#4d82ff] font-medium text-[14px] rounded-[8px] hover:bg-[#eef3fd] dark:hover:bg-[#1e3a8a]/40 transition-colors w-max"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Try again
+              </button>
+            </div>
+          )}
+
+          {!isSufficient && !balanceUnavailable && (
+            <div className="flex flex-col gap-3 mt-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+<div className="flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-[#f97316] shrink-0 mt-0.5" />
                 <p className="text-[13px] text-[#c2410c] dark:text-[#f97316] leading-relaxed">
                   Insufficient funds. You need an additional <strong>{formatPrice(shortfall)}</strong> to complete this payment.

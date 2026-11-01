@@ -11,8 +11,10 @@ export interface CourseRegistrationDraft {
 }
 
 export interface FinanceRegistrationDraft {
+  /** Full session or first semester, so the student isn't asked again when they return */
+  paymentType?: "full" | "semester";
   currentStep: number;
-  selectedResidence: string | null;
+selectedResidence: string | null;
   selectedWorshipCenterId: string | null;
   selectedMealPlan: string | null;
   customAmount: number | null;

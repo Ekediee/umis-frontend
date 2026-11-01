@@ -51,4 +51,10 @@ describe('FinancialSuccessModal (financial selections locked in)', () => {
     expect(screen.getByText('Fund wallet and pay now')).toBeInTheDocument();
     expect(screen.queryByText('Pay now')).toBeNull();
   });
+
+  it('customizes message for off-campus students without mentioning meal plan', () => {
+    render(<FinancialSuccessModal isOpen walletBalance={50000} isOffCampus={true} />);
+    expect(screen.getByText(/Your off-campus residence and worship center selections/i)).toBeInTheDocument();
+    expect(screen.queryByText(/meal plan/i)).toBeNull();
+  });
 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isSuccessfulPaymentStatus } from "@/lib/payments/payment-status";
 
 /**
  * Payment callback route handler.
@@ -9,12 +10,13 @@ import { NextRequest, NextResponse } from "next/server";
  * This handler immediately strips all sensitive/noisy params and redirects
  * the user back to the originating page (e.g. /dashboard/finance/fees/payment or /dashboard/finance),
  * keeping only the transaction_reference so the frontend can confirm the payment with the backend.
- */
+ * A cancelled or failed payment keeps its status instead, so it never reaches /wallet/fund.
+*/
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
 
-  const transactionReference = searchParams.get("transaction_reference");
-  const status = searchParams.get("status");
+  const transactionReference = searchParams.get("transaction_reference") || searchParams.get("data");
+const status = searchParams.get("status");
 
   // Determine return path (from query parameter or stored cookie)
   const rawReturnTo = searchParams.get("return_to") || request.cookies.get("payment_return_to")?.value;
@@ -34,13 +36,13 @@ export async function GET(request: NextRequest) {
   // Build destination URL preserving any existing query parameters on targetPath
   const targetUrl = new URL(targetPath, origin);
 
-  if (transactionReference) {
-    // Pass only the reference ID — the landing page useEffect will call
+  if (transactionReference && isSuccessfulPaymentStatus(status)) {
+// Pass only the reference ID — the landing page useEffect will call
     // /api/v1/wallet/fund and then clear this param from the URL.
     targetUrl.searchParams.set("transaction_reference", transactionReference);
   } else {
-    // Merchant returned without a reference (cancelled, errored, or unexpected response).
-    targetUrl.searchParams.set("payment_status", status ?? "failed");
+    // Merchant returned cancelled, failed, or without a reference.
+targetUrl.searchParams.set("payment_status", status ?? "failed");
   }
 
   // 302 redirect & clear return cookie

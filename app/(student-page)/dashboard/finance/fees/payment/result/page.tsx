@@ -18,9 +18,10 @@ function PaymentResultContent() {
   const searchParams = useSearchParams();
 
   const status = searchParams.get("status") || "success";
-  const ref = searchParams.get("ref") || "PAY-728910-ARTH";
-  const amount = parseFloat(searchParams.get("amount") || "647000");
-  const gateway = searchParams.get("gateway") || "Flutterwave";
+  const ref = searchParams.get("ref") || "";
+  const amount = parseFloat(searchParams.get("amount") || "0");
+  const plan = searchParams.get("plan") === "full" ? "full" : "semester";
+const gateway = searchParams.get("gateway") || "Flutterwave";
   const isSuccess = status === "success";
   
   const getGatewayLogo = () => {
@@ -60,7 +61,7 @@ function PaymentResultContent() {
   };
 
   const handleDownloadReceipt = () => {
-    router.push(`/dashboard/finance/receipt?status=success&ref=${ref}&amount=${amount}&gateway=${gateway}&action=download`);
+    router.push(`/dashboard/finance/receipt?status=success&ref=${ref}&amount=${amount}&gateway=${gateway}&plan=${plan}&action=download`);
   };
 
   const handleViewRegistrationStatus = () => {

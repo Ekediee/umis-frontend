@@ -48,6 +48,7 @@ interface BaseModalProps {
   onSecondaryAction?: () => void;
   hasWalletBalance?: boolean;
   walletBalance?: number;
+  isOffCampus?: boolean;
   isLoading?: boolean;
   /** Optional block between the description and the buttons (e.g. a helpful notice) */
   aside?: React.ReactNode;
@@ -271,6 +272,7 @@ export function FinancialSuccessModal({
   onSecondaryAction,
   hasWalletBalance,
   walletBalance,
+  isOffCampus = false,
 }: {
   isOpen: boolean;
   onClose?: () => void;
@@ -278,6 +280,7 @@ export function FinancialSuccessModal({
   onSecondaryAction?: () => void;
   hasWalletBalance?: boolean;
   walletBalance?: number;
+  isOffCampus?: boolean;
 }) {
   const router = useRouter();
   const storeWalletBalance = useWalletStore((state) => state.balance);
@@ -294,7 +297,11 @@ export function FinancialSuccessModal({
       title="Financial Selections Locked In"
       description={
         <p className="text-[13.5px] leading-relaxed text-[#525866] dark:text-gray-300">
-          {hasFunds
+          {isOffCampus
+            ? (hasFunds
+                ? "Your off-campus residence and worship center selections have been locked in successfully. Please proceed to pay to complete your registration."
+                : "Your off-campus residence and worship center selections have been locked in successfully. Please proceed to fund your wallet and pay to complete your registration.")
+            : hasFunds
             ? "Your hall residence, worship center, and meal plan selections have been locked in successfully. Please proceed to pay to complete your registration."
             : "Your hall residence, worship center, and meal plan selections have been locked in successfully. Please proceed to fund your wallet and pay to complete your registration."}
         </p>

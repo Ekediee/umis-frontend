@@ -10,31 +10,33 @@ import { jsPDF } from "jspdf";
 import { useSearchParams } from "next/navigation";
 import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
+import { useFinanceRegistration } from "@/hooks/use-finance-registration";
+import { buildReceiptItems, receiptItemsTotal } from "@/lib/payments/receipt-items";
 
-const receiptItems = [
-  { label: "Mandatory Basic Fees", amount: "₦185,000.00" },
-  { label: "Selected Residence (Block C)", amount: "₦152,000.00" },
-  { label: "Selected Meal Plan (Daily Standard)", amount: "₦45,000.00" },
-  { label: "Selected Worship Center (Tithe/Levy)", amount: "₦12,500.00" },
-  { label: "Registration & Admin Charges", amount: "₦252,500.00" },
-];
+const naira = (n: number) => `₦${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function ReceiptContent() {
   const searchParams = useSearchParams();
   const isWallet = searchParams.get("type") === "wallet";
-  const ref = searchParams.get("ref") || (isWallet ? "FLW-882104-WF" : "PAY-728910-ARTH");
-  const amount = parseFloat(searchParams.get("amount") || (isWallet ? "500000" : "647000"));
-  const gateway = searchParams.get("gateway") || "Flutterwave";
+  const ref = searchParams.get("ref");
+  const amount = parseFloat(searchParams.get("amount") ?? "");
+  const hasPayment = !!ref && amount > 0;
+  const plan = searchParams.get("plan") === "full" ? "full" : "semester";
+const gateway = searchParams.get("gateway") || "Flutterwave";
   const customDate = searchParams.get("date");
   const customTime = searchParams.get("time");
 
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [userData, setUserData] = useState<UMISResponse | null>(null);
+  const { data: financeData, summary, isLoading: isLoadingItems } = useFinanceRegistration();
 
   useEffect(() => {
     getUserData().then(setUserData);
   }, []);
+
+  const paidItems = buildReceiptItems(financeData, summary, plan);
+  const chargesTotal = receiptItemsTotal(paidItems);
 
   const studentName = 
     userData?.user_data?.personal_information?.student_name ||
@@ -84,8 +86,26 @@ function ReceiptContent() {
     window.print();
   };
 
+  // Opened without a payment (e.g. from a sample record): nothing real to show
+  if (!hasPayment) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
+        <p className="text-[16px] font-semibold text-gray-900 dark:text-gray-100">This receipt isn&apos;t available</p>
+        <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-sm">
+          We couldn&apos;t find the details of this payment. Open it again from your payment confirmation.
+        </p>
+        <Link
+          href="/dashboard/finance"
+          className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[10px] bg-[#003cbb] dark:bg-[#2563EB] text-white text-[14px] font-medium"
+        >
+          Back to Finance
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className=" px-4 md:px-8 pb-12 print:px-0 print:pb-0 print:bg-white">
+<div className=" px-4 md:px-8 pb-12 print:px-0 print:pb-0 print:bg-white">
       <style dangerouslySetInnerHTML={{
         __html: `
         @media print {
@@ -185,7 +205,7 @@ function ReceiptContent() {
                   <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">
                     {isWallet ? "Amount Credited" : "Amount Paid"}
                   </p>
-                  <p className="text-[15px] font-bold text-[#003cbb] dark:text-[#4d82ff] transition-colors">₦{amount.toLocaleString()}.00</p>
+                  <p className="text-[15px] font-bold text-[#003cbb] dark:text-[#4d82ff] transition-colors">{naira(amount)}</p>
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-400 dark:text-gray-450 mb-1 transition-colors">Payment Method</p>
@@ -233,24 +253,39 @@ function ReceiptContent() {
               <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-800 transition-colors">
                 {(isWallet
                     ? [
-                        { label: "Wallet Credit Top-up", amount: `₦${amount.toLocaleString()}.00` },
-                        { label: "Gateway & Service Charge", amount: "₦0.00" },
+                        { label: "Wallet Credit Top-up", amount: naira(amount) },
+{ label: "Gateway & Service Charge", amount: "₦0.00" },
                         { label: "Beneficiary Account", amount: `Student Wallet (${studentName})` },
                         { label: "Transaction Channel", amount: `${gateway} Automated Rail` },
                         { label: "Transaction Purpose", amount: "Wallet Funding" },
                       ]
-                  : receiptItems
+                  : paidItems.map((item) => ({
+                      label: item.label,
+                      amount: item.amount === null ? "Included" : naira(item.amount),
+                    }))
                 ).map((item) => (
-                  <div key={item.label} className="flex items-center justify-between py-3.5">
+<div key={item.label} className="flex items-center justify-between py-3.5">
                     <span className="text-[14px] text-gray-600 dark:text-gray-300 transition-colors">{item.label}</span>
                     <span className="text-[14px] font-bold text-gray-900 dark:text-gray-100 transition-colors">{item.amount}</span>
                   </div>
                 ))}
+                {!isWallet && paidItems.length === 0 && (
+                  <p className="py-3.5 text-[14px] text-gray-500 dark:text-gray-400">
+                    {isLoadingItems ? "Loading your registration items…" : "The breakdown of this payment isn't available right now."}
+                  </p>
+                )}
+                {/* A part payment, or a balance after earlier payments */}
+                {!isWallet && paidItems.length > 0 && Math.abs(chargesTotal - amount) >= 0.01 && (
+                  <div className="flex items-center justify-between py-3.5">
+                    <span className="text-[14px] text-gray-600 dark:text-gray-300 transition-colors">Total registration charges</span>
+                    <span className="text-[14px] font-bold text-gray-900 dark:text-gray-100 transition-colors">{naira(chargesTotal)}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Total */}
-            <div className="bg-[#f5f8fe] dark:bg-[#003cbb]/10 rounded-[16px] p-5 md:p-6 print:p-6 flex flex-col md:flex-row print:flex-row items-center justify-between gap-3 mb-8 transition-colors">
+<div className="bg-[#f5f8fe] dark:bg-[#003cbb]/10 rounded-[16px] p-5 md:p-6 print:p-6 flex flex-col md:flex-row print:flex-row items-center justify-between gap-3 mb-8 transition-colors">
               <div>
                 <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] tracking-wider uppercase transition-colors">
                   {isWallet ? "TOTAL SUM CREDITED" : "TOTAL SUM PAID"}
@@ -258,10 +293,10 @@ function ReceiptContent() {
                 <p className="text-[12px] text-[#003cbb]/70 dark:text-[#4d82ff]/70 mt-0.5 transition-colors">
                   {isWallet
                     ? "Net balance credited directly to student digital wallet account."
-                    : "Calculated including VAT and administrative levies."}
+                    : "The amount paid in this transaction."}
                 </p>
               </div>
-              <p className="text-[28px] md:text-[32px] print:text-[32px] font-bold text-[#003cbb] dark:text-[#4d82ff] transition-colors">₦{amount.toLocaleString()}.00</p>
+              <p className="text-[28px] md:text-[32px] print:text-[32px] font-bold text-[#003cbb] dark:text-[#4d82ff] transition-colors">{naira(amount)}</p>
             </div>
 
             {/* Verification Footer */}

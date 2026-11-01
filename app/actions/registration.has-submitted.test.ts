@@ -106,6 +106,17 @@ describe("getHasSubmittedCoursesAction — HTTP responses", () => {
     expect(result.message).toBe("Succssfully fetched status");
   });
 
+  it("reports a 200 with an empty body as an unexpected response, not a connection problem", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("", { status: 200 }))
+    );
+
+    const result = await getHasSubmittedCoursesAction();
+
+    expect(result).toEqual({ error: "Unexpected response while checking course submission status" });
+  });
+
   it("maps has_submitted: false and locked_financial_reg: true", async () => {
     mockFetch(200, {
       status: true,
