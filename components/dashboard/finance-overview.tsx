@@ -25,8 +25,8 @@ export function FinanceOverview() {
 
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
-  const { balance, fetchBalance } = useWalletStore();
-  const { isFinancialSubmitted, payState } = useRegistrationStore();
+  const { balance, error: walletError, fetchBalance } = useWalletStore();
+const { isFinancialSubmitted, payState } = useRegistrationStore();
   const [hasCompletedSelections, setHasCompletedSelections] = useState(false);
 
   useEffect(() => {
@@ -81,7 +81,8 @@ export function FinanceOverview() {
   const estimatedSemesterFee = studentFees?.estimated_semester_fee ?? 0;
   const hasEnoughForSemester = estimatedSemesterFee > 0 && walletBalance >= estimatedSemesterFee;
   const hasSelectedAll = isFinancialSubmitted || payState === "in_progress" || hasCompletedSelections;
-  const shortfall = Math.max(0, estimatedSemesterFee - walletBalance);
+  // An unreadable balance says nothing about the shortfall, so no amount is pre-filled
+  const shortfall = walletError ? 0 : Math.max(0, estimatedSemesterFee - walletBalance);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-[20px] border border-gray-200 dark:border-gray-800 p-5 md:p-6 flex flex-col h-full transition-colors duration-200">

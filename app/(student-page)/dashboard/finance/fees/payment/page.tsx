@@ -19,7 +19,7 @@ import { PaymentProgressSheet } from "@/components/fees/payment-progress-sheet";
 import { PaymentMethodSheet } from "@/components/fees/payment-method-sheet";
 import { ProcessingOverlay } from "@/components/fees/processing-overlay";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
-import { fundWalletAction } from "@/app/actions/payment";
+import { confirmWalletFunding } from "@/lib/payments/wallet-funding";
 import { toast } from "sonner";
 import { FinancialConfirmationModal } from "@/components/fees/financial-confirmation-modal";
 import { FinancialSuccessModal } from "@/components/registration/registration-status-modals";
@@ -84,8 +84,8 @@ function PaymentFlowContent() {
   const userData = useUserData();
 
   const { data: financeData, isLoading, error } = useFinanceRegistration();
-  const { balance: storeWalletBalance, fetchBalance, setBalance: setStoreWalletBalance } = useWalletStore();
-  const walletBalance = storeWalletBalance ?? 0;
+  const { balance: storeWalletBalance, error: walletError, fetchBalance, setBalance: setStoreWalletBalance } = useWalletStore();
+const walletBalance = storeWalletBalance ?? 0;
 
   const {
     lockedWorshipCenterId,
@@ -120,29 +120,36 @@ function PaymentFlowContent() {
   // Handle return from merchant payment callback
   useEffect(() => {
     const txRef = searchParams.get("transaction_reference") || searchParams.get("data");
-    if (!txRef) return;
+    const paymentStatus = searchParams.get("payment_status");
+    if (!txRef && !paymentStatus) return;
 
     // Clean callback params from address bar
     const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.delete("transaction_reference");
     currentUrl.searchParams.delete("data");
     currentUrl.searchParams.delete("status");
+    currentUrl.searchParams.delete("payment_status");
     window.history.replaceState({}, "", currentUrl.toString());
 
     setCurrentStep(5);
 
-    fundWalletAction(txRef)
-      .then((res) => {
-        if (res.success) {
-          toast.success(res.message || "Wallet funded successfully!");
-          fetchBalance();
-        } else {
-          toast.error(res.error || "Failed to confirm wallet funding.");
-        }
-      })
-      .catch(() => {
-        toast.error("Failed to confirm wallet funding.");
-      });
+    if (!txRef) {
+      toast.error("Payment was not completed. Please try again.");
+      return;
+    }
+
+    const confirming = toast.loading("Confirming your payment…");
+    confirmWalletFunding(txRef).then((result) => {
+      toast.dismiss(confirming);
+      fetchBalance();
+      if (result.outcome === "credited") {
+        toast.success(`₦${result.amount.toLocaleString()} was added to your wallet.`);
+      } else if (result.outcome === "pending") {
+        toast.warning(`Your wallet hasn't updated yet. Please check again in a few minutes, and don't pay again. Ref ${result.reference}.`, { duration: 15000 });
+      } else {
+        toast.error(result.error);
+      }
+    });
   }, [searchParams, fetchBalance]);
 
   // If navigated here with ?step=5 or selections are submitted, land directly on step 5
@@ -623,8 +630,10 @@ function PaymentFlowContent() {
         {currentStep === 5 && (
           <WalletPayment
             walletBalance={walletBalance}
+            balanceUnavailable={!!walletError}
+            onRetryBalance={() => fetchBalance()}
             totalAmount={customAmount ?? computeTotal()}
-            studentName={studentName}
+studentName={studentName}
             academicInfo={academicInfo}
             onCancelPayment={handleCancelPayment}
             onPayNow={handlePayNow}
@@ -716,11 +725,8 @@ function PaymentFlowContent() {
         onClose={() => setIsFundWalletModalOpen(false)}
         defaultAmount={Math.max(0, (customAmount ?? computeTotal()) - walletBalance) || undefined}
         returnPath={`/dashboard/finance/fees/payment?type=${paymentType || "semester"}&step=5`}
-        onSuccess={(amount) => {
-          setStoreWalletBalance(walletBalance + amount);
-          fetchBalance();
-        }}
-      />
+        onSuccess={() => fetchBalance()}
+/>
 
       <FinancialConfirmationModal
         isOpen={isFinancialConfirmOpen}

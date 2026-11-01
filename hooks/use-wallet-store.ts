@@ -19,6 +19,9 @@ interface WalletState {
   clearWallet: () => void;
 }
 
+// Only the newest request may update the store, so a slow older one can't overwrite it
+let latestRequest = 0;
+
 export const useWalletStore = create<WalletState>((set) => ({
   balance: null,
   rawBalance: null,
@@ -26,9 +29,11 @@ export const useWalletStore = create<WalletState>((set) => ({
   error: null,
 
   fetchBalance: async () => {
+    const request = ++latestRequest;
     set({ isLoading: true, error: null });
     try {
       const result = await getWalletBalanceAction();
+      if (request !== latestRequest) return;
       if (result.success && result.balance !== undefined) {
         set({
           balance: result.balance,
@@ -44,6 +49,7 @@ export const useWalletStore = create<WalletState>((set) => ({
       }
     } catch (err) {
       console.error("useWalletStore fetchBalance error:", err);
+      if (request !== latestRequest) return;
       set({
         isLoading: false,
         error: "An unexpected error occurred while fetching wallet balance.",

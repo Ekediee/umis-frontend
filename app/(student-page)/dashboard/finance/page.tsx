@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { Info, ChevronRight, ThumbsUp, Eye, Download, EyeOff, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Info, ChevronRight, ThumbsUp, Eye, Download, EyeOff, Clock, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -11,7 +11,9 @@ import { getUserData } from "@/app/actions/user";
 import { UMISResponse } from "@/lib/session";
 import { FundWalletModal, FundWalletStep } from "@/components/fees/fund-wallet-modal";
 import { PayOutstandingModal } from "@/components/fees/pay-outstanding-modal";
-import { fundWalletAction, getStudentFeesAction } from "@/app/actions/payment";
+import { getStudentFeesAction } from "@/app/actions/payment";
+import { confirmWalletFunding } from "@/lib/payments/wallet-funding";
+import { isSuccessfulPaymentStatus } from "@/lib/payments/payment-status";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
@@ -110,8 +112,8 @@ function FinancePageContent() {
   const searchParams = useSearchParams();
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
-  const { balance, isLoading: isWalletLoading, fetchBalance } = useWalletStore();
-  const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
+  const { balance, isLoading: isWalletLoading, error: walletError, fetchBalance } = useWalletStore();
+const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
   const isRegisteredForSemester = Boolean(semesterInfo?.check);
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
@@ -121,7 +123,8 @@ function FinancePageContent() {
   const [showWalletBalance, setShowWalletBalance] = useState(true);
   const [successAmount, setSuccessAmount] = useState<number | undefined>(undefined);
   const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
-  const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fees" | "wallet">("payment");
+  const [pendingReference, setPendingReference] = useState<string | undefined>(undefined);
+const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fees" | "wallet">("payment");
   const [walletFundingHistory, setWalletFundingHistory] = useState<WalletFundingRecord[]>([]);
 
   const amountParam = searchParams.get("amount");
@@ -202,51 +205,54 @@ function FinancePageContent() {
     // Clean the URL immediately so parameters don't persist on page reload
     router.replace("/dashboard/finance");
 
-    if (txRef && (status === "1" || status === "completed" || !status)) {
-      // Optimistically read amount if the backend adds it to the callback in future
-      const amountParam = searchParams.get("amount");
-      const callbackAmount = amountParam ? parseFloat(amountParam) : undefined;
+    if (txRef && !paymentStatus && isSuccessfulPaymentStatus(status)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- show the wait straight away on return
+      setFundWalletStep("confirming");
+      setIsFundWalletModalOpen(true);
 
-      fundWalletAction(txRef).then((result) => {
-        if (result.success) {
-          const displayMsg = result.message || message || "Wallet funded successfully!";
-          const fundedAmt = callbackAmount && callbackAmount > 0 ? callbackAmount : 500000;
-          if (callbackAmount && callbackAmount > 0) {
-            setSuccessAmount(callbackAmount);
-          } else {
-            setSuccessAmount(undefined);
-          }
-          setSuccessMessage(displayMsg);
-          notify({
-            // Keyed on the transaction, so a reloaded callback URL never posts it twice
-            key: `wallet-funded:${txRef}`,
-            type: "PAYMENT_RECEIVED",
-            title: "Payment received",
-            message: callbackAmount && callbackAmount > 0 ? `₦${callbackAmount.toLocaleString()} was added to your wallet. Ref ${txRef}.` : `Your wallet top-up was confirmed. Ref ${txRef}.`,
-            href: "/dashboard/finance",
-            silent: true,
-          });
-          setFundWalletStep("success");
-          setIsFundWalletModalOpen(true);
-          // Refetch fresh balance from backend
-          fetchBalance();
-          loadStudentFees();
+      confirmWalletFunding(txRef).then((result) => {
+        fetchBalance();
+        loadStudentFees();
 
-          // Record wallet funding transaction event
-          recordWalletFundingEvent({
-            reference: String(txRef),
-            amount: fundedAmt,
-            gateway: "Flutterwave",
-            status: "successful",
-            description: "Wallet Credit • Online Checkout Settlement",
-          }).then(() => {
-            loadWalletHistory();
-          }).catch((err) => {
-            console.warn("Failed to record wallet callback event:", err);
-          });
-        } else {
-          toast.error(result.error || "Wallet funding failed. Please contact support.");
+        if (result.outcome === "failed") {
+          setIsFundWalletModalOpen(false);
+          setFundWalletStep("amount");
+          toast.error(result.error);
+          return;
         }
+
+        if (result.outcome === "pending") {
+          setPendingReference(result.reference);
+          setFundWalletStep("pending");
+          return;
+        }
+
+        const naira = (n: number) => `₦${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        setSuccessAmount(result.amount);
+        setSuccessMessage(`${naira(result.amount)} was added to your wallet. Your balance is now ${naira(result.balance)}.`);
+        setFundWalletStep("success");
+        notify({
+          // Keyed on the transaction, so a reloaded callback URL never posts it twice
+          key: `wallet-funded:${txRef}`,
+          type: "PAYMENT_RECEIVED",
+          title: "Payment received",
+          message: `${naira(result.amount)} was added to your wallet. Ref ${txRef}.`,
+          href: "/dashboard/finance",
+          silent: true,
+        });
+
+        // Only a credit the balance confirms goes in the history, with the amount that arrived
+        recordWalletFundingEvent({
+          reference: String(txRef),
+          amount: result.amount,
+          gateway: "Flutterwave",
+          status: "successful",
+          description: "Wallet Credit • Online Checkout Settlement",
+        }).then(() => {
+          loadWalletHistory();
+        }).catch((err) => {
+          console.warn("Failed to record wallet callback event:", err);
+        });
       });
     } else {
       // Payment was cancelled, failed, or returned a non-success status
@@ -490,20 +496,31 @@ function FinancePageContent() {
                 <span className="text-[clamp(18px,8.5cqi,26px)] leading-tight font-bold tracking-tight tabular-nums whitespace-nowrap">
                   {!showWalletBalance
                     ? "****"
-                    : isWalletLoading && balance === null
-                    ? "₦..."
-                    : balance !== null
-                    ? `₦${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : "₦0.00"}
+                    : isWalletLoading
+                    ? balance === null ? "₦..." : `₦${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : walletError || balance === null
+                    ? "Unavailable"
+                    : `₦${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </span>
-                <button
-                  onClick={() => setShowWalletBalance(!showWalletBalance)}
-                  className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-                  aria-label={showWalletBalance ? "Hide wallet balance" : "Show wallet balance"}
-                >
-                  {showWalletBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                </button>
-              </div>
+                {walletError && !isWalletLoading ? (
+                  <button
+                    type="button"
+                    onClick={() => fetchBalance()}
+                    className="h-8 px-2.5 shrink-0 inline-flex items-center gap-1 rounded-[10px] text-[12px] font-semibold text-white bg-white/15 hover:bg-white/25 transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Retry
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowWalletBalance(!showWalletBalance)}
+                    className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                    aria-label={showWalletBalance ? "Hide wallet balance" : "Show wallet balance"}
+                  >
+                    {showWalletBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
+                )}
+</div>
             </div>
 
             <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 mt-4">
@@ -1034,7 +1051,8 @@ function FinancePageContent() {
         defaultAmount={defaultFundAmount}
         successAmount={successAmount}
         successMessage={successMessage}
-      />
+        pendingReference={pendingReference}
+/>
     </div>
   );
 }

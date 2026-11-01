@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Loader2 } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Loader2, Clock } from "lucide-react";
+import { useWalletStore } from "@/hooks/use-wallet-store";
+import { rememberPendingFunding } from "@/lib/payments/wallet-funding";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import {
@@ -9,7 +11,6 @@ import {
   initialisePaymentAction,
 } from "@/app/actions/payment";
 import type { PaymentMethod } from "@/app/actions/payment.types";
-import { recordWalletFundingEvent } from "@/lib/wallet-history";
 
 // ─── Connected Payment Channel ───────────────────────────────────────────────
 export const CONNECTED_PAYMENT_CHANNEL: PaymentMethod = {
@@ -26,7 +27,7 @@ const GATEWAY_DEFAULT_DESCRIPTION = "Instant confirmation via cards, bank transf
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type FundWalletStep = "amount" | "gateway" | "success";
+export type FundWalletStep = "amount" | "gateway" | "confirming" | "pending" | "success";
 
 export interface FundWalletModalProps {
   isOpen: boolean;
@@ -42,9 +43,11 @@ export interface FundWalletModalProps {
    * (e.g. parsed from the callback URL).
    */
   successAmount?: number;
-  /** Message from the /wallet/fund API to display on the success screen. */
+  /** What to tell the student on the success screen, once the balance has gone up. */
   successMessage?: string;
-  /** Pre-fill the funding amount input (e.g. calculated shortfall) */
+  /** Transaction reference shown on the "pending" screen, to quote to support. */
+  pendingReference?: string;
+/** Pre-fill the funding amount input (e.g. calculated shortfall) */
   defaultAmount?: number;
   /** Page path to return to after payment callback (e.g. /dashboard/finance/fees/payment) */
   returnPath?: string;
@@ -59,8 +62,9 @@ export function FundWalletModal({
   initialStep = "amount",
   successAmount,
   successMessage,
+  pendingReference,
   defaultAmount,
-  returnPath,
+returnPath,
 }: FundWalletModalProps) {
   const [step, setStep] = useState<FundWalletStep>(initialStep);
   const [amount, setAmount] = useState(defaultAmount ? String(defaultAmount) : "");
@@ -197,9 +201,13 @@ export function FundWalletModal({
     // Build the callback URL with return destination
     const redirectUrl = `${window.location.origin}/api/v1/payment/status?return_to=${encodeURIComponent(effectiveReturnPath)}`;
 
+    const payable = Math.round(parsedAmount * 100) / 100;
+    const wallet = useWalletStore.getState();
+    rememberPendingFunding(payable, wallet.error ? null : wallet.balance);
+
     const result = await initialisePaymentAction({
-      amount: parsedAmount,
-      currency: "NGN",
+      amount: payable,
+currency: "NGN",
       payment_method: channelCode,
       wallet_payment: true,
       redirect_url: redirectUrl,
@@ -217,18 +225,8 @@ export function FundWalletModal({
   };
 
   const handleComplete = () => {
-    const finalAmount = successAmount ?? parsedAmount;
-    if (finalAmount > 0) {
-      recordWalletFundingEvent({
-        reference: `FLW-${Date.now().toString(36).toUpperCase()}`,
-        amount: finalAmount,
-        gateway: "Flutterwave",
-        status: "successful",
-        description: "Wallet Credit • Online Gateway Settlement",
-      }).catch((err) => console.warn("Failed to record wallet event:", err));
-    }
-    onSuccess(finalAmount);
-    onClose();
+    onSuccess(successAmount ?? 0);
+onClose();
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -264,8 +262,51 @@ export function FundWalletModal({
       >
         <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-[16px] w-full max-w-[480px] shadow-xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
 
+          {/* ── Waiting for the balance to go up ──────────────────────────── */}
+          {step === "confirming" && (
+            <div className="p-12 flex flex-col items-center justify-center text-center" role="status">
+              <Loader2 className="w-10 h-10 text-[#003cbb] dark:text-[#4d82ff] animate-spin mb-6" />
+              <h3 className="text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 mb-2">
+                Confirming your payment
+              </h3>
+              <p className="text-[14px] text-[#525866] dark:text-gray-400">
+                This takes a few seconds. Please keep this page open.
+              </p>
+            </div>
+          )}
+
+          {/* ── Accepted, but the balance hasn't shown it ─────────────────── */}
+          {step === "pending" && (
+            <div className="p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
+                <Clock className="w-10 h-10 text-amber-500" />
+              </div>
+              <h3 className="text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 mb-2">
+                Your wallet hasn&apos;t updated yet
+              </h3>
+              <p className="text-[14px] text-[#525866] dark:text-gray-400 mb-3">
+                Your payment was accepted, but we can&apos;t see it in your balance yet. Please check again in a few minutes. There&apos;s no need to pay again.
+              </p>
+              {pendingReference && (
+                <p className="text-[13px] text-[#525866] dark:text-gray-400 mb-8 break-all">
+                  If it doesn&apos;t appear, contact support with reference{" "}
+                  <span className="font-mono font-semibold text-[#0a0d14] dark:text-gray-100">{pendingReference}</span>
+                </p>
+              )}
+              <button
+                onClick={() => {
+                  onSuccess(0);
+                  onClose();
+                }}
+                className="w-full px-4 py-3 rounded-[10px] bg-[#003cbb] dark:bg-[#2563EB] text-white text-[14px] font-medium hover:bg-[#002d8f] dark:hover:bg-[#1D4ED8] transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          )}
+
           {/* ── Success screen ────────────────────────────────────────────── */}
-          {step === "success" && (
+{step === "success" && (
             <div className="p-12 flex flex-col items-center justify-center text-center">
               <div className="w-20 h-20 bg-[#10b981]/10 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle2 className="w-10 h-10 text-[#10b981]" />

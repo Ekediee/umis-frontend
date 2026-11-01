@@ -15,60 +15,20 @@ export interface WalletFundingRecord {
   createdAt: number;
 }
 
-const SEED_WALLET_RECORDS: WalletFundingRecord[] = [
-  {
-    id: "WF-2026-091801",
-    reference: "FLW-729104-WF",
-    amount: 2500000,
-    formattedAmount: "₦2,500,000.00",
-    gateway: "Flutterwave",
-    date: "Sep 18, 2026",
-    time: "10:30 AM",
-    status: "successful",
-    description: "Wallet Credit • Tuition & Campus Deposit",
-    createdAt: new Date("2026-09-18T10:30:00").getTime(),
-  },
-  {
-    id: "WF-2026-091002",
-    reference: "FLW-882109-ATM",
-    amount: 1500000,
-    formattedAmount: "₦1,500,000.00",
-    gateway: "Flutterwave",
-    date: "Sep 10, 2026",
-    time: "03:15 PM",
-    status: "successful",
-    description: "Wallet Credit • Automated Bank Transfer",
-    createdAt: new Date("2026-09-10T15:15:00").getTime(),
-  },
-  {
-    id: "WF-2026-082503",
-    reference: "FLW-441290-CRD",
-    amount: 600000,
-    formattedAmount: "₦600,000.00",
-    gateway: "Flutterwave",
-    date: "Aug 25, 2026",
-    time: "11:42 AM",
-    status: "successful",
-    description: "Wallet Credit • Debit Card Top-Up",
-    createdAt: new Date("2026-08-25T11:42:00").getTime(),
-  },
-];
+// Sample records older versions added to every browser; they were never real payments
+const SAMPLE_RECORD_IDS = new Set(["WF-2026-091801", "WF-2026-091002", "WF-2026-082503"]);
 
 /**
  * Retrieves the full wallet funding history.
- * If empty or uninitialized, seeds with initial realistic records.
- * Automatically aligns any previously cached records with the connected Flutterwave gateway.
+* Automatically aligns any previously cached records with the connected Flutterwave gateway.
  */
 export async function getWalletFundingHistory(): Promise<WalletFundingRecord[]> {
   try {
     const existing = await get<WalletFundingRecord[]>(WALLET_FUNDING_STORAGE_KEY);
-    if (!existing || existing.length === 0) {
-      await set(WALLET_FUNDING_STORAGE_KEY, SEED_WALLET_RECORDS);
-      return SEED_WALLET_RECORDS;
-    }
+    if (!existing || existing.length === 0) return [];
 
     // Migrate any legacy/disconnected gateway references in client storage to Flutterwave
-    const migrated = existing.map((rec) => {
+    const migrated = existing.filter((rec) => !SAMPLE_RECORD_IDS.has(rec.id)).map((rec) => {
       if (rec.gateway === "Payzeep" || rec.gateway === "Paystack" || rec.gateway === "Card / WebPay") {
         return {
           ...rec,
@@ -87,7 +47,7 @@ export async function getWalletFundingHistory(): Promise<WalletFundingRecord[]> 
     return migrated.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error("[WalletHistory] Failed to retrieve wallet funding history:", error);
-    return SEED_WALLET_RECORDS;
+    return [];
   }
 }
 
@@ -118,7 +78,7 @@ export async function recordWalletFundingEvent(
       hour12: true,
     });
   const id = event.id || `WF-${Date.now().toString(36).toUpperCase()}`;
-  const formattedAmount = `₦${event.amount.toLocaleString()}.00`;
+  const formattedAmount = `₦${event.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const newRecord: WalletFundingRecord = {
     id,
