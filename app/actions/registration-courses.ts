@@ -474,7 +474,12 @@ export const getHasSubmittedCoursesAction = async (): Promise<HasSubmittedCourse
       return { error: errorMessage };
     }
 
-    const json: RawHasSubmittedCoursesResponse = await response.json();
+    let json: RawHasSubmittedCoursesResponse;
+    try {
+      json = await response.json();
+    } catch {
+      return { error: "Unexpected response while checking course submission status" };
+    }
     if (typeof json?.data?.has_submitted !== "boolean") {
       return { error: "Unexpected response while checking course submission status" };
     }

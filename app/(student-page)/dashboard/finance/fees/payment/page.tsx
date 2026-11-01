@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense, useEffect, useCallback } from "react";
+import { useState, useMemo, Suspense, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,42 +34,41 @@ import {
   OFFLINE_FINANCE_REG_KEY,
   FinanceRegistrationDraft,
 } from "@/lib/offline-storage";
-import type { FinanceWorshipCenter } from "@/app/actions/registration-finance";
+import {
+  submitFinanceRegistrationAction,
+  type FinanceResidence,
+  type FinanceMealType,
+  type FinanceWorshipCenter,
+} from "@/app/actions/registration-finance";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Hall → Worship Center keyword map
-//
-// Keys   = hall residenceid from the API
-// Values = substrings to match against
-//          `"${sabbath_class_name} ${location_on_campus}".toLowerCase()`
-//
-// Adjust these strings whenever hall / chapel names change in the API.
-// ─────────────────────────────────────────────────────────────────────────────
-const HALL_WORSHIP_KEYWORDS: Record<string, string[]> = {
-  BC:    ["bethel"],
-  EMER2: ["emerald"],
-  EMER4: ["emerald"],
-  I2:    ["gamaliel"],
-  PM:    ["gideon", "beula"],
-  NM:    ["neal wilson"],
-  ROYL:  ["nelson mandela", "canaan"],
-  WE:    ["welch"],
-  WI:    ["winslow"],
-};
+/** Derives a meal plan code (BL, BS, LS, BLS, NONE) from a descriptive label. */
+function deriveMealCode(label: string): string {
+  const upper = label.trim().toUpperCase();
+  if (upper === "BL" || upper === "BS" || upper === "LS" || upper === "BLS" || upper === "NONE") {
+    return upper;
+  }
+  if (upper.includes("OFF CAMPUS")) return "NONE";
+  const hasB = upper.includes("BREAKFAST");
+  const hasL = upper.includes("LUNCH");
+  const hasS = upper.includes("SUPPER");
+  if (hasB && hasL && hasS) return "BLS";
+  if (hasB && hasL) return "BL";
+  if (hasB && hasS) return "BS";
+  if (hasL && hasS) return "LS";
+  return label;
+}
 
-/** Returns the worship center pre-assigned to a hall, or null if none. */
+/** Returns the worship center associated with a hall by matching residenceid, or null if none. */
 function findHallWorshipCenter(
   residenceid: string,
   worshipCenters: FinanceWorshipCenter[]
 ): FinanceWorshipCenter | null {
-  const keywords = HALL_WORSHIP_KEYWORDS[residenceid];
-  if (!keywords?.length) return null;
+  if (!residenceid) return null;
+  const targetId = residenceid.trim().toLowerCase();
   return (
-    worshipCenters.find((wc) => {
-      const haystack =
-        `${wc.sabbath_class_name} ${wc.location_on_campus}`.toLowerCase();
-      return keywords.some((kw) => haystack.includes(kw.toLowerCase()));
-    }) ?? null
+    worshipCenters.find(
+      (wc) => wc.residenceid && wc.residenceid.trim().toLowerCase() === targetId
+    ) ?? null
   );
 }
 
@@ -77,13 +76,36 @@ const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Match a residence by name against the catalog, tolerating case/spacing/punctuation differences. */
+function findCatalogResidence(list: FinanceResidence[], name: string): FinanceResidence | undefined {
+  const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const target = norm(name);
+  if (!target) return undefined;
+  return (
+    list.find((r) => r.qresidenceid > 0 && norm(r.residencename) === target) ||
+    list.find((r) => {
+      if (r.qresidenceid <= 0) return false;
+      const n = norm(r.residencename);
+      return n.length > 3 && (n.startsWith(target) || target.startsWith(n));
+    })
+  );
+}
+
 function PaymentFlowContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentType = searchParams.get("type");
   const userData = useUserData();
 
-  const { data: financeData, isLoading, error } = useFinanceRegistration();
+  const {
+    data: financeData,
+    summary: financeSummary,
+    studentFees,
+    isLoading,
+    error,
+    markAsLocked,
+    refreshSummaryAndFees,
+  } = useFinanceRegistration();
   const { balance: storeWalletBalance, fetchBalance, setBalance: setStoreWalletBalance } = useWalletStore();
   const walletBalance = storeWalletBalance ?? 0;
 
@@ -102,9 +124,11 @@ function PaymentFlowContent() {
   const [isPartialPaymentOpen, setIsPartialPaymentOpen] = useState(false);
   const [isMobilePaymentSelectionOpen, setIsMobilePaymentSelectionOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSubmittingFinanceReg, setIsSubmittingFinanceReg] = useState(false);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [isRestored, setIsRestored] = useState(false);
+  const hasAppliedSummaryRef = useRef(false);
 
   // Core selection state
   const [selectedResidence, setSelectedResidence] = useState<string | null>(null);
@@ -112,6 +136,8 @@ function PaymentFlowContent() {
   const [selectedMealPlan, setSelectedMealPlan] = useState<string | null>(null);
   const [isFinancialConfirmOpen, setIsFinancialConfirmOpen] = useState(false);
   const [isFinancialSuccessOpen, setIsFinancialSuccessOpen] = useState(false);
+
+  const isBackendLocked = Boolean(financeSummary?.lock_financial_reg);
 
   useEffect(() => {
     fetchBalance();
@@ -145,13 +171,13 @@ function PaymentFlowContent() {
       });
   }, [searchParams, fetchBalance]);
 
-  // If navigated here with ?step=5 or selections are submitted, land directly on step 5
+  // If navigated here explicitly with ?step=5 (e.g. wallet funding return), land on step 5
   useEffect(() => {
     const stepParam = searchParams.get("step");
-    if (stepParam === "5" || isFinancialSubmitted || payState === "in_progress") {
+    if (stepParam === "5") {
       setCurrentStep(5);
     }
-  }, [searchParams, isFinancialSubmitted, payState]);
+  }, [searchParams]);
 
   const studentName = userData?.user_data?.student_name || userData?.entity_name || "Student";
   const academicLevel = userData?.user_data?.academic_information?.study_level || "200L";
@@ -164,84 +190,221 @@ function PaymentFlowContent() {
   const isFullSession = paymentType === "full";
   const typeLabel = paymentType === "semester" ? "1st Semester Registration" : "Full Session Registration";
 
-  // ── Core derived flags — read directly from state, no intermediate variable ─
-  // NOTE: These are plain constants recomputed on every render.
-  // Do NOT wrap them in useMemo; that would delay the update by one render tick
-  // when the dependency comparison runs stale.
-  const isOffCampus = selectedResidence === "OFF_CAMPUS";
+  // ── Effective lists (catalog + fallback from financial-reg-summary) ───────
+
+  const effectiveResidences = useMemo((): FinanceResidence[] => {
+    const list = financeData?.residence || [];
+    const sr = financeSummary?.semester_residence;
+    if (!sr?.residence_name) return list;
+    const exists = !!findCatalogResidence(list, sr.residence_name);
+    if (exists) return list;
+    const isOC = sr.residence_name.trim().toLowerCase().includes("off campus");
+    const fallback: FinanceResidence = {
+      qresidenceid: -1,
+      residenceoption: sr.majors || "Full",
+      full_charges: (sr.residence_charges || 0) * 2,
+      charges: sr.residence_charges || 0,
+      residenceid: isOC ? "OC" : "SUMMARY_RES",
+      residencename: sr.residence_name,
+      sex: "",
+      min_level: 100,
+      max_level: 500,
+      majors: sr.majors || "Hall Type: Classic",
+      blockname: "A",
+      capacity: 0,
+      roomsize: 0,
+      org_id: 0,
+      occupied_space: 0,
+      space_left: 1,
+      residence_images: sr.residence_images || [],
+    };
+    return [fallback, ...list];
+  }, [financeData, financeSummary]);
+
+  const effectiveWorshipCenters = useMemo((): FinanceWorshipCenter[] => {
+    const list = financeData?.worship_centers || [];
+    const swc = financeSummary?.worship_center;
+    if (!swc?.worship_center_name) return list;
+    const exists = list.some(
+      (wc) => wc.sabbath_class_name.trim().toLowerCase() === swc.worship_center_name.trim().toLowerCase()
+    );
+    if (exists) return list;
+    const fallback: FinanceWorshipCenter = {
+      sabbath_class_id: -1,
+      sabbath_class_name: swc.worship_center_name,
+      pastor_in_charge: swc.pastor_in_charge || "TBA",
+      location_on_campus: swc.location_on_campus || "Main Campus",
+      declared_capacity: 0,
+      occupied_space: 0,
+      space_left: 1,
+      residenceid: null,
+    };
+    return [fallback, ...list];
+  }, [financeData, financeSummary]);
+
+  const effectiveMealTypes = useMemo((): FinanceMealType[] => {
+    const list = financeData?.meal_types || [];
+    const sm = financeSummary?.meal_type;
+    if (!sm?.meal_type) return list;
+    const target = sm.meal_type.trim().toLowerCase();
+    const exists = list.some(
+      (m) =>
+        m.selection.trim().toLowerCase() === target ||
+        m.mealtype.trim().toLowerCase() === target
+    );
+    if (exists) return list;
+    const fallback: FinanceMealType = {
+      qselectionid: -1,
+      mealtype: deriveMealCode(sm.meal_type),
+      selection: sm.meal_type,
+    };
+    return [fallback, ...list];
+  }, [financeData, financeSummary]);
+
+  // ── Derived selected objects & flags ──────────────────────────────────────
+
+  const summaryMatchedResidenceId = useMemo((): string | null => {
+    const targetName = financeSummary?.semester_residence?.residence_name?.trim().toLowerCase();
+    if (!targetName) return null;
+    const matchRes = findCatalogResidence(effectiveResidences, targetName);
+    return matchRes ? String(matchRes.qresidenceid) : null;
+  }, [financeSummary, effectiveResidences]);
+
+  const summaryMatchedWorshipCenterId = useMemo((): string | null => {
+    const targetWc = financeSummary?.worship_center?.worship_center_name?.trim().toLowerCase();
+    if (!targetWc) return null;
+    const matchWc = effectiveWorshipCenters.find(
+      (wc) => wc.sabbath_class_name.trim().toLowerCase() === targetWc
+    );
+    return matchWc ? String(matchWc.sabbath_class_id) : null;
+  }, [financeSummary, effectiveWorshipCenters]);
+
+  const summaryMatchedMealPlanId = useMemo((): string | null => {
+    const targetMeal = financeSummary?.meal_type?.meal_type?.trim().toLowerCase();
+    if (!targetMeal) return null;
+    const matchMeal = effectiveMealTypes.find(
+      (m) =>
+        m.selection.trim().toLowerCase() === targetMeal ||
+        m.mealtype.trim().toLowerCase() === targetMeal
+    );
+    return matchMeal ? String(matchMeal.qselectionid) : null;
+  }, [financeSummary, effectiveMealTypes]);
+
+  const activeResidence = selectedResidence ?? summaryMatchedResidenceId;
+  const activeWorshipCenterId = selectedWorshipCenterId ?? summaryMatchedWorshipCenterId;
+  const activeMealPlan = selectedMealPlan ?? summaryMatchedMealPlanId;
+
+  const selectedResidenceObj = useMemo(() => {
+    if (!activeResidence) return null;
+    return (
+      effectiveResidences.find((r) => String(r.qresidenceid) === activeResidence) || null
+    );
+  }, [activeResidence, effectiveResidences]);
+
+  const isOffCampus =
+    activeResidence === "OFF_CAMPUS" ||
+    selectedResidenceObj?.residenceid?.trim().toUpperCase() === "OC" ||
+    Boolean(selectedResidenceObj?.residencename?.toLowerCase().includes("off campus"));
 
   const isWorshipLocked =
     !!lockedWorshipCenterId &&
     !!worshipCenterLockedUntil &&
     Date.now() < worshipCenterLockedUntil;
 
-  // ── Derived selected objects ──────────────────────────────────────────────
-
-  const selectedResidenceObj = useMemo(() => {
-    if (!selectedResidence || isOffCampus || !financeData?.residence) return null;
-    return (
-      financeData.residence.find((r) => String(r.qresidenceid) === selectedResidence) || null
-    );
-  }, [selectedResidence, isOffCampus, financeData]);
-
-  /** Worship center auto-assigned by the hall (null when off-campus or no keyword match). */
+  /** Worship center auto-assigned by the hall (null when off-campus or no match). */
   const hallAssignedWC = useMemo((): FinanceWorshipCenter | null => {
-    if (isOffCampus || isWorshipLocked || !selectedResidenceObj || !financeData?.worship_centers) {
+    if (isOffCampus || isWorshipLocked || !selectedResidenceObj) {
       return null;
     }
-    return findHallWorshipCenter(selectedResidenceObj.residenceid, financeData.worship_centers);
-  }, [isOffCampus, isWorshipLocked, selectedResidenceObj, financeData]);
+    return findHallWorshipCenter(selectedResidenceObj.residenceid, effectiveWorshipCenters);
+  }, [isOffCampus, isWorshipLocked, selectedResidenceObj, effectiveWorshipCenters]);
 
   /** True when the worship center is silently assigned by the selected hall. */
   const isWorshipAutoAssigned = !isOffCampus && !!hallAssignedWC;
 
   const selectedWorshipCenterObj = useMemo(() => {
-    if (!selectedWorshipCenterId || !financeData?.worship_centers) return null;
+    if (!activeWorshipCenterId) return null;
     return (
-      financeData.worship_centers.find(
-        (wc) => String(wc.sabbath_class_id) === selectedWorshipCenterId
+      effectiveWorshipCenters.find(
+        (wc) => String(wc.sabbath_class_id) === activeWorshipCenterId
       ) || null
     );
-  }, [selectedWorshipCenterId, financeData]);
+  }, [activeWorshipCenterId, effectiveWorshipCenters]);
 
   const selectedMealTypeObj = useMemo(() => {
-    if (!selectedMealPlan || !financeData?.meal_types) return null;
+    if (!activeMealPlan) return null;
     return (
-      financeData.meal_types.find(
-        (m) => String(m.qselectionid) === selectedMealPlan || m.mealtype === selectedMealPlan
+      effectiveMealTypes.find(
+        (m) => String(m.qselectionid) === activeMealPlan || m.mealtype === activeMealPlan
       ) || null
     );
-  }, [selectedMealPlan, financeData]);
+  }, [activeMealPlan, effectiveMealTypes]);
 
   /** Details of the currently locked worship center (for the read-only lock panel). */
   const lockedWCDetails = useMemo(() => {
-    if (!isWorshipLocked || !lockedWorshipCenterId || !financeData?.worship_centers) return null;
-    const wc = financeData.worship_centers.find(
-      (w) => String(w.sabbath_class_id) === lockedWorshipCenterId
-    );
-    return wc
-      ? { name: wc.sabbath_class_name, location: wc.location_on_campus, pastor: wc.pastor_in_charge }
-      : null;
-  }, [isWorshipLocked, lockedWorshipCenterId, financeData]);
+    if (isWorshipLocked && lockedWorshipCenterId) {
+      const wc = effectiveWorshipCenters.find(
+        (w) => String(w.sabbath_class_id) === lockedWorshipCenterId
+      );
+      if (wc) {
+        return {
+          name: wc.sabbath_class_name,
+          location: wc.location_on_campus,
+          pastor: wc.pastor_in_charge,
+        };
+      }
+    }
+    if ((isWorshipLocked || isBackendLocked) && selectedWorshipCenterObj) {
+      return {
+        name: selectedWorshipCenterObj.sabbath_class_name,
+        location: selectedWorshipCenterObj.location_on_campus,
+        pastor: selectedWorshipCenterObj.pastor_in_charge,
+      };
+    }
+    if ((isWorshipLocked || isBackendLocked) && financeSummary?.worship_center) {
+      return {
+        name: financeSummary.worship_center.worship_center_name,
+        location: financeSummary.worship_center.location_on_campus || "Main Campus",
+        pastor: financeSummary.worship_center.pastor_in_charge || "TBA",
+      };
+    }
+    return null;
+  }, [
+    isWorshipLocked,
+    lockedWorshipCenterId,
+    effectiveWorshipCenters,
+    isBackendLocked,
+    selectedWorshipCenterObj,
+    financeSummary,
+  ]);
 
   const mappedWorshipCenters = useMemo(() => {
-    if (!financeData?.worship_centers) return [];
-    return financeData.worship_centers.map((wc) => ({
-      id: String(wc.sabbath_class_id),
-      name: wc.sabbath_class_name,
-      location: wc.location_on_campus,
-      pastor: wc.pastor_in_charge,
-      declaredCapacity: wc.declared_capacity,
-      spacesLeft: wc.space_left,
-    }));
-  }, [financeData]);
+    const selectedResId = selectedResidenceObj?.residenceid?.trim().toLowerCase();
+    return effectiveWorshipCenters
+      .filter((wc) => {
+        if (String(wc.sabbath_class_id) === activeWorshipCenterId) return true;
+        if (!selectedResId || !wc.residenceid) return true;
+        return wc.residenceid.trim().toLowerCase() !== selectedResId;
+      })
+      .map((wc) => ({
+        id: String(wc.sabbath_class_id),
+        name: wc.sabbath_class_name,
+        location: wc.location_on_campus,
+        pastor: wc.pastor_in_charge,
+        declaredCapacity: wc.declared_capacity,
+        spacesLeft: wc.space_left,
+        residenceid: wc.residenceid ?? null,
+      }));
+  }, [effectiveWorshipCenters, selectedResidenceObj, activeWorshipCenterId]);
 
   /** The hall's chapel ID to hide from the free-choice list in step 2. */
   const excludedWorshipCenterId = useMemo(() => {
-    if (!selectedResidenceObj || !financeData?.worship_centers) return null;
-    const wc = findHallWorshipCenter(selectedResidenceObj.residenceid, financeData.worship_centers);
-    return wc ? String(wc.sabbath_class_id) : null;
-  }, [selectedResidenceObj, financeData]);
+    if (!selectedResidenceObj) return null;
+    const wc = findHallWorshipCenter(selectedResidenceObj.residenceid, effectiveWorshipCenters);
+    if (!wc) return null;
+    if (String(wc.sabbath_class_id) === activeWorshipCenterId) return null;
+    return String(wc.sabbath_class_id);
+  }, [selectedResidenceObj, effectiveWorshipCenters, activeWorshipCenterId]);
 
   // ── Dynamic step navigation ───────────────────────────────────────────────
   //
@@ -250,25 +413,17 @@ function PaymentFlowContent() {
   //    2 = Select Worship Center
   //    3 = Select Meal Plan      ← skipped when off-campus
   //    4 = Summary
-  //
-  //  NOTE: These are plain functions (not useCallback) so they ALWAYS read
-  //  the freshest render's values of selectedResidence and hallAssignedWC,
-  //  with zero risk of a stale closure causing wrong navigation.
   // ─────────────────────────────────────────────────────────────────────────
 
   const getNextStep = (step: number): number => {
-    const offCampus = selectedResidence === "OFF_CAMPUS";
     if (step === 1) return 2;
-    if (step === 2) return offCampus ? 4 : 3;
+    if (step === 2) return isOffCampus ? 4 : 3;
     if (step === 3) return 4;
     return step;
   };
 
   const getPrevStep = (step: number): number => {
-    const offCampus = selectedResidence === "OFF_CAMPUS";
-    
-
-    if (step === 4) return offCampus ? 2 : 3;         // skip back over meal when off-campus
+    if (step === 4) return isOffCampus ? 2 : 3;         // skip back over meal when off-campus
     if (step === 3) return 2;
     if (step === 2) return 1;
     return step;
@@ -285,23 +440,17 @@ function PaymentFlowContent() {
   }, [isOffCampus, isWorshipAutoAssigned, currentStep]);
 
   // ── Visible steps for stepper / progress sheet ────────────────────────────
-  // Re-derived from the raw state variables (not from derived booleans) so
-  // React's useMemo dependency tracking is as direct as possible.
   const visibleSteps = useMemo((): StepDefinition[] => {
-    const offCampus = selectedResidence === "OFF_CAMPUS";
-    
-
     return [
       { id: 1, title: "Select Residence" },
       { id: 2, title: "Select Worship Center" },
       { id: 3, title: "Select Meal Plan" },
       { id: 4, title: "Summary" },
     ].filter((s) => {
-      
-      if (s.id === 3 && offCampus) return false;     // off-campus → hide meal step
+      if (s.id === 3 && isOffCampus) return false;     // off-campus → hide meal step
       return true;
     });
-  }, [selectedResidence, hallAssignedWC]);
+  }, [isOffCampus]);
 
   // ── Restore draft from offline storage ────────────────────────────────────
   useEffect(() => {
@@ -314,7 +463,7 @@ function PaymentFlowContent() {
           if (draft.selectedWorshipCenterId !== undefined) setSelectedWorshipCenterId(draft.selectedWorshipCenterId);
           if (draft.selectedMealPlan !== undefined) setSelectedMealPlan(draft.selectedMealPlan);
           if (draft.customAmount !== undefined) setCustomAmount(draft.customAmount);
-          if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 5) {
+          if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 4) {
             setCurrentStep(draft.currentStep);
           }
         }
@@ -336,12 +485,78 @@ function PaymentFlowContent() {
     }
   }, [isRestored, isWorshipLocked, lockedWorshipCenterId]);
 
+  // ── Auto-select & lock from /api/v1/academics/financial-reg-summary ───────
+  useEffect(() => {
+    if (!isRestored || isLoading || hasAppliedSummaryRef.current) return;
+    hasAppliedSummaryRef.current = true;
+
+    if (!financeSummary) return;
+
+    // 1. Auto-select Residence if present in summary
+    if (financeSummary.semester_residence?.residence_name) {
+      const targetName = financeSummary.semester_residence.residence_name.trim().toLowerCase();
+      const matchRes = findCatalogResidence(effectiveResidences, targetName);
+      if (matchRes) {
+        setSelectedResidence(String(matchRes.qresidenceid));
+      }
+    }
+
+    // 2. Auto-select Worship Center if present in summary
+    if (financeSummary.worship_center?.worship_center_name) {
+      const targetWc = financeSummary.worship_center.worship_center_name.trim().toLowerCase();
+      const matchWc = effectiveWorshipCenters.find(
+        (wc) => wc.sabbath_class_name.trim().toLowerCase() === targetWc
+      );
+      if (matchWc) {
+        setSelectedWorshipCenterId(String(matchWc.sabbath_class_id));
+      }
+    }
+
+    // 3. Auto-select Meal Plan if present in summary
+    if (financeSummary.meal_type?.meal_type) {
+      const targetMeal = financeSummary.meal_type.meal_type.trim().toLowerCase();
+      const matchMeal = effectiveMealTypes.find(
+        (m) =>
+          m.selection.trim().toLowerCase() === targetMeal ||
+          m.mealtype.trim().toLowerCase() === targetMeal
+      );
+      if (matchMeal) {
+        setSelectedMealPlan(String(matchMeal.qselectionid));
+      }
+    }
+
+    // 4. Sync lock state & step with lock_financial_reg from backend
+    if (financeSummary.lock_financial_reg) {
+      const stepParam = searchParams.get("step");
+      const txRef = searchParams.get("transaction_reference") || searchParams.get("data");
+      if (stepParam !== "5" && !txRef) {
+        setCurrentStep(4);
+      }
+    } else {
+      // Clear any stale local submission state if backend says lock_financial_reg is false
+      setIsFinancialSubmitted(false);
+      if (payState === "in_progress") {
+        setPayState("not_started");
+      }
+    }
+  }, [
+    isRestored,
+    isLoading,
+    financeSummary,
+    effectiveResidences,
+    effectiveWorshipCenters,
+    effectiveMealTypes,
+    searchParams,
+    payState,
+    setIsFinancialSubmitted,
+    setPayState,
+  ]);
 
   // ── Save draft to offline storage ─────────────────────────────────────────
   useEffect(() => {
     if (!isRestored) return;
     const draft: FinanceRegistrationDraft = {
-      currentStep: currentStep,
+      currentStep: currentStep <= 4 ? currentStep : 4,
       selectedResidence,
       selectedWorshipCenterId,
       selectedMealPlan,
@@ -354,6 +569,7 @@ function PaymentFlowContent() {
   }, [isRestored, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
 
   const hasProgress = useMemo(() => {
+    if (isBackendLocked) return false;
     return (
       currentStep > 1 ||
       selectedResidence !== null ||
@@ -361,9 +577,10 @@ function PaymentFlowContent() {
       selectedMealPlan !== null ||
       customAmount !== null
     );
-  }, [currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
+  }, [isBackendLocked, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
 
   const handleResetProgress = async () => {
+    if (isBackendLocked) return;
     try { await clearOfflineDraft(OFFLINE_FINANCE_REG_KEY); } catch {}
     setSelectedResidence(null);
     if (!isWorshipLocked) setSelectedWorshipCenterId(null);
@@ -375,17 +592,24 @@ function PaymentFlowContent() {
   // ── Residence selection — clears dependent state ──────────────────────────
   const handleResidenceSelect = useCallback(
     (id: string) => {
+      if (isBackendLocked) return;
+      if (id === selectedResidence) return;
       setSelectedResidence(id);
+      const picked = effectiveResidences.find((r) => String(r.qresidenceid) === id);
+      const pickedOffCampus =
+        id === "OFF_CAMPUS" ||
+        picked?.residenceid?.trim().toUpperCase() === "OC" ||
+        Boolean(picked?.residencename?.toLowerCase().includes("off campus"));
       // Off-campus has no meal plan
-      if (id === "OFF_CAMPUS") {
+      if (pickedOffCampus) {
         setSelectedMealPlan(null);
       }
-      // Clear worship when residence changes (unless the 2-year lock holds it)
-      if (!isWorshipLocked) {
+      // Clear worship only if not locked and not pre-selected from backend summary
+      if (!isWorshipLocked && !financeSummary?.worship_center) {
         setSelectedWorshipCenterId(null);
       }
     },
-    [isWorshipLocked]
+    [isBackendLocked, selectedResidence, effectiveResidences, isWorshipLocked, financeSummary]
   );
 
   // ── Navigation handlers ────────────────────────────────────────────────────
@@ -433,37 +657,7 @@ function PaymentFlowContent() {
     }
   };
 
-  // ── Financial submission ───────────────────────────────────────────────────
-
-  const handleFullPayment = () => setIsFinancialConfirmOpen(true);
-
-  const handleConfirmFinancialSubmit = () => {
-    setIsFinancialConfirmOpen(false);
-    // Apply 2-year worship lock on successful submission
-    if (selectedWorshipCenterId && !isWorshipLocked) {
-      setWorshipCenterLock(selectedWorshipCenterId, Date.now() + TWO_YEARS_MS);
-    }
-    setIsFinancialSubmitted(true);
-    setPayState("in_progress");
-    setIsFinancialSuccessOpen(true);
-  };
-
-  const handleProceedToPayment = () => {
-    setIsFinancialSuccessOpen(false);
-    setCustomAmount(null);
-    setCurrentStep(5);
-  };
-
-  const handleCancelPayment = () => {
-    setCustomAmount(null);
-    if (isFinancialSubmitted || payState === "in_progress") {
-      router.push("/dashboard/finance");
-    } else {
-      setCurrentStep(4);
-    }
-  };
-
-  // ── Total computation ─────────────────────────────────────────────────────
+  // ── Total computation & comparison with Amount Paid For Semester ──────────
 
   const computeTotal = () => {
     const mandatory = isFullSession
@@ -482,9 +676,110 @@ function PaymentFlowContent() {
     return mandatory + residenceCost + mealCost;
   };
 
+  const grossTotal = computeTotal();
+  const amountPaidForSemester = studentFees?.amount_paid_for_semester ?? 0;
+  const isSettledByPaidAmount = grossTotal > 0 && grossTotal <= amountPaidForSemester;
+  const netAmountDue = Math.max(0, grossTotal - amountPaidForSemester);
+  const payableAmount = customAmount ?? netAmountDue;
+
+  useEffect(() => {
+    if (isBackendLocked && isSettledByPaidAmount && payState !== "completed") {
+      setPayState("completed");
+    }
+  }, [isBackendLocked, isSettledByPaidAmount, payState, setPayState]);
+
+  // ── Financial submission ───────────────────────────────────────────────────
+
+  const handleFullPayment = () => setIsFinancialConfirmOpen(true);
+
+  const handleConfirmFinancialSubmit = async () => {
+    if (!selectedResidenceObj || !selectedWorshipCenterObj) {
+      toast.error("Please select your residence and worship center before submitting.");
+      return;
+    }
+
+    // -1 is a display-only placeholder built from financial-reg-summary (which has no id).
+    if (Number(selectedResidenceObj.qresidenceid) <= 0) {
+      toast.error(
+        "Your previously selected residence isn't in the current residence list. Please go back to Step 1 and pick a residence to submit."
+      );
+      return;
+    }
+
+    const mealTypeCode = isOffCampus
+      ? "NONE"
+      : selectedMealTypeObj
+      ? deriveMealCode(selectedMealTypeObj.mealtype)
+      : "";
+
+    if (!isOffCampus && !mealTypeCode) {
+      toast.error("Please select a meal plan before submitting.");
+      return;
+    }
+
+    setIsSubmittingFinanceReg(true);
+    try {
+      const result = await submitFinanceRegistrationAction({
+        qresidenceid: Number(selectedResidenceObj.qresidenceid),
+        meal_type: mealTypeCode,
+        sabbath_class_id: Number(selectedWorshipCenterObj.sabbath_class_id),
+      });
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to submit financial registration.");
+        return;
+      }
+
+      toast.success(result.message || "Financial registration submitted successfully!");
+
+      // Apply 2-year worship lock on successful submission
+      if (selectedWorshipCenterId && !isWorshipLocked) {
+        setWorshipCenterLock(selectedWorshipCenterId, Date.now() + TWO_YEARS_MS);
+      }
+
+      // Lock selections and refresh summary + student fee ledger
+      markAsLocked();
+      await refreshSummaryAndFees();
+
+      if (isSettledByPaidAmount) {
+        setPayState("completed");
+        setIsFinancialSubmitted(false);
+      } else {
+        setIsFinancialSubmitted(true);
+        setPayState("in_progress");
+      }
+
+      // Close modal and return to Step 4 (Summary view)
+      setIsFinancialConfirmOpen(false);
+      setCurrentStep(4);
+    } finally {
+      setIsSubmittingFinanceReg(false);
+    }
+  };
+
+  const handleProceedToPayment = () => {
+    setIsFinancialSuccessOpen(false);
+    setCustomAmount(null);
+    setCurrentStep(5);
+  };
+
+  const handleViewPaymentReceipt = () => {
+    setPayState("completed");
+    setIsFinancialSubmitted(false);
+    clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch(() => {});
+    router.push(
+      `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${grossTotal}&gateway=Wallet`
+    );
+  };
+
+  const handleCancelPayment = () => {
+    setCustomAmount(null);
+    setCurrentStep(4);
+  };
+
   const handlePayNow = () => {
     setIsProcessing(true);
-    const total = customAmount ?? computeTotal();
+    const total = payableAmount;
     setTimeout(() => {
       setIsProcessing(false);
       setStoreWalletBalance(Math.max(0, walletBalance - total));
@@ -527,6 +822,7 @@ function PaymentFlowContent() {
             typeLabel={typeLabel}
             hasProgress={hasProgress}
             onCancelProgress={handleResetProgress}
+            onStepClick={handleChangeStep}
           />
         </div>
       )}
@@ -540,27 +836,30 @@ function PaymentFlowContent() {
           <SelectResidence
             selectedId={selectedResidence}
             onSelect={handleResidenceSelect}
-            residences={financeData?.residence || []}
+            residences={effectiveResidences}
             isLoading={isLoading}
             error={error}
             isFullSession={isFullSession}
+            isLocked={isBackendLocked}
           />
         )}
 
         {/* Step 2: Worship Center — shown for ALL residence types (including off-campus),
-            but put into locked read-only mode when a 2-year lock is active. */}
+            but put into locked read-only mode when a 2-year lock or backend lock is active. */}
         {currentStep === 2 && (
           <SelectWorshipCenter
             selectedId={selectedWorshipCenterId}
-            onSelect={setSelectedWorshipCenterId}
+            onSelect={(id) => {
+              if (!isBackendLocked) setSelectedWorshipCenterId(id);
+            }}
             worshipCenters={mappedWorshipCenters}
             isLoading={isLoading}
             error={error}
-            isLocked={isWorshipLocked}
-            lockedUntil={worshipCenterLockedUntil}
+            isLocked={isWorshipLocked || isBackendLocked}
+            lockedUntil={isWorshipLocked ? worshipCenterLockedUntil : null}
             lockedCenter={lockedWCDetails}
-
             excludedId={excludedWorshipCenterId}
+            selectedResidenceId={selectedResidenceObj?.residenceid ?? null}
           />
         )}
 
@@ -571,12 +870,15 @@ function PaymentFlowContent() {
         {currentStep === 3 && !isOffCampus && (
           <SelectMealPlan
             selectedId={selectedMealPlan}
-            onSelect={setSelectedMealPlan}
-            mealTypes={financeData?.meal_types?.filter((m: any) => !m.selection.toLowerCase().includes("off campus")) || []}
+            onSelect={(id) => {
+              if (!isBackendLocked) setSelectedMealPlan(id);
+            }}
+            mealTypes={effectiveMealTypes.filter((m) => !m.selection.toLowerCase().includes("off campus"))}
             generalCharges={financeData?.general_charges || null}
             isLoading={isLoading}
             error={error}
             isFullSession={isFullSession}
+            isLocked={isBackendLocked}
           />
         )}
 
@@ -592,14 +894,15 @@ function PaymentFlowContent() {
             isWorshipLocked={isWorshipLocked}
             worshipLockedUntil={worshipCenterLockedUntil}
             isFullSession={isFullSession}
-            isLocked={isFinancialSubmitted || payState === "in_progress"}
+            isLocked={isBackendLocked}
+            amountPaidForSemester={amountPaidForSemester}
           />
         )}
 
         {currentStep === 5 && (
           <WalletPayment
             walletBalance={walletBalance}
-            totalAmount={customAmount ?? computeTotal()}
+            totalAmount={payableAmount}
             studentName={studentName}
             academicInfo={academicInfo}
             onCancelPayment={handleCancelPayment}
@@ -628,33 +931,33 @@ function PaymentFlowContent() {
           <div className="flex items-center justify-between max-w-[1200px] mx-auto">
             <Button
               variant="outline"
-              onClick={() => {
-                if (isFinancialSubmitted || payState === "in_progress") {
-                  setCurrentStep(5);
-                } else {
-                  handlePrevious();
-                }
-              }}
+              onClick={handlePrevious}
               className="rounded-[10px] h-11 px-4 md:px-6 text-[14px] font-medium transition-all gap-2 bg-[#f6f8fa] dark:bg-gray-800 text-[#525866] dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline-block">
-                {isFinancialSubmitted || payState === "in_progress" ? "Back to payment" : "Previous"}
-              </span>
+              <span className="hidden sm:inline-block">Previous</span>
             </Button>
             <div className="flex-1 md:flex-none flex items-center justify-end pl-3 md:pl-0">
               <Button
                 onClick={() => {
-                  if (isFinancialSubmitted || payState === "in_progress") {
-                    setCurrentStep(5);
-                  } else {
+                  if (!isBackendLocked) {
                     handleFullPayment();
+                  } else if (isSettledByPaidAmount) {
+                    handleViewPaymentReceipt();
+                  } else {
+                    handleProceedToPayment();
                   }
                 }}
                 className="w-full md:w-auto rounded-[10px] h-11 px-6 md:px-8 text-[14px] font-medium bg-[#003cbb] dark:bg-[#2563EB] hover:bg-[#002e8f] dark:hover:bg-[#1D4ED8] text-white transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <span>{isFinancialSubmitted || payState === "in_progress" ? "Proceed to payment" : "Submit selection"}</span>
-                {isFinancialSubmitted || payState === "in_progress" ? <ChevronRight className="w-4 h-4" /> : null}
+                <span>
+                  {!isBackendLocked
+                    ? "Submit selection"
+                    : isSettledByPaidAmount
+                    ? "View Payment Receipt"
+                    : "Proceed to Payment"}
+                </span>
+                {isBackendLocked ? <ChevronRight className="w-4 h-4" /> : null}
               </Button>
             </div>
           </div>
@@ -665,7 +968,7 @@ function PaymentFlowContent() {
       <PartialPaymentModal
         isOpen={isPartialPaymentOpen}
         onClose={() => setIsPartialPaymentOpen(false)}
-        totalAmount={computeTotal()}
+        totalAmount={grossTotal}
         onPayNow={(amount) => {
           setCustomAmount(amount);
           setCurrentStep(4);
@@ -685,12 +988,13 @@ function PaymentFlowContent() {
         onClose={() => setIsMobileSheetOpen(false)}
         currentStep={currentStep}
         steps={visibleSteps}
+        onStepClick={handleChangeStep}
       />
 
       <FundWalletModal
         isOpen={isFundWalletModalOpen}
         onClose={() => setIsFundWalletModalOpen(false)}
-        defaultAmount={Math.max(0, (customAmount ?? computeTotal()) - walletBalance) || undefined}
+        defaultAmount={Math.max(0, payableAmount - walletBalance) || undefined}
         returnPath={`/dashboard/finance/fees/payment?type=${paymentType || "semester"}&step=5`}
         onSuccess={(amount) => {
           setStoreWalletBalance(walletBalance + amount);
@@ -700,9 +1004,12 @@ function PaymentFlowContent() {
 
       <FinancialConfirmationModal
         isOpen={isFinancialConfirmOpen}
-        onClose={() => setIsFinancialConfirmOpen(false)}
+        onClose={() => {
+          if (!isSubmittingFinanceReg) setIsFinancialConfirmOpen(false);
+        }}
         onConfirm={handleConfirmFinancialSubmit}
         studentName={studentName}
+        isLoading={isSubmittingFinanceReg}
       />
 
       <FinancialSuccessModal

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import type { FinanceMealType, FinanceGeneralCharges } from "@/app/actions/registration";
@@ -64,6 +64,7 @@ interface SelectMealPlanProps {
   isLoading?: boolean;
   error?: string | null;
   isFullSession?: boolean;
+  isLocked?: boolean;
 }
 
 export function SelectMealPlan({
@@ -74,6 +75,7 @@ export function SelectMealPlan({
   isLoading = false,
   error = null,
   isFullSession = false,
+  isLocked = false,
 }: SelectMealPlanProps) {
   return (
     <div className="w-full max-w-[1200px] h-[79vh] overflow-y-auto flex flex-col gap-5 p-1.5">
@@ -86,6 +88,18 @@ export function SelectMealPlan({
       {!isLoading && error && (
         <div className="rounded-[12px] bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 px-4 py-3 text-[14px] text-red-600 dark:text-red-400">
           {error}
+        </div>
+      )}
+
+      {/* Locked Banner */}
+      {isLocked && (
+        <div className="rounded-[12px] bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+          </div>
+          <span className="text-[13px] md:text-[14px] font-medium text-amber-900 dark:text-amber-200">
+            Your meal plan selection has been locked and cannot be changed.
+          </span>
         </div>
       )}
 
@@ -105,12 +119,18 @@ export function SelectMealPlan({
               <div
                 key={meal.qselectionid}
                 className={cn(
-                  "relative bg-white dark:bg-gray-900 border-2 rounded-[12px] flex flex-col gap-2 pt-2 px-2 pb-3 transition-all cursor-pointer",
+                  "relative bg-white dark:bg-gray-900 border-2 rounded-[12px] flex flex-col gap-2 pt-2 px-2 pb-3 transition-all",
+                  isLocked ? "cursor-not-allowed" : "cursor-pointer",
                   isSelected
                     ? "bg-[#e5ecfc] dark:bg-[#003cbb]/20 border-[#003cbb] dark:border-[#4d82ff]"
-                    : "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none hover:shadow-md dark:hover:border-gray-700"
+                    : cn(
+                        "border-[#f5f5f5] dark:border-gray-800 shadow-[0px_1px_2px_0px_rgba(228,229,231,0.24)] dark:shadow-none",
+                        isLocked ? "opacity-60" : "hover:shadow-md dark:hover:border-gray-700"
+                      )
                 )}
-                onClick={() => onSelect(String(meal.qselectionid))}
+                onClick={() => {
+                  if (!isLocked) onSelect(String(meal.qselectionid));
+                }}
               >
                 {/* Meal Image: 4:3 so the illustrated meal and its label show in full */}
                 <div className="relative aspect-[4/3] w-full rounded-[8px] overflow-hidden bg-[#f6efe6]">

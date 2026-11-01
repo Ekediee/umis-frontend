@@ -9,9 +9,16 @@ interface PaymentProgressSheetProps {
   onClose: () => void;
   currentStep: number;
   steps: StepDefinition[];
+  onStepClick?: (stepId: number) => void;
 }
 
-export function PaymentProgressSheet({ isOpen, onClose, currentStep, steps }: PaymentProgressSheetProps) {
+export function PaymentProgressSheet({
+  isOpen,
+  onClose,
+  currentStep,
+  steps,
+  onStepClick,
+}: PaymentProgressSheetProps) {
   if (!isOpen) return null;
 
   return (
@@ -35,11 +42,19 @@ export function PaymentProgressSheet({ isOpen, onClose, currentStep, steps }: Pa
               const displayNumber = index + 1;
 
               return (
-                <div
+                <button
+                  type="button"
                   key={step.id}
+                  onClick={() => {
+                    if (onStepClick) {
+                      onStepClick(step.id);
+                      onClose();
+                    }
+                  }}
                   className={cn(
-                    "flex items-center justify-between p-4 rounded-[12px] transition-colors",
-                    isCompleted ? "bg-[#eef3fd] dark:bg-[#003cbb]/10" : "bg-transparent"
+                    "flex items-center justify-between p-4 rounded-[12px] transition-colors w-full text-left",
+                    isCompleted ? "bg-[#eef3fd] dark:bg-[#003cbb]/10" : "bg-transparent",
+                    onStepClick && "cursor-pointer hover:bg-[#e5ecfc] dark:hover:bg-[#003cbb]/20"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -60,7 +75,7 @@ export function PaymentProgressSheet({ isOpen, onClose, currentStep, steps }: Pa
                   ) : (
                     <Circle className="w-5 h-5 text-[#cdd0d5] dark:text-gray-700 transition-colors" />
                   )}
-                </div>
+                </button>
               );
             })}
           </div>

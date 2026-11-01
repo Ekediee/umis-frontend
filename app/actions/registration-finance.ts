@@ -19,11 +19,13 @@ interface RawFinanceResidence {
   sex: string;
   min_level: number;
   max_level: number;
-  majors: string;
+  majors: string | null;
   blockname?: string;
   capacity?: number;
   roomsize?: number;
   org_id?: number;
+  occupied_space?: number;
+  space_left?: number;
   residence_images?: RawFinanceResidenceImage[];
 }
 
@@ -50,6 +52,7 @@ interface RawFinanceWorshipCenter {
   declared_capacity: number;
   occupied_space: number;
   space_left: number;
+  residenceid?: string | null;
 }
 
 interface RawFinanceRegistrationResponse {
@@ -85,6 +88,8 @@ export interface FinanceResidence {
   capacity?: number;
   roomsize?: number;
   org_id?: number;
+  occupied_space?: number;
+  space_left?: number;
   residence_images?: ResidenceImage[];
 }
 
@@ -111,6 +116,7 @@ export interface FinanceWorshipCenter {
   declared_capacity: number;
   occupied_space: number;
   space_left: number;
+  residenceid?: string | null;
 }
 
 export interface FinanceRegistrationData {
@@ -122,6 +128,53 @@ export interface FinanceRegistrationData {
 
 export interface FinanceRegistrationResult {
   data?: FinanceRegistrationData;
+  message?: string;
+  error?: string;
+}
+
+// ── Financial Registration Summary (/api/v1/academics/financial-reg-summary) ──
+
+export interface FinancialRegSummaryMeal {
+  meal_type: string;
+  meal_description?: string;
+  semester_meal_charge?: number;
+}
+
+export interface FinancialRegSummaryWorshipCenter {
+  worship_center_name: string;
+  location_on_campus: string;
+  pastor_in_charge: string;
+}
+
+export interface FinancialRegSummaryResidence {
+  residence_name: string;
+  residence_charges: number;
+  residence_images?: ResidenceImage[];
+  residence_dean?: string;
+  majors?: string | null;
+}
+
+export interface FinancialRegSummaryData {
+  meal_type: FinancialRegSummaryMeal | null;
+  worship_center: FinancialRegSummaryWorshipCenter | null;
+  semester_residence: FinancialRegSummaryResidence | null;
+  lock_financial_reg: boolean;
+}
+
+export interface FinancialRegSummaryResult {
+  data?: FinancialRegSummaryData;
+  message?: string;
+  error?: string;
+}
+
+export interface SubmitFinanceRegistrationPayload {
+  qresidenceid: number;
+  meal_type: string;
+  sabbath_class_id: number;
+}
+
+export interface SubmitFinanceRegistrationResult {
+  success: boolean;
   message?: string;
   error?: string;
 }
@@ -249,6 +302,8 @@ export const getFinanceRegistrationAction =
               capacity: r.capacity,
               roomsize: r.roomsize,
               org_id: r.org_id,
+              occupied_space: r.occupied_space,
+              space_left: r.space_left,
               residence_images: Array.isArray(r.residence_images) ? r.residence_images : [],
             };
           }),
@@ -266,6 +321,7 @@ export const getFinanceRegistrationAction =
             declared_capacity: wc.declared_capacity,
             occupied_space: wc.occupied_space,
             space_left: wc.space_left,
+            residenceid: wc.residenceid ?? null,
           })),
         },
         message: json?.message,
@@ -277,3 +333,187 @@ export const getFinanceRegistrationAction =
       };
     }
   };
+
+/**
+ * Fetches the student's current financial registration summary (existing selections + lock flag).
+ * Endpoint: GET /api/v1/academics/financial-reg-summary
+ */
+export const getFinancialRegSummaryAction =
+  async (): Promise<FinancialRegSummaryResult> => {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("API_URL is not defined in environment variables");
+      return { error: "Internal server error: Missing API configuration" };
+    }
+
+    const token = await getSessionToken();
+    if (!token) {
+      return { error: "You are not authenticated. Please log in again." };
+    }
+
+    try {
+      const response = await loggedFetch(
+        `${apiUrl}/api/v1/academics/financial-reg-summary`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return {
+            data: {
+              meal_type: null,
+              worship_center: null,
+              semester_residence: null,
+              lock_financial_reg: false,
+            },
+          };
+        }
+        let errorMessage = "Failed to fetch financial registration summary";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // keep fallback
+        }
+        return { error: errorMessage };
+      }
+
+      const json = await response.json();
+      const rawData = json?.data ?? {};
+
+      const rawMeal = rawData?.meal_type;
+      const mealType: FinancialRegSummaryMeal | null =
+        rawMeal &&
+        typeof rawMeal === "object" &&
+        typeof rawMeal.meal_type === "string" &&
+        rawMeal.meal_type.trim().length > 0
+          ? {
+              meal_type: rawMeal.meal_type.trim(),
+              meal_description: rawMeal.meal_description,
+              semester_meal_charge:
+                typeof rawMeal.semester_meal_charge === "number"
+                  ? rawMeal.semester_meal_charge
+                  : undefined,
+            }
+          : null;
+
+      const rawWC = rawData?.worship_center;
+      const worshipCenter: FinancialRegSummaryWorshipCenter | null =
+        rawWC &&
+        typeof rawWC === "object" &&
+        typeof rawWC.worship_center_name === "string" &&
+        rawWC.worship_center_name.trim().length > 0
+          ? {
+              worship_center_name: rawWC.worship_center_name.trim(),
+              location_on_campus: rawWC.location_on_campus ?? "",
+              pastor_in_charge: rawWC.pastor_in_charge ?? "",
+            }
+          : null;
+
+      const rawRes = rawData?.semester_residence;
+      const semesterResidence: FinancialRegSummaryResidence | null =
+        rawRes &&
+        typeof rawRes === "object" &&
+        typeof rawRes.residence_name === "string" &&
+        rawRes.residence_name.trim().length > 0
+          ? {
+              residence_name: rawRes.residence_name.trim(),
+              residence_charges:
+                typeof rawRes.residence_charges === "number"
+                  ? rawRes.residence_charges
+                  : 0,
+              residence_images: Array.isArray(rawRes.residence_images)
+                ? rawRes.residence_images
+                : [],
+              residence_dean: rawRes.residence_dean,
+              majors: rawRes.majors ? String(rawRes.majors).trim() : null,
+            }
+          : null;
+
+      return {
+        data: {
+          meal_type: mealType,
+          worship_center: worshipCenter,
+          semester_residence: semesterResidence,
+          lock_financial_reg: Boolean(rawData?.lock_financial_reg),
+        },
+        message: json?.message,
+      };
+    } catch (error) {
+      console.error("getFinancialRegSummaryAction error:", error);
+      return {
+        error: "Could not connect to the server. Please try again later.",
+      };
+    }
+  };
+
+/**
+ * Submits the student's financial registration selections (residence, meal plan, worship center).
+ * Endpoint: POST /api/v1/student/submit-finance-registration
+ */
+export const submitFinanceRegistrationAction = async (
+  payload: SubmitFinanceRegistrationPayload
+): Promise<SubmitFinanceRegistrationResult> => {
+  const apiUrl = process.env.API_URL;
+  if (!apiUrl) {
+    console.error("API_URL is not defined in environment variables");
+    return {
+      success: false,
+      error: "Internal server error: Missing API configuration",
+    };
+  }
+
+  const token = await getSessionToken();
+  if (!token) {
+    return {
+      success: false,
+      error: "You are not authenticated. Please log in again.",
+    };
+  }
+
+  try {
+    const response = await loggedFetch(
+      `${apiUrl}/api/v1/student/submit-finance-registration`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      }
+    );
+
+    const json = await response.json().catch(() => null);
+
+    if (!response.ok || json?.status === false) {
+      return {
+        success: false,
+        error:
+          json?.message ||
+          "Failed to submit financial registration. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      message:
+        json?.message || "Financial registration submitted successfully!",
+    };
+  } catch (error) {
+    console.error("submitFinanceRegistrationAction error:", error);
+    return {
+      success: false,
+      error: "Could not connect to the server. Please try again later.",
+    };
+  }
+};
+
