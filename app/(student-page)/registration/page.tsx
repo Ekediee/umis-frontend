@@ -143,10 +143,10 @@ export default function RegistrationPage() {
           setRegState("not_started");
         } else if (result.error) {
           // Keep whatever local state we have; don't block the student
-          console.error("Could not verify course submission status:", result.error);
+          console.warn("Could not verify course submission status:", result.error);
         }
       })
-      .catch((err) => console.error("Could not verify course submission status:", err))
+      .catch((err) => console.warn("Could not verify course submission status:", err))
       .finally(() => setSubmissionChecked(true));
   }, [isRegisteredForSemester]);
 

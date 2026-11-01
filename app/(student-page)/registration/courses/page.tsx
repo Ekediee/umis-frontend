@@ -54,10 +54,10 @@ function RegistrationCoursesFlowContent() {
           setRegState("in_progress");
         } else if (result.error) {
           // Fail open: don't block registration if the check itself fails
-          console.error("Could not verify course submission status:", result.error);
+          console.warn("Could not verify course submission status:", result.error);
         }
       })
-      .catch((err) => console.error("Could not verify course submission status:", err));
+      .catch((err) => console.warn("Could not verify course submission status:", err));
     return () => {
       cancelled = true;
     };
