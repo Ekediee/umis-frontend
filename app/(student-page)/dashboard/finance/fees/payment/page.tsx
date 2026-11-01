@@ -20,6 +20,8 @@ import { PaymentMethodSheet } from "@/components/fees/payment-method-sheet";
 import { ProcessingOverlay } from "@/components/fees/processing-overlay";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { confirmWalletFunding } from "@/lib/payments/wallet-funding";
+import { findCatalogResidence } from "@/lib/payments/receipt-items";
+import { useAcademicSession } from "@/hooks/use-academic-session";
 import { toast } from "sonner";
 import { FinancialConfirmationModal } from "@/components/fees/financial-confirmation-modal";
 import { FinancialSuccessModal } from "@/components/registration/registration-status-modals";
@@ -76,21 +78,6 @@ const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Match a residence by name against the catalog, tolerating case/spacing/punctuation differences. */
-function findCatalogResidence(list: FinanceResidence[], name: string): FinanceResidence | undefined {
-  const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const target = norm(name);
-  if (!target) return undefined;
-  return (
-    list.find((r) => r.qresidenceid > 0 && norm(r.residencename) === target) ||
-    list.find((r) => {
-      if (r.qresidenceid <= 0) return false;
-      const n = norm(r.residencename);
-      return n.length > 3 && (n.startsWith(target) || target.startsWith(n));
-    })
-  );
-}
-
 function PaymentFlowContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,7 +115,9 @@ const walletBalance = storeWalletBalance ?? 0;
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [isRestored, setIsRestored] = useState(false);
-  const hasAppliedSummaryRef = useRef(false);
+  // Keeps the saved choice when the address has no ?type= (e.g. an older link)
+  const draftPaymentType = useRef<FinanceRegistrationDraft["paymentType"]>(undefined);
+const hasAppliedSummaryRef = useRef(false);
 
   // Core selection state
   const [selectedResidence, setSelectedResidence] = useState<string | null>(null);
@@ -191,10 +180,11 @@ const walletBalance = storeWalletBalance ?? 0;
   const currentSemester =
     (userData?.user_data?.academic_information as Record<string, unknown> | undefined)
       ?.current_semester as string || "First Semester";
-  const academicInfo = `Academic Year 2025/2026 - ${currentSemester} ${academicLevel}`;
+  const { session, semesterName } = useAcademicSession();
+  const academicInfo = `Academic Year ${session ?? "—"} - ${semesterName ?? currentSemester} ${academicLevel}`;
 
-  const sessionLabel = "2025/2026";
-  const isFullSession = paymentType === "full";
+  const sessionLabel = session ?? "—";
+const isFullSession = paymentType === "full";
   const typeLabel = paymentType === "semester" ? "1st Semester Registration" : "Full Session Registration";
 
   // ── Effective lists (catalog + fallback from financial-reg-summary) ───────
@@ -466,8 +456,9 @@ const walletBalance = storeWalletBalance ?? 0;
       try {
         const draft = await getOfflineDraft<FinanceRegistrationDraft>(OFFLINE_FINANCE_REG_KEY);
         if (draft && isMounted) {
+          draftPaymentType.current = draft.paymentType;
           if (draft.selectedResidence !== undefined) setSelectedResidence(draft.selectedResidence);
-          if (draft.selectedWorshipCenterId !== undefined) setSelectedWorshipCenterId(draft.selectedWorshipCenterId);
+if (draft.selectedWorshipCenterId !== undefined) setSelectedWorshipCenterId(draft.selectedWorshipCenterId);
           if (draft.selectedMealPlan !== undefined) setSelectedMealPlan(draft.selectedMealPlan);
           if (draft.customAmount !== undefined) setCustomAmount(draft.customAmount);
           if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 4) {
@@ -563,8 +554,9 @@ const walletBalance = storeWalletBalance ?? 0;
   useEffect(() => {
     if (!isRestored) return;
     const draft: FinanceRegistrationDraft = {
+      paymentType: paymentType === "full" || paymentType === "semester" ? paymentType : draftPaymentType.current,
       currentStep: currentStep <= 4 ? currentStep : 4,
-      selectedResidence,
+selectedResidence,
       selectedWorshipCenterId,
       selectedMealPlan,
       customAmount,
@@ -573,7 +565,7 @@ const walletBalance = storeWalletBalance ?? 0;
     saveOfflineDraft(OFFLINE_FINANCE_REG_KEY, draft).catch((err) => {
       console.warn("Failed to save finance draft:", err);
     });
-  }, [isRestored, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
+  }, [isRestored, paymentType, currentStep, selectedResidence, selectedWorshipCenterId, selectedMealPlan, customAmount]);
 
   const hasProgress = useMemo(() => {
     if (isBackendLocked) return false;
@@ -775,7 +767,7 @@ const walletBalance = storeWalletBalance ?? 0;
     setIsFinancialSubmitted(false);
     clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch(() => {});
     router.push(
-      `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${grossTotal}&gateway=Wallet`
+      `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${grossTotal}&gateway=Wallet&plan=${isFullSession ? "full" : "semester"}`
     );
   };
 
@@ -794,7 +786,7 @@ const walletBalance = storeWalletBalance ?? 0;
       setIsFinancialSubmitted(false);
       clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch(() => {});
       router.push(
-        `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=Wallet`
+        `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${total}&gateway=Wallet&plan=${isFullSession ? "full" : "semester"}`
       );
     }, 2500);
   };
@@ -839,6 +831,20 @@ const walletBalance = storeWalletBalance ?? 0;
         "flex-1 flex justify-center items-start overflow-y-auto",
         currentStep === 5 ? "pt-3 md:pt-4" : "pt-6"
       )}>
+        {/* The choice is no longer asked each visit, so it stays changeable until registration locks */}
+        {currentStep === 1 && !isBackendLocked && (
+          <div className="flex items-center justify-between gap-3 mb-3 px-1 text-[13px] text-[#525866] dark:text-gray-400">
+            <span className="min-w-0 truncate">{typeLabel}</span>
+            <button
+              type="button"
+              onClick={() => router.replace(`/dashboard/finance/fees?change=${isFullSession ? "full" : "semester"}`)}
+              className="shrink-0 font-semibold text-[#003cbb] dark:text-[#4d82ff] hover:underline"
+            >
+              Change
+            </button>
+          </div>
+        )}
+
         {currentStep === 1 && (
           <SelectResidence
             selectedId={selectedResidence}

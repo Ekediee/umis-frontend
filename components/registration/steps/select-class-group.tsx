@@ -1,5 +1,6 @@
 "use client";
 
+import { useAcademicSession } from "@/hooks/use-academic-session";
 import { cn } from "@/lib/utils";
 import { ClassGroup } from "@/app/actions/registration";
 import { useRegistration } from "@/components/providers/registration-provider";
@@ -27,6 +28,7 @@ function GroupSkeleton() {
 }
 
 export function SelectClassGroup(props: SelectClassGroupProps) {
+  const { session, semesterName } = useAcademicSession();
   const context = useRegistration();
 
   const selectedGroups = props.selectedGroups !== undefined ? props.selectedGroups : context.selectedGroups;
@@ -41,11 +43,11 @@ export function SelectClassGroup(props: SelectClassGroupProps) {
       {/* Session Info Banner (Mobile Only, on Desktop it is in the WebStepper) */}
       <div className="md:hidden bg-[#eef3fd] dark:bg-[#003cbb]/15 rounded-[16px] p-4 flex items-center justify-between gap-2 border border-[#ccdaf9] dark:border-[#ccdaf9]/25">
         <span className="text-[14px] font-semibold text-[#003cbb] dark:text-[#4d82ff] tracking-tight">
-          First Semester
-        </span>
+          {semesterName ?? "—"}
+</span>
         <span className="text-[14px] font-medium text-[#003cbb] dark:text-[#4d82ff]">
-          2025/2026
-        </span>
+          {session ?? "—"}
+</span>
       </div>
 
       {/* Main Form Area */}

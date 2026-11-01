@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { RegistrationContext } from "@/components/providers/registration-provider";
+import { useAcademicSession } from "@/hooks/use-academic-session";
 import { ResetProgressConfirmModal } from "@/components/registration/registration-status-modals";
 
 interface WebStepperProps {
@@ -12,7 +13,8 @@ interface WebStepperProps {
 }
 
 export function WebStepper(props: WebStepperProps) {
-  const context = useContext(RegistrationContext);
+  const { session, semesterName } = useAcademicSession();
+const context = useContext(RegistrationContext);
   const currentStep = props.currentStep !== undefined ? props.currentStep : (context?.currentStep ?? 1);
   const router = useRouter();
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -43,8 +45,8 @@ export function WebStepper(props: WebStepperProps) {
         <div className="flex flex-1 items-center justify-center gap-3 lg:gap-4 min-w-0">
           {/* Session Pill */}
           <div className="bg-[#eaf0ff] dark:bg-[#4d82ff]/10 rounded-2xl px-4 h-[52px] flex flex-col justify-center border border-[#ccdaf9] dark:border-[#4d82ff]/25 shrink-0">
-            <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">2025/2026</span>
-            <span className="text-[13px] font-medium text-[#003cbb]/80 dark:text-[#8ba7ff] leading-tight whitespace-nowrap">First Semester</span>
+            <span className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight">{session ?? "—"}</span>
+            <span className="text-[13px] font-medium text-[#003cbb]/80 dark:text-[#8ba7ff] leading-tight whitespace-nowrap">{semesterName ?? "—"}</span>
           </div>
 
           {/* Stepper Pill */}

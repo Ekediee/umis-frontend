@@ -13,6 +13,7 @@ import { FundWalletModal, FundWalletStep } from "@/components/fees/fund-wallet-m
 import { PayOutstandingModal } from "@/components/fees/pay-outstanding-modal";
 import { getStudentFeesAction } from "@/app/actions/payment";
 import { confirmWalletFunding } from "@/lib/payments/wallet-funding";
+import { paymentProgress } from "@/lib/payments/fee-progress";
 import { isSuccessfulPaymentStatus } from "@/lib/payments/payment-status";
 import type { StudentFeesData } from "@/app/actions/payment.types";
 import { useWalletStore } from "@/hooks/use-wallet-store";
@@ -310,13 +311,7 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
   const isDebt = studentFees !== null && rawOutstanding > 0;
   const hasOutstandingFees = isDebt;
 
-  // Option 1: Holistic Net Obligation Evaluation
-  // Total obligation accounts for amount already paid + total remaining outstanding debt (past + current)
-  const totalObligation = paidAmount + outstandingAmount;
-
-  const progressPercent = totalObligation > 0
-    ? Math.min(100, Math.max(0, Math.round((paidAmount / totalObligation) * 100)))
-    : (outstandingAmount === 0 && paidAmount > 0 ? 100 : 0);
+  const progressPercent = paymentProgress(studentFees?.estimated_semester_fee ?? 0, paidAmount, outstandingAmount);
 
   const isFinancialApproved = progressPercent >= 75;
 

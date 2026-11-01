@@ -1,25 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Info, X } from "lucide-react";
+import { Suspense, useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Info, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRegistrationStore } from "@/hooks/use-registration-store";
 import { getSemesterRegistrationStatusAction } from "@/app/actions/registration";
+import { getOfflineDraft, OFFLINE_FINANCE_REG_KEY, type FinanceRegistrationDraft } from "@/lib/offline-storage";
 
-export default function FeesPage() {
+function FeesPageContent() {
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState<"full" | "semester" | null>(null);
+  const searchParams = useSearchParams();
+  // ?change=<type>: the student came back on purpose to switch, so they aren't sent on again
+  const changingFrom = searchParams.get("change");
+  const isChanging = changingFrom !== null;
+  const [selectedOption, setSelectedOption] = useState<"full" | "semester" | null>(
+    changingFrom === "full" || changingFrom === "semester" ? changingFrom : null
+  );
+  const [isCheckingProgress, setIsCheckingProgress] = useState(!isChanging);
 
   const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
 
+  // Students who already chose go straight back to where they stopped
   useEffect(() => {
-    // If financial registration has already been submitted, proceed directly to summary payment
-    if ((isFinancialSubmitted || payState === "in_progress") && payState !== "completed") {
-      router.replace("/dashboard/finance/fees/payment?step=5");
+    if (isChanging) return;
+    let cancelled = false;
+
+    async function resume() {
+      const draft = await getOfflineDraft<FinanceRegistrationDraft>(OFFLINE_FINANCE_REG_KEY).catch(() => undefined);
+      if (cancelled) return;
+
+      const type = draft?.paymentType;
+      const submitted = (isFinancialSubmitted || payState === "in_progress") && payState !== "completed";
+      if (submitted) {
+        router.replace(`/dashboard/finance/fees/payment?${type ? `type=${type}&` : ""}step=5`);
+      } else if (type && payState !== "completed") {
+        router.replace(`/dashboard/finance/fees/payment?type=${type}`);
+      } else {
+        setIsCheckingProgress(false);
+      }
     }
-  }, [isFinancialSubmitted, payState, router]);
+
+    resume();
+    return () => {
+      cancelled = true;
+    };
+  }, [isChanging, isFinancialSubmitted, payState, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,8 +66,16 @@ export default function FeesPage() {
     router.back();
   };
 
+  if (isCheckingProgress) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]" role="status" aria-label="Loading">
+        <Loader2 className="w-8 h-8 text-[#003cbb] dark:text-[#4d82ff] animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-6 w-full px-4 md:px-8 pb-10 relative bg-white dark:bg-black md:bg-transparent min-h-screen md:min-h-0 transition-colors">
+<div className="flex flex-col gap-6 w-full px-4 md:px-8 pb-10 relative bg-white dark:bg-black md:bg-transparent min-h-screen md:min-h-0 transition-colors">
       
       {/* General Back Button (Desktop only) */}
       <div className="hidden md:flex mt-2 mb-2">
@@ -120,8 +155,9 @@ export default function FeesPage() {
 
           <Button 
             disabled={!selectedOption}
-            onClick={() => router.push(`/dashboard/finance/fees/payment?type=${selectedOption}`)}
-            className={cn(
+            // replace, not push: Back from the flow shouldn't land here and bounce forward again
+            onClick={() => router.replace(`/dashboard/finance/fees/payment?type=${selectedOption}`)}
+className={cn(
               "w-full h-[52px] rounded-[12px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all",
               selectedOption 
                 ? "bg-[#003CBB] dark:bg-[#2563EB] text-white hover:bg-[#003CBB]/90 dark:hover:bg-[#1D4ED8]" 
@@ -149,5 +185,13 @@ export default function FeesPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function FeesPage() {
+  return (
+    <Suspense fallback={null}>
+      <FeesPageContent />
+    </Suspense>
   );
 }
