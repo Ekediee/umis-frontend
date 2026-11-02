@@ -21,7 +21,18 @@ import { useRegistrationStore } from "@/hooks/use-registration-store";
 import {
   getSemesterRegistrationStatusAction,
   getFinancialRegSummaryAction,
+  getFinanceRegistrationAction,
+  type FinanceRegistrationData,
+  type FinancialRegSummaryData,
 } from "@/app/actions/registration";
+import {
+  buildPrintReceiptUrl,
+  getBackendReference,
+  isFinancialRegComplete,
+  registrationTotal,
+  resolveRegistrationPlan,
+  stableReceiptRef,
+} from "@/lib/payments/registration-receipt";
 import { toast } from "sonner";
 import { notify } from "@/lib/notifications/bus";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -122,7 +133,7 @@ function FinancePageContent() {
 
   const [userData, setUserData] = useState<UMISResponse | null>(null);
   const { balance, isLoading: isWalletLoading, error: walletError, fetchBalance } = useWalletStore();
-const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useRegistrationStore();
+const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState, registeredPlan } = useRegistrationStore();
   const isRegisteredForSemester = Boolean(semesterInfo?.check);
   const [hasFinanceDraft, setHasFinanceDraft] = useState(false);
   const [hasBackendFinanceSelections, setHasBackendFinanceSelections] = useState(false);
@@ -130,6 +141,8 @@ const { semesterInfo, setSemesterInfo, isFinancialSubmitted, payState } = useReg
     hasBackendFinanceSelections ||
     ((hasFinanceDraft || isFinancialSubmitted || payState === "in_progress") &&
       payState !== "completed");
+  const [financeCatalog, setFinanceCatalog] = useState<FinanceRegistrationData | null>(null);
+  const [regSummary, setRegSummary] = useState<FinancialRegSummaryData | null>(null);
   const [studentFees, setStudentFees] = useState<StudentFeesData | null>(null);
   const [isLoadingFees, setIsLoadingFees] = useState(true);
   const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false);
@@ -213,7 +226,13 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
               res.data.meal_type
           );
           setHasBackendFinanceSelections(hasSelections);
+          setRegSummary(res.data);
         }
+      })
+      .catch(() => {});
+    getFinanceRegistrationAction()
+      .then((res) => {
+        if (res.data) setFinanceCatalog(res.data);
       })
       .catch(() => {});
   }, [fetchBalance, setSemesterInfo]);
@@ -305,6 +324,32 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
   }, []);
 
   const paidAmount = studentFees?.amount_paid_for_semester ?? 0;
+
+  // Registration is complete once it's locked on the backend and the payment covers the total.
+  // Anything not yet loaded keeps the Start/Complete behaviour.
+  const registrationPlan = resolveRegistrationPlan({
+    remembered: registeredPlan,
+    finance: financeCatalog,
+    summary: regSummary,
+    fees: studentFees,
+  });
+  const registrationCost = registrationTotal(financeCatalog, regSummary, registrationPlan);
+  const isFinancialRegDone = isFinancialRegComplete(
+    Boolean(regSummary?.lock_financial_reg),
+    registrationCost,
+    paidAmount
+  );
+
+  const handlePrintReceipt = () => {
+    const matric = userData?.user_data?.personal_information?.matric_number;
+    const ref = stableReceiptRef({
+      matric,
+      session: semesterInfo?.semester,
+      plan: registrationPlan,
+      backendRef: getBackendReference(regSummary, studentFees),
+    });
+    router.push(buildPrintReceiptUrl({ ref, amount: registrationCost, plan: registrationPlan }));
+  };
   const rawOutstanding = studentFees?.total_outstanding_fees ?? 0;
   const outstandingAmount = studentFees ? Math.abs(rawOutstanding) : 0;
   const isCredit = studentFees !== null && rawOutstanding < 0;
@@ -619,20 +664,24 @@ const [activeHistoryTab, setActiveHistoryTab] = useState<"payment" | "school-fee
             <div className="relative z-10 max-w-[60%] flex flex-col justify-center">
               <h3 className="text-[18px] @[24rem]:text-[20px] font-bold leading-snug text-gray-900 dark:text-gray-100 mb-6 @[24rem]:mb-8">Pay for current semester</h3>
               <Button
-                disabled={!isRegisteredForSemester}
+                disabled={!isRegisteredForSemester && !isFinancialRegDone}
                 onClick={() => {
-                  if (isRegisteredForSemester) {
+                  if (isFinancialRegDone) {
+                    handlePrintReceipt();
+                  } else if (isRegisteredForSemester) {
                     router.push("/dashboard/finance/fees");
                   }
                 }}
                 className={cn(
                   "w-fit px-5 whitespace-nowrap rounded-xl py-0 h-[48px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0",
-                  isRegisteredForSemester
+                  isRegisteredForSemester || isFinancialRegDone
                     ? "bg-white/60 hover:bg-white/80 dark:bg-white dark:hover:bg-gray-100 text-[#003cbb] dark:text-gray-900 backdrop-blur-sm cursor-pointer"
                     : "bg-[#E2E4E9] dark:bg-gray-800 text-[#CDD0D5] dark:text-gray-600 cursor-not-allowed"
                 )}
               >
-                {isFinancialRegInProgress
+                {isFinancialRegDone
+                  ? "Print Receipt"
+                  : isFinancialRegInProgress
                   ? "Complete Financial Registration"
                   : "Start Financial Registration"}{" "}
                 <ChevronRight className="w-4 h-4" />

@@ -10,6 +10,9 @@ interface RegistrationState {
   setRegState: (state: RegistrationStatusState) => void;
   setPayState: (state: RegistrationStatusState) => void;
   isFinancialSubmitted: boolean;
+  /** Plan (full session / semester) the student last submitted financial registration under. */
+  registeredPlan: "full" | "semester" | null;
+  setRegisteredPlan: (plan: "full" | "semester" | null) => void;
   setIsFinancialSubmitted: (submitted: boolean) => void;
   resetStore: () => void;
 
@@ -54,6 +57,8 @@ export const useRegistrationStore = create<RegistrationState>()(
       setRegState: (state) => set({ regState: state }),
       setPayState: (state) => set({ payState: state }),
       isFinancialSubmitted: false,
+      registeredPlan: null,
+      setRegisteredPlan: (plan) => set({ registeredPlan: plan }),
       setIsFinancialSubmitted: (submitted) => set({ isFinancialSubmitted: submitted }),
       resetStore: () => set({ regState: "not_started", payState: "not_started", isFinancialSubmitted: false }),
 

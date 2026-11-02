@@ -21,6 +21,7 @@ import { ProcessingOverlay } from "@/components/fees/processing-overlay";
 import { FundWalletModal } from "@/components/fees/fund-wallet-modal";
 import { confirmWalletFunding } from "@/lib/payments/wallet-funding";
 import { findCatalogResidence } from "@/lib/payments/receipt-items";
+import { stableReceiptRef } from "@/lib/payments/registration-receipt";
 import { useAcademicSession } from "@/hooks/use-academic-session";
 import { toast } from "sonner";
 import { FinancialConfirmationModal } from "@/components/fees/financial-confirmation-modal";
@@ -104,6 +105,7 @@ const walletBalance = storeWalletBalance ?? 0;
     setIsFinancialSubmitted,
     payState,
     setPayState,
+    setRegisteredPlan,
   } = useRegistrationStore();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -737,6 +739,7 @@ selectedResidence,
       }
 
       // Lock selections and refresh summary + student fee ledger
+      setRegisteredPlan(isFullSession ? "full" : "semester");
       markAsLocked();
       await refreshSummaryAndFees();
 
@@ -767,7 +770,7 @@ selectedResidence,
     setIsFinancialSubmitted(false);
     clearOfflineDraft(OFFLINE_FINANCE_REG_KEY).catch(() => {});
     router.push(
-      `/dashboard/finance/fees/payment/result?status=success&ref=PAY-${Date.now().toString(36).toUpperCase()}&amount=${grossTotal}&gateway=Wallet&plan=${isFullSession ? "full" : "semester"}`
+      `/dashboard/finance/fees/payment/result?status=success&ref=${stableReceiptRef({ matric: userData?.user_data?.personal_information?.matric_number, session: useRegistrationStore.getState().semesterInfo?.semester, plan: isFullSession ? "full" : "semester" })}&amount=${grossTotal}&gateway=Wallet&plan=${isFullSession ? "full" : "semester"}`
     );
   };
 
