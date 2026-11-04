@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Check, RotateCcw } from "lucide-react";
+import { ArrowLeftRight, ChevronLeft, ChevronRight, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ResetProgressConfirmModal } from "@/components/registration/registration-status-modals";
@@ -20,6 +20,8 @@ interface PaymentStepperProps {
   hasProgress?: boolean;
   onCancelProgress?: () => void;
   onStepClick?: (stepId: number) => void;
+  /** Reopens the registration-type choice; leave out once registration is locked */
+  onChangeType?: () => void;
 }
 
 export function PaymentStepper({
@@ -30,6 +32,7 @@ export function PaymentStepper({
   hasProgress = false,
   onCancelProgress,
   onStepClick,
+  onChangeType,
 }: PaymentStepperProps) {
   const router = useRouter();
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -56,11 +59,25 @@ export function PaymentStepper({
 
         {/* Center: Centered Pills Container */}
         <div className="flex items-center justify-center gap-2 @[60rem]:gap-3 flex-1 min-w-0">
-          {/* Session Pill */}
-          <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-3 @[60rem]:px-4 h-[48px] @[60rem]:h-[52px] flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 min-w-[96px] max-w-[220px] shrink" title={`${sessionLabel} · ${typeLabel}`}>
+          {/* Session Pill — also the way to switch between Full Session and 1st Semester */}
+          {onChangeType ? (
+            <button
+              type="button"
+              onClick={onChangeType}
+              title="Change registration type"
+              aria-label={`${typeLabel}, ${sessionLabel}. Change registration type`}
+              className="group/type bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-3 @[60rem]:px-4 h-[48px] @[60rem]:h-[52px] flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 min-w-[96px] max-w-[220px] shrink relative text-left pr-8 @[60rem]:pr-9 hover:border-[#003cbb]/40 dark:hover:border-[#4d82ff]/40 transition-colors"
+            >
             <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight truncate w-full">{sessionLabel}</span>
             <span className="text-[12px] @[60rem]:text-[13px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight truncate w-full">{typeLabel}</span>
-          </div>
+              <ArrowLeftRight className="absolute right-2.5 @[60rem]:right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#003cbb]/60 dark:text-[#4d82ff]/70 group-hover/type:text-[#003cbb] dark:group-hover/type:text-[#4d82ff] transition-colors" aria-hidden />
+            </button>
+          ) : (
+            <div className="bg-[#e5ecfc] dark:bg-[#2b67e5]/10 rounded-2xl px-3 @[60rem]:px-4 h-[48px] @[60rem]:h-[52px] flex flex-col items-start justify-center border border-[#e2e4e9] dark:border-gray-800 min-w-[96px] max-w-[220px] shrink" title={`${sessionLabel} · ${typeLabel}`}>
+            <span className="text-[11px] font-bold text-[#003cbb] dark:text-[#4d82ff] leading-tight truncate w-full">{sessionLabel}</span>
+            <span className="text-[12px] @[60rem]:text-[13px] font-semibold text-[#2b67e5] dark:text-[#60a5fa] leading-tight truncate w-full">{typeLabel}</span>
+            </div>
+          )}
 
           {/* Stepper Pill */}
           <div className="flex items-center gap-1.5 @[60rem]:gap-2 bg-white dark:bg-gray-900 rounded-2xl px-3 @[60rem]:px-4 h-[48px] @[60rem]:h-[52px] border border-[#e2e4e9] dark:border-gray-800 shrink-0">

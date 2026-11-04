@@ -629,6 +629,10 @@ selectedResidence,
   };
 
   const handleChangeStep = (step: number) => setCurrentStep(step);
+  // Reopens the Full Session / 1st Semester choice; selections stay saved
+  const handleChangeType = isBackendLocked
+    ? undefined
+    : () => router.replace(`/dashboard/finance/fees?change=${isFullSession ? "full" : "semester"}`);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -825,6 +829,7 @@ selectedResidence,
             hasProgress={hasProgress}
             onCancelProgress={handleResetProgress}
             onStepClick={handleChangeStep}
+            onChangeType={handleChangeType}
           />
         </div>
       )}
@@ -834,20 +839,6 @@ selectedResidence,
         "flex-1 flex justify-center items-start overflow-y-auto",
         currentStep === 5 ? "pt-3 md:pt-4" : "pt-6"
       )}>
-        {/* The choice is no longer asked each visit, so it stays changeable until registration locks */}
-        {currentStep === 1 && !isBackendLocked && (
-          <div className="flex items-center justify-between gap-3 mb-3 px-1 text-[13px] text-[#525866] dark:text-gray-400">
-            <span className="min-w-0 truncate">{typeLabel}</span>
-            <button
-              type="button"
-              onClick={() => router.replace(`/dashboard/finance/fees?change=${isFullSession ? "full" : "semester"}`)}
-              className="shrink-0 font-semibold text-[#003cbb] dark:text-[#4d82ff] hover:underline"
-            >
-              Change
-            </button>
-          </div>
-        )}
-
         {currentStep === 1 && (
           <SelectResidence
             selectedId={selectedResidence}
@@ -1002,6 +993,8 @@ studentName={studentName}
       />
 
       <PaymentProgressSheet
+        typeLabel={`${sessionLabel} · ${typeLabel}`}
+        onChangeType={handleChangeType}
         isOpen={isMobileSheetOpen}
         onClose={() => setIsMobileSheetOpen(false)}
         currentStep={currentStep}

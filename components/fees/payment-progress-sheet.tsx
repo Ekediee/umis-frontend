@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StepDefinition } from "@/components/fees/payment-stepper";
 
@@ -10,6 +10,10 @@ interface PaymentProgressSheetProps {
   currentStep: number;
   steps: StepDefinition[];
   onStepClick?: (stepId: number) => void;
+  /** e.g. "2026/2027 · 1st Semester Registration" */
+  typeLabel?: string;
+  /** Reopens the registration-type choice; leave out once registration is locked */
+  onChangeType?: () => void;
 }
 
 export function PaymentProgressSheet({
@@ -18,6 +22,8 @@ export function PaymentProgressSheet({
   currentStep,
   steps,
   onStepClick,
+  typeLabel,
+  onChangeType,
 }: PaymentProgressSheetProps) {
   if (!isOpen) return null;
 
@@ -33,6 +39,28 @@ export function PaymentProgressSheet({
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[20px] font-bold text-[#0a0d14] dark:text-gray-100 transition-colors">Make Payment</h2>
         </div>
+
+        {typeLabel && (
+          <div className="flex items-center justify-between gap-3 mb-6 p-4 rounded-[12px] bg-[#eef3fd] dark:bg-[#003cbb]/10">
+            <div className="min-w-0">
+              <p className="text-[12px] font-medium text-[#525866] dark:text-gray-400">Registration type</p>
+              <p className="text-[15px] font-semibold text-[#0a0d14] dark:text-gray-100 leading-snug">{typeLabel}</p>
+            </div>
+            {onChangeType && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onChangeType();
+                }}
+                className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] border border-[#ccdaf9] dark:border-blue-900/60 bg-white dark:bg-gray-900 text-[13px] font-semibold text-[#003cbb] dark:text-[#4d82ff] hover:bg-[#f5f8fe] dark:hover:bg-gray-800 transition-colors"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" aria-hidden />
+                Change
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <h3 className="text-[13px] font-bold text-[#003cbb] dark:text-[#4d82ff] mb-1 transition-colors">Steps</h3>
