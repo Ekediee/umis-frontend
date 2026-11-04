@@ -10,6 +10,10 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   output: 'standalone',
   transpilePackages: ["@base-ui/react"],
+  // Lecturer API docs for the backend team: a static page, public on every environment.
+  async rewrites() {
+    return [{ source: "/lecturer/api-docs", destination: "/docs/lecturer-api.html" }];
+  },
   images: {
     remotePatterns: [
       // Backend (HTTPS — production / when cert is valid)

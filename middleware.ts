@@ -15,6 +15,9 @@ function lecturerSessionValid(value: string | undefined) {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Lecturer API docs are public, so the backend team can read them without a lecturer account.
+  if (pathname === '/lecturer/api-docs') return NextResponse.next()
+
   // Lecturer portal (BU Pulse for staff) has its own session, separate from students.
   if (pathname === '/lecturer' || pathname.startsWith('/lecturer/')) {
     const isLecturerAuthPage = pathname.startsWith('/lecturer/sign-in')
@@ -94,7 +97,8 @@ export const config = {
      * - icons (PWA icons: needed before sign-in, e.g. installing from /login)
      * - videos (the landing page film, watched before sign-in)
      * - favicon.ico (favicon file)
+     * - docs (public documentation pages, e.g. the lecturer API docs)
      */
-    '/((?!api|_next/static|_next/image|images|icons|videos|favicon.ico|manifest.json|sw.js|swe-worker-).*)',
+    '/((?!api|_next/static|_next/image|images|icons|videos|docs|favicon.ico|manifest.json|sw.js|swe-worker-).*)',
   ],
 }
