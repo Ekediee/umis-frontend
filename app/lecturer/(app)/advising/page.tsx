@@ -14,25 +14,29 @@ import { lecturerApi } from "@/lib/lecturer/api";
 import { appNow } from "@/lib/lecturer/clock";
 import { daysBetween, fullName, plural, shortDate, timeAgo } from "@/lib/lecturer/format";
 import { useLecturerQuery, useMutation } from "@/lib/lecturer/query";
-import { allChecksPassed, RETURN_REASON_LABELS } from "@/lib/lecturer/rules";
+import { allChecksPassed, canReturn, RETURN_REASON_LABELS } from "@/lib/lecturer/rules";
 import type { Registration, RegistrationStatus } from "@/lib/lecturer/types";
 import { cn } from "@/lib/utils";
 import { Page } from "@/components/lecturer/shell/page";
 import { ReturnSheet } from "@/components/lecturer/advising/return-sheet";
+import { AdviseeRoster } from "@/components/lecturer/advising/advisee-roster";
 import { Btn, CardSkeleton, Checkbox, Chip, ErrorState, ExplainedEmpty, Input, PersonAvatar, Segmented } from "@/components/lecturer/ui/primitives";
 import { Sheet } from "@/components/lecturer/ui/sheet";
 
-const SEGMENTS: { value: RegistrationStatus; label: string }[] = [
+type View = RegistrationStatus | "all";
+
+const SEGMENTS: { value: View; label: string }[] = [
   { value: "to_review", label: "To review" },
   { value: "returned", label: "Returned" },
   { value: "approved_advisor", label: "Approved by you" },
   { value: "approved_school", label: "Approved by school" },
   { value: "not_submitted", label: "Not submitted" },
+  { value: "all", label: "All students" },
 ];
 
 export default function AdvisingPage() {
   const q = useLecturerQuery("advising", () => lecturerApi.getAdvising());
-  const [segment, setSegment] = useState<RegistrationStatus>("to_review");
+  const [segment, setSegment] = useState<View>("to_review");
   const [checkFilter, setCheckFilter] = useState<"all" | "passed" | "failed">("all");
   const [term, setTerm] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -43,8 +47,9 @@ export default function AdvisingPage() {
   const now = appNow();
 
   const counts = useMemo(() => {
-    const c = Object.fromEntries(SEGMENTS.map((s) => [s.value, 0])) as Record<RegistrationStatus, number>;
+    const c = Object.fromEntries(SEGMENTS.map((s) => [s.value, 0])) as Record<View, number>;
     q.data?.registrations.forEach((r) => c[r.status]++);
+    c.all = q.data?.registrations.length ?? 0;
     return c;
   }, [q.data]);
 
@@ -130,7 +135,9 @@ export default function AdvisingPage() {
         )}
       </div>
 
-      {segment === "to_review" && counts.to_review === 0 ? (
+      {segment === "all" ? (
+        <AdviseeRoster level={w.level} term={term} />
+      ) : segment === "to_review" && counts.to_review === 0 ? (
         <ExplainedEmpty
           icon={CheckCircle2}
           title="All submitted registrations are decided"
@@ -187,12 +194,12 @@ export default function AdvisingPage() {
                     </div>
                   </div>
                 </Link>
-                {r.status === "to_review" && (
+                {canReturn(r.status) && (
                   <div className="hidden gap-2 md:flex">
                     <Btn size="sm" variant="secondary" icon={Undo2} onClick={() => setReturning(r)}>
                       Return
                     </Btn>
-                    {passed && (
+                    {r.status === "to_review" && passed && (
                       <Btn size="sm" variant="success" icon={Check} disabled={approve.pending} onClick={() => approveOne(r)}>
                         Approve
                       </Btn>

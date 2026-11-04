@@ -248,7 +248,7 @@ export interface RegistrationCourse {
 }
 
 export interface RegistrationCheck {
-  id: "units" | "prerequisites" | "carry-overs" | "clashes";
+  id: "units" | "prerequisites" | "carry-overs" | "core-courses" | "clashes";
   label: string;
   passed: boolean;
   detail?: string;
@@ -256,7 +256,7 @@ export interface RegistrationCheck {
   suggestedReason?: ReturnReason;
 }
 
-export type ReturnReason = "missing-carry-over" | "too-many-units" | "too-few-units" | "wrong-elective" | "other";
+export type ReturnReason = "missing-carry-over" | "missing-core-course" | "too-many-units" | "too-few-units" | "wrong-elective" | "other";
 
 export interface Registration {
   id: string;
@@ -276,6 +276,93 @@ export interface AdvisingWindow {
   level: number;
   advisees: number;
   closesAt: string;
+  /** Current term, e.g. session "2026/2027", semester 1. */
+  session: string;
+  semester: 1 | 2;
+}
+
+// ── Advisee records (advisor view of one student) ───────────────────────────
+
+/** One course in a programme's curriculum (BU Pulse course catalogue). */
+export interface CurriculumCourse {
+  code: string;
+  title: string;
+  units: number;
+  level: number;
+  semester: 1 | 2;
+  kind: "core" | "elective";
+}
+
+/** A published result on the student's unofficial transcript. */
+export interface TranscriptCourse {
+  code: string;
+  title: string;
+  units: number;
+  score: number;
+  grade: Letter;
+  gradePoint: number;
+}
+
+export interface TranscriptSemester {
+  session: string; // "2025/2026"
+  semester: 1 | 2;
+  level: number;
+  courses: TranscriptCourse[];
+  gpa: number;
+  /** CGPA at the end of this semester. */
+  cgpa: number;
+}
+
+/** A course the student is taking now, with CA scores published so far. */
+export interface CurrentCourse {
+  code: string;
+  title: string;
+  units: number;
+  lecturer: string;
+  /** null score = not entered yet (never shown as 0). */
+  assessments: { name: string; max: number; score: number | null }[];
+  attendancePct: number | null;
+}
+
+export type AuditStatus = "passed" | "failed" | "registered" | "missing" | "to_do";
+
+export interface AuditCourse extends CurriculumCourse {
+  status: AuditStatus;
+  /** Latest published grade, when the course was attempted. */
+  grade?: Letter;
+  attempts: number;
+  /** Failed before and registered again this semester. */
+  retake?: boolean;
+}
+
+export interface CourseAudit {
+  courses: AuditCourse[];
+  counts: Record<AuditStatus, number>;
+  unitsPassed: number;
+  unitsRequired: number;
+}
+
+/** One row of the advisor's "All students" roster. */
+export interface AdviseeSummary {
+  student: Student;
+  registrationId: string;
+  status: RegistrationStatus;
+  units: number;
+  cgpa: number | null;
+  standing: Registration["standing"];
+  failedOutstanding: number;
+  missingCore: number;
+}
+
+export interface AdviseeRecord {
+  student: Student;
+  registration: Registration;
+  cgpa: number | null;
+  standing: Registration["standing"];
+  transcript: TranscriptSemester[];
+  current: CurrentCourse[];
+  curriculum: CurriculumCourse[];
+  term: { session: string; semester: 1 | 2 };
 }
 
 // ── Supervision (Stage 7) ───────────────────────────────────────────────────

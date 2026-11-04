@@ -7,9 +7,12 @@
 
 import { DEMO_NOW, getDb } from "./db";
 import { caTotal, gradeRow, preSubmitCheck } from "../grading";
-import { deadlineUrgency, riskSignals, waitingUrgency } from "../rules";
+import { auditCourses, canReturn, deadlineUrgency, riskSignals, waitingUrgency } from "../rules";
 import { daysBetween, formatSemester, fullName, isoDay, minutes, plural, shortDate, startOfDay, timeRange, dayDate, localDate } from "../format";
 import type {
+  AdviseeRecord,
+  AdviseeSummary,
+  CurrentCourse,
   AttendanceStatus,
   ClassSession,
   Course,
@@ -730,7 +733,9 @@ export function approveRegistrations(ids: string[]) {
 export function returnRegistration(id: string, reasons: ReturnReason[], note: string) {
   const r = getDb().registrations.find((x) => x.id === id);
   if (!r) return fail("We couldn't find that registration.", "REG-404");
+  if (!canReturn(r.status)) return fail("This registration can't be returned right now.", "REG-409");
   if (!reasons.length && note.trim().length < 10) return fail("Pick a reason or write at least 10 characters.", "REG-422");
+  // Returning after approval withdraws the approval (and the school officer's, if given).
   r.status = "returned";
   r.returned = { reasons, note, at: now().toISOString() };
   r.decidedAt = r.returned.at;
@@ -740,6 +745,94 @@ export function returnRegistration(id: string, reasons: ReturnReason[], note: st
 export function remindNotSubmitted() {
   const n = getDb().registrations.filter((r) => r.status === "not_submitted").length;
   return respond({ ok: true, reminded: n });
+}
+
+// ── Advisee records: roster, transcript, current scores, course audit ───────
+
+/** Courses a student counts as registered for this semester (nothing until they submit). */
+const registeredCodes = (r: Registration) => (r.status === "not_submitted" ? null : r.courses.map((c) => c.code));
+
+function auditFor(r: Registration) {
+  const db = getDb();
+  return auditCourses(db.curriculum, db.transcripts.get(r.student.id) ?? [], registeredCodes(r), { level: r.student.level, semester: db.advising.semester });
+}
+
+/** Every student in the advisor's level, with registration status and audit counts. */
+export function getAdviseeRoster(level?: number) {
+  const db = getDb();
+  const rows: AdviseeSummary[] = db.registrations
+    .filter((r) => level === undefined || r.student.level === level)
+    .map((r) => {
+      const audit = auditFor(r);
+      return {
+        student: r.student,
+        registrationId: r.id,
+        status: r.status,
+        units: r.status === "not_submitted" ? 0 : r.courses.reduce((s, c) => s + c.units, 0),
+        cgpa: db.transcripts.has(r.student.id) ? r.cgpa : null,
+        standing: r.standing,
+        failedOutstanding: audit.counts.failed,
+        missingCore: audit.counts.missing,
+      };
+    });
+  return respond({ window: db.advising, students: rows });
+}
+
+const COURSE_LECTURERS: Record<string, string> = {
+  "GEDS 101": "Mrs. Yemi Olatunji",
+  "COS 101": "Dr. Ifeanyi Okeke",
+  "MTH 101": "Prof. Bola Adekunle",
+  "PHY 101": "Dr. Chika Umeh",
+  "PHY 107": "Dr. Chika Umeh",
+  "CHM 101": "Dr. Musa Abdullahi",
+  "SEN 101": "Dr. Amos Awoniyi",
+  "GEDS 105": "Mr. Tayo Ogunbanjo",
+  "COS 102": "Dr. Ifeanyi Okeke",
+};
+
+/**
+ * CA published so far this semester (week 6): CA 1 is in for every course,
+ * the mid-semester test for some, the assignment for none yet.
+ */
+function currentCoursesFor(r: Registration): CurrentCourse[] {
+  if (r.status === "not_submitted") return [];
+  const seed = [...r.student.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  return r.courses.map((c, i) => {
+    const v = (n: number) => ((seed + i * 97 + n * 13) % 1000) / 1000;
+    const weak = c.carryOver ? 0.25 : 0;
+    const testIn = v(1) > 0.4;
+    return {
+      code: c.code,
+      title: c.title,
+      units: c.units,
+      lecturer: COURSE_LECTURERS[c.code] ?? "To be assigned",
+      assessments: [
+        { name: "CA 1", max: 10, score: Math.round((0.45 + v(2) * 0.55 - weak) * 10) },
+        { name: "Mid-semester test", max: 20, score: testIn ? Math.round((0.4 + v(3) * 0.6 - weak) * 20) : null },
+        { name: "Assignment", max: 10, score: null },
+      ],
+      attendancePct: Math.round(62 + v(4) * 38 - weak * 40),
+    };
+  });
+}
+
+/** One advisee's full record. Scoped: only students in the advisor's levels; every view is logged by the API. */
+export function getAdviseeRecord(studentId: string) {
+  const db = getDb();
+  const r = db.registrations.find((x) => x.student.id === studentId);
+  if (!r) return fail("We couldn't find that student among your advisees.", "ADV-404");
+  const transcript = db.transcripts.get(studentId) ?? [];
+  const record: AdviseeRecord = {
+    student: r.student,
+    registration: r,
+    cgpa: transcript.length ? r.cgpa : null,
+    standing: r.standing,
+    transcript,
+    current: currentCoursesFor(r),
+    curriculum: db.curriculum,
+    term: { session: db.advising.session, semester: db.advising.semester },
+  };
+  return respond(record);
 }
 
 // ── Supervision (Stage 7) ───────────────────────────────────────────────────

@@ -135,6 +135,12 @@ export const lecturerApi = {
   returnRegistration: (id: string, reasons: ReturnReason[], note: string) =>
     call<R<typeof mock.returnRegistration>>(() => mock.returnRegistration(id, reasons, note), { method: "POST", path: `/lecturer/advising/registrations/${enc(id)}/return`, body: { reasons, note }, idempotent: true }),
   remindNotSubmitted: () => call<R<typeof mock.remindNotSubmitted>>(() => mock.remindNotSubmitted(), { method: "POST", path: "/lecturer/advising/reminders" }),
+  /** Every student in the advisor's level, with registration status and course-audit counts. */
+  getAdviseeRoster: (level?: number) =>
+    call<R<typeof mock.getAdviseeRoster>>(() => mock.getAdviseeRoster(level), { method: "GET", path: `/lecturer/advising/students${q({ level })}` }),
+  /** One advisee: unofficial transcript, current CA scores, curriculum. Read-only; the API logs each view. */
+  getAdviseeRecord: (studentId: string) =>
+    call<R<typeof mock.getAdviseeRecord>>(() => mock.getAdviseeRecord(studentId), { method: "GET", path: `/lecturer/advising/students/${enc(studentId)}` }),
 
   // ── Supervision (7) ──────────────────────────────────────────────────────
   getSupervision: () => call<R<typeof mock.getSupervision>>(() => mock.getSupervision(), { method: "GET", path: "/lecturer/supervision" }),
