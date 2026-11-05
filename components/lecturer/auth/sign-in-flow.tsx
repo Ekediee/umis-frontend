@@ -5,13 +5,20 @@
  * Staff email only; student emails are sent to the student portal.
  */
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
-import { Activity, BadgeCheck, CalendarCheck2, ClipboardCheck, GraduationCap, KeyRound, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
 import { requestInstructorLink, signInWithSso, signInWithStaffId, verifyInstructorLink, type AuthResult } from "@/app/actions/lecturer-auth";
 import { BackButton, Btn, Field, Input } from "../ui/primitives";
+import { BrandPanel, PulseMark } from "./brand-panel";
+
+const ROLES = ["Lecturers", "Course advisors", "Supervisors", "HODs and deans"];
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+}
 
 type Step = { kind: "choose" } | { kind: "sso" } | { kind: "not-recognised"; email: string } | { kind: "code"; instructorId: string; admin: string };
 
@@ -53,57 +60,53 @@ export function SignInFlow() {
 
   return (
     <div className="flex min-h-dvh bg-[#F4F5F7] dark:bg-black">
-      {/* Brand panel — Revolut-style gradient hero */}
-      <aside className="relative hidden w-[46%] max-w-[640px] flex-col justify-between overflow-hidden bg-gradient-to-br from-[#002a85] via-[#003cbb] to-[#2563eb] p-12 text-white lg:flex">
-        <div className="pointer-events-none absolute -top-24 -right-24 size-[420px] rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-10 size-[300px] rounded-full bg-sky-300/20 blur-3xl" />
-        <div className="relative flex items-center gap-3">
-          <Image src="/images/bu_logo.png" alt="Babcock University" width={40} height={40} className="rounded-full bg-white p-1" />
-          <span className="text-[15px] font-semibold">Babcock University · Pulse</span>
-        </div>
-        <div className="relative">
-          <h1 className="text-[40px] leading-[1.1] font-bold tracking-tight">Your week, not a wall of tables.</h1>
-          <p className="mt-4 max-w-[420px] text-[16px] leading-relaxed text-white/80">Teach, assess, approve and supervise from one screen that shows what needs you today.</p>
-          <ul className="mt-8 grid max-w-[440px] grid-cols-2 gap-3 text-[14px]">
-            {[
-              { icon: CalendarCheck2, label: "Registers in under a minute" },
-              { icon: ClipboardCheck, label: "Approvals with a reason" },
-              { icon: GraduationCap, label: "Chapter reviews in place" },
-              { icon: BadgeCheck, label: "Grades checked before submit" },
-            ].map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-2.5 rounded-2xl bg-white/10 px-3 py-3 ring-1 ring-white/15 backdrop-blur-sm">
-                <Icon className="size-4 shrink-0" /> {label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="relative text-[12px] text-white/60">BU Pulse keeps one record for teaching, grading and approvals.</p>
-      </aside>
+      <BrandPanel />
 
       <main className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-[420px]">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex size-10 items-center justify-center rounded-full bg-[#eef3fd] dark:bg-[#003cbb]/20">
-              <Activity className="size-5 text-[#003cbb]" strokeWidth={2.5} />
+          <div className="relative mb-8 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#001f66] via-[#003cbb] to-[#1d4ed8] p-5 text-white lg:hidden">
+            <div className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-sky-300/25 blur-2xl" />
+            <div className="relative flex items-center gap-3">
+              <PulseMark size={44} />
+              <div>
+                <p className="text-[16px] leading-tight font-bold">BU Pulse</p>
+                <p className="text-[12px] text-white/70">Babcock University · Lecturer</p>
+              </div>
             </div>
-            <div>
-              <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Pulse</p>
-              <p className="text-[13px] text-gray-500">Lecturer</p>
-            </div>
+            <p className="relative mt-4 text-[15px] leading-snug font-semibold">Your week, not a wall of tables.</p>
           </div>
 
-          {notice && <p className="mb-5 rounded-2xl bg-white px-4 py-3 text-[13px] text-gray-600 ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-800">{notice}</p>}
+          <div className="mb-8 hidden lg:block">
+            <PulseMark size={52} className="shadow-none ring-gray-200 dark:ring-gray-800" />
+          </div>
+
+          {notice && (
+            <p role="status" className="mb-5 rounded-2xl bg-[#eef3fd] px-4 py-3 text-[13px] font-medium text-[#0b2a72] dark:bg-[#003cbb]/20 dark:text-[#cfe0ff]">
+              {notice}
+            </p>
+          )}
 
           {step.kind === "choose" && (
             <>
-              <h2 className="text-[26px] font-bold tracking-tight text-gray-900 dark:text-gray-50">Sign in</h2>
-              <p className="mt-1 text-[14px] text-gray-500">For lecturers, course advisors and supervisors.</p>
+              <p className="text-[13px] font-semibold text-[#003cbb] dark:text-[#4d82ff]" suppressHydrationWarning>
+                {greeting()} 👋
+              </p>
+              <h2 className="mt-1 text-[28px] leading-tight font-bold tracking-tight text-gray-900 dark:text-gray-50">Sign in to Pulse</h2>
+              <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Who can sign in">
+                {ROLES.map((r) => (
+                  <li key={r} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-800">
+                    {r}
+                  </li>
+                ))}
+              </ul>
 
-              <Btn size="lg" variant="dark" className="mt-7 w-full" icon={ShieldCheck} onClick={() => (setError(null), setStep({ kind: "sso" }))}>
+              <Btn size="lg" className="group mt-7 w-full" icon={ShieldCheck} onClick={() => (setError(null), setStep({ kind: "sso" }))}>
                 Continue with university account
+                <ArrowRight className="ml-auto transition-transform group-hover:translate-x-0.5" />
               </Btn>
+              <p className="mt-2 text-center text-[12px] text-gray-500">Recommended · uses your Babcock staff email</p>
 
-              <div className="my-6 flex items-center gap-3 text-[12px] font-medium text-gray-400">
+              <div className="my-7 flex items-center gap-3 text-[12px] font-medium text-gray-400">
                 <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" /> or use your staff ID <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
               </div>
 
@@ -164,7 +167,7 @@ export function SignInFlow() {
             </form>
           )}
 
-          <p className="mt-8 text-center text-[13px] text-gray-500">
+          <p className="mt-10 text-center text-[13px] text-gray-500">
             A student? <Link href="/login" className="font-semibold text-[#003cbb] hover:underline dark:text-[#7aa2ff]">Go to the student portal</Link>
           </p>
           <p className="mt-2 text-center text-[12px] text-gray-400">Sessions end after 8 hours or when you close the browser.</p>
@@ -177,13 +180,38 @@ export function SignInFlow() {
 function StaffIdForm({ pending, error, onSubmit }: { pending: boolean; error: string | null; onSubmit: (id: string, pw: string) => (e: FormEvent) => void }) {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
+  const [show, setShow] = useState(false);
+  const [caps, setCaps] = useState(false);
+  const checkCaps = (e: React.KeyboardEvent<HTMLInputElement>) => setCaps(e.getModifierState?.("CapsLock") ?? false);
   return (
     <form onSubmit={onSubmit(id, pw)} className="flex flex-col gap-4">
       <Field label="Staff ID" htmlFor="staffId">
         <Input id="staffId" value={id} onChange={(e) => setId(e.target.value)} autoComplete="username" autoCapitalize="characters" placeholder="e.g. NIYI" required aria-invalid={!!error} />
       </Field>
-      <Field label="Password" htmlFor="password" error={error}>
-        <Input id="password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required aria-invalid={!!error} />
+      <Field label="Password" htmlFor="password" error={error} hint={caps ? "Caps Lock is on." : undefined}>
+        <div className="relative">
+          <Input
+            id="password"
+            type={show ? "text" : "password"}
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            onKeyUp={checkCaps}
+            onKeyDown={checkCaps}
+            autoComplete="current-password"
+            required
+            aria-invalid={!!error}
+            className="pr-12"
+          />
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            aria-label={show ? "Hide password" : "Show password"}
+            aria-pressed={show}
+            className="absolute top-1/2 right-1 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          >
+            {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
       </Field>
       <Btn type="submit" size="lg" variant="secondary" icon={KeyRound} loading={pending} className="w-full">
         Sign in with staff ID

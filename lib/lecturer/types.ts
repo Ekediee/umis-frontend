@@ -106,6 +106,12 @@ export interface Enrolment {
   /** assessmentId → score; null = not entered (never coerced to 0). */
   caScores: Record<string, number | null>;
   examScore: number | null;
+  /**
+   * CA total typed on the grade sheet (out of the course CA weight). When set it
+   * replaces the total calculated from the CA assessments; unset means "use the
+   * calculated total". Audit-logged with old and new values in live mode.
+   */
+  caOverride?: number;
   examStatus?: ExamStatus;
   examStatusReason?: string;
   status: "active" | "dropped";

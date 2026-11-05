@@ -16,14 +16,15 @@ import { appNow } from "@/lib/lecturer/clock";
 import { daysBetween, formatSemester, fullName, plural, shortDate } from "@/lib/lecturer/format";
 import { GRADE_SCALE } from "@/lib/lecturer/grading";
 import { invalidate, useLecturerQuery, useMutation } from "@/lib/lecturer/query";
-import type { ExamStatus, Letter } from "@/lib/lecturer/types";
+import type { Letter } from "@/lib/lecturer/types";
 import { cn } from "@/lib/utils";
 import { Page } from "../shell/page";
-import { BackButton, Btn, CardSkeleton, Chip, ErrorState, Field, ProgressBar, Segmented, Select, Surface, Textarea } from "../ui/primitives";
+import { BackButton, Btn, CardSkeleton, Chip, ErrorState, Field, ProgressBar, Segmented, Surface, Textarea } from "../ui/primitives";
 import { Sheet } from "../ui/sheet";
 import { ImportSheet } from "./import-sheet";
 import { ScoreGrid, type GridRow } from "./score-grid";
 import { SheetStatusChip, StatusTracker } from "./status";
+import { StudentGradeSheet } from "./student-grade-sheet";
 
 type Filter = "all" | "missing" | "over" | "noca" | "highlighted";
 
@@ -35,7 +36,7 @@ export function GradeSheetView({ courseId }: { courseId: string }) {
   const key = groupId ? `gradesheet:${courseId}:${groupId}` : null;
   const q = useLecturerQuery(key, () => lecturerApi.getGradeSheet(courseId, groupId!));
   const [filter, setFilter] = useState<Filter>("all");
-  const [statusFor, setStatusFor] = useState<string | null>(null);
+  const [openStudent, setOpenStudent] = useState<string | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const now = appNow();
@@ -92,8 +93,18 @@ export function GradeSheetView({ courseId }: { courseId: string }) {
       first: r.student.firstName,
       last: r.student.lastName,
       matric: r.student.matric,
-      value: r.enrolment.examScore,
-      locked: locked || !!g.status,
+      values: { ca: g.ca, exam: r.enrolment.examScore },
+      locked,
+      lockedKeys: g.status ? ["exam"] : [],
+      notes: g.caEdited
+        ? {
+            ca: (
+              <span title="Clear the cell to go back to the calculated total">
+                Edited · calc. {g.caComputed ?? "–"}
+              </span>
+            ),
+          }
+        : undefined,
       highlight: highlighted.has(r.student.id),
       tags: (
         <>
@@ -109,12 +120,12 @@ export function GradeSheetView({ courseId }: { courseId: string }) {
           )}
         </>
       ),
-      cells: [g.ca ?? <span className="text-gray-400">–</span>, g.total ?? <span className="text-gray-400">–</span>, g.letter ? <LetterBadge letter={g.letter} /> : <span className="text-gray-400">–</span>],
-      trailing: editable && !locked ? (
-        <button type="button" aria-label={`More options for ${fullName(r.student)}`} onClick={() => setStatusFor(r.student.id)} className="inline-flex size-9 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+      cells: [g.total ?? <span className="text-gray-400">–</span>, g.letter ? <LetterBadge letter={g.letter} /> : <span className="text-gray-400">–</span>],
+      trailing: (
+        <button type="button" aria-label={`Open ${fullName(r.student)}'s marks`} onClick={() => setOpenStudent(r.student.id)} className="inline-flex size-9 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
           <MoreHorizontal className="size-4" />
         </button>
-      ) : undefined,
+      ),
     };
   });
 
@@ -198,18 +209,33 @@ export function GradeSheetView({ courseId }: { courseId: string }) {
           )}
           <ScoreGrid
             rows={gridRows}
-            max={c.examWeight}
-            label="Exam"
-            beforeHeaders={[`CA (${c.caWeight})`]}
+            columns={[
+              {
+                key: "ca",
+                label: "CA",
+                max: c.caWeight,
+                onSave: async (id, v) => {
+                  await lecturerApi.saveCaTotal(courseId, sheet.groupId, id, v);
+                  q.refetch();
+                  invalidate(`classlist:${courseId}`);
+                },
+              },
+              {
+                key: "exam",
+                label: "Exam",
+                max: c.examWeight,
+                onSave: async (id, v) => {
+                  await lecturerApi.saveExamScore(courseId, sheet.groupId, id, v);
+                  q.refetch();
+                  invalidate("today:");
+                },
+              },
+            ]}
             extraHeaders={["Total", "Grade"]}
-            onSave={async (id, v) => {
-              await lecturerApi.saveExamScore(courseId, sheet.groupId, id, v);
-              q.refetch();
-              invalidate("today:");
-            }}
+            onOpenRow={setOpenStudent}
           />
           <p className="mt-3 flex items-center gap-1.5 text-[12px] text-gray-500">
-            <Info className="size-3.5" /> Totals round half up to a whole number before the grade applies (49.5 becomes 50, a C). Enter moves to the next row.
+            <Info className="size-3.5" /> CA fills in from your assessments; type over it to set a student&apos;s CA total, or clear it to go back to the calculated one. Totals round half up (49.5 becomes 50, a C). Enter moves down, Tab moves across.
           </p>
         </div>
 
@@ -234,11 +260,14 @@ export function GradeSheetView({ courseId }: { courseId: string }) {
         </aside>
       </div>
 
-      <ExamStatusSheet
-        studentId={statusFor}
-        name={statusFor ? fullName(data.rows.find((r) => r.student.id === statusFor)!.student) : ""}
-        courseId={courseId}
-        onClose={() => setStatusFor(null)}
+      <StudentGradeSheet
+        data={data}
+        studentId={openStudent}
+        order={rows.map((r) => r.student.id)}
+        editable={editable}
+        highlighted={highlighted}
+        onNavigate={setOpenStudent}
+        onClose={() => setOpenStudent(null)}
         onSaved={refresh}
       />
       <SubmitSheet open={submitOpen} onClose={() => setSubmitOpen(false)} data={data} groupName={groupName} late={daysLeft < 0} onDone={refresh} />
@@ -296,52 +325,6 @@ function Distribution({ dist }: { dist: Record<Letter, number> }) {
         </div>
       ))}
     </div>
-  );
-}
-
-function ExamStatusSheet({ studentId, name, courseId, onClose, onSaved }: { studentId: string | null; name: string; courseId: string; onClose: () => void; onSaved: () => void }) {
-  const [status, setStatus] = useState<ExamStatus>("absent");
-  const [reason, setReason] = useState("");
-  const save = useMutation((s: ExamStatus | null) => lecturerApi.setExamStatus(courseId, studentId!, s, reason));
-  return (
-    <Sheet
-      open={!!studentId}
-      onClose={onClose}
-      size="sm"
-      title={`Set a status for ${name}`}
-      description="Use this when a student has no exam score for a reason. The reason goes to your HOD."
-      footer={
-        <>
-          <Btn variant="ghost" onClick={() => save.mutate(null).then(() => (onSaved(), onClose()))}>
-            Clear status
-          </Btn>
-          <Btn
-            loading={save.pending}
-            disabled={reason.trim().length < 5}
-            onClick={async () => {
-              await save.mutate(status).catch(() => undefined);
-              onSaved();
-              setReason("");
-              onClose();
-            }}
-          >
-            Save
-          </Btn>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-4">
-        <Field label="Status" htmlFor="exam-status">
-          <Select id="exam-status" value={status} onChange={(e) => setStatus(e.target.value as ExamStatus)}>
-            <option value="absent">Absent from exam</option>
-            <option value="incomplete">Incomplete</option>
-          </Select>
-        </Field>
-        <Field label="Reason" htmlFor="exam-reason">
-          <Textarea id="exam-reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="e.g. Medical certificate from the health centre, dated 2 Dec." />
-        </Field>
-      </div>
-    </Sheet>
   );
 }
 

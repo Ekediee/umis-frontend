@@ -79,6 +79,8 @@ export default function AdvisingPage() {
   const daysLeft = daysBetween(now, w.closesAt);
   const eligible = rows.filter((r) => r.status === "to_review" && allChecksPassed(r));
   const selectedRows = eligible.filter((r) => selected.has(r.id));
+  const allEligibleSelected = eligible.length > 0 && selectedRows.length === eligible.length;
+  const needsSingle = rows.filter((r) => r.status === "to_review" && !allChecksPassed(r)).length;
 
   const approveOne = async (r: Registration) => {
     const res = await approve.mutate([r.id]).catch(() => undefined);
@@ -153,6 +155,39 @@ export default function AdvisingPage() {
       ) : rows.length === 0 ? (
         <ExplainedEmpty compact icon={ClipboardCheck} title="Nobody here" reason={term ? "No advisee matches your search." : "No registrations at this stage."} />
       ) : (
+        <>
+        {segment === "to_review" && (
+          <div className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[20px] border border-gray-200 bg-white py-1 pr-3 dark:border-gray-800 dark:bg-gray-900">
+            <Checkbox
+              className="ml-1"
+              label={allEligibleSelected ? "Deselect all" : "Select all registrations that passed every check"}
+              checked={allEligibleSelected}
+              indeterminate={selectedRows.length > 0 && !allEligibleSelected}
+              disabled={eligible.length === 0}
+              onChange={() => setSelected(allEligibleSelected ? new Set() : new Set(eligible.map((r) => r.id)))}
+            />
+            <p className="min-w-0 flex-1 text-[14px]">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">
+                {selectedRows.length > 0 ? `${selectedRows.length} of ${eligible.length} selected` : eligible.length > 0 ? "Select all" : "Nothing to select"}
+              </span>
+              <span className="text-[13px] text-gray-500 dark:text-gray-400">
+                {" · "}
+                {eligible.length > 0 ? `${plural(eligible.length, "registration")} passed every check` : "none passed every check"}
+                {needsSingle > 0 && `, ${needsSingle} need${needsSingle === 1 ? "s" : ""} a single decision`}
+              </span>
+            </p>
+            {selectedRows.length > 0 && (
+              <Btn size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+                Deselect all
+              </Btn>
+            )}
+            {eligible.length > 0 && !allEligibleSelected && (
+              <Btn size="sm" variant="ghost" onClick={() => setSelected(new Set(eligible.map((r) => r.id)))}>
+                Select all
+              </Btn>
+            )}
+          </div>
+        )}
         <ul className="flex flex-col gap-2.5 pb-24">
           {rows.map((r) => {
             const passed = allChecksPassed(r);
@@ -211,10 +246,11 @@ export default function AdvisingPage() {
             );
           })}
         </ul>
+        </>
       )}
 
       {/* Floating pill action bar (Linktree-style) */}
-      {segment === "to_review" && eligible.length > 0 && (
+      {segment === "to_review" && selectedRows.length > 0 && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[92px] z-40 flex justify-center px-4 md:bottom-8 md:pl-64">
           <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-gray-900 p-1.5 pl-5 text-white shadow-2xl dark:bg-white dark:text-gray-900">
             <span className="text-[13px] font-semibold">{selectedRows.length ? `${selectedRows.length} selected` : `${eligible.length} passed every check`}</span>

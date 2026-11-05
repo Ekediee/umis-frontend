@@ -98,6 +98,12 @@ export const lecturerApi = {
       path: `/lecturer/courses/${enc(courseId)}/grade-sheets/${enc(groupId)}/rows/${enc(studentId)}`,
       body: { exam: score },
     }),
+  saveCaTotal: (courseId: string, groupId: string, studentId: string, score: number | null) =>
+    call<R<typeof mock.saveCaTotal>>(() => mock.saveCaTotal(courseId, groupId, studentId, score), {
+      method: "PUT",
+      path: `/lecturer/courses/${enc(courseId)}/grade-sheets/${enc(groupId)}/rows/${enc(studentId)}`,
+      body: { ca: score },
+    }),
   setExamStatus: (courseId: string, studentId: string, status: Enrolment["examStatus"] | null, reason: string) =>
     call<R<typeof mock.setExamStatus>>(() => mock.setExamStatus(courseId, studentId, status, reason), {
       method: "PUT",

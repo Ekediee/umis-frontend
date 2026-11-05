@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { forwardRef, type ComponentProps, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, ChevronLeft, CircleDot, Clock, FolderOpen, Info, LifeBuoy, Loader2, XCircle, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ChevronLeft, CircleDot, Clock, FolderOpen, Info, LifeBuoy, Loader2, Minus, XCircle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -393,9 +393,15 @@ export function Toggle({ checked, onChange, label, description, disabled, id }: 
   );
 }
 
+/**
+ * Brand checkbox: a real (visually hidden) input drives a drawn 20px box, so
+ * keyboard, screen readers and forms behave natively. Checked and mixed states
+ * are brand blue with a white tick or dash; the whole 44px area is clickable.
+ */
 export function Checkbox({ checked, onChange, label, indeterminate, disabled, className }: { checked: boolean; onChange: (v: boolean) => void; label: string; indeterminate?: boolean; disabled?: boolean; className?: string }) {
+  const on = checked || !!indeterminate;
   return (
-    <span className={cn("inline-flex size-11 shrink-0 items-center justify-center", className)}>
+    <label className={cn("group/cb relative inline-flex size-11 shrink-0 items-center justify-center", disabled ? "cursor-not-allowed" : "cursor-pointer", className)}>
       <input
         type="checkbox"
         aria-label={label}
@@ -405,9 +411,22 @@ export function Checkbox({ checked, onChange, label, indeterminate, disabled, cl
           if (el) el.indeterminate = !!indeterminate;
         }}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-[18px] cursor-pointer rounded-[5px] accent-[#003cbb] disabled:cursor-not-allowed disabled:opacity-40"
+        className="peer sr-only"
       />
-    </span>
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-5 items-center justify-center rounded-[6px] border-2 transition-[background-color,border-color,box-shadow] duration-150",
+          "peer-focus-visible:ring-3 peer-focus-visible:ring-[#003cbb]/30",
+          on
+            ? "border-[#003cbb] bg-[#003cbb] text-white dark:border-[#2d6bff] dark:bg-[#2d6bff]"
+            : "border-gray-300 bg-white group-hover/cb:border-[#003cbb]/60 dark:border-gray-600 dark:bg-gray-950 dark:group-hover/cb:border-[#4d82ff]/70",
+          disabled && "border-gray-200 bg-gray-100 opacity-60 group-hover/cb:border-gray-200 dark:border-gray-700 dark:bg-gray-800",
+        )}
+      >
+        {indeterminate ? <Minus className="size-3.5" strokeWidth={3.5} /> : checked ? <Check className="size-3.5" strokeWidth={3.5} /> : null}
+      </span>
+    </label>
   );
 }
 
