@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>BU Pulse Lecturer API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+body { margin: 0; }
+[hidden] { display: none !important; }
+/* Layout: sticky endpoint index on the left, sections of collapsible endpoint cards on the right (stacks on phones). */
+:root {
+  --bg: #0b1220;
+  --panel: #111a2c;
+  --panel-2: #0e1626;
+  --raise: #16213a;
+  --line: #22304d;
+  --line-soft: #1a2640;
+  --fg: #e6ebf5;
+  --muted: #8b97b2;
+  --faint: #5f6b86;
+  --accent: #4d82ff;
+  --accent-ink: #9bb8ff;
+  --rail: #f5b82e;
+  --get-bg: rgba(18,183,106,.12); --get-fg: #4ade80; --get-line: rgba(74,222,128,.35);
+  --post-bg: rgba(77,130,255,.12); --post-fg: #8fb0ff; --post-line: rgba(77,130,255,.4);
+  --put-bg: rgba(249,115,22,.12); --put-fg: #fb923c; --put-line: rgba(251,146,60,.4);
+  --del-bg: rgba(240,68,56,.12); --del-fg: #f87171; --del-line: rgba(248,113,113,.4);
+  --new-a: #f97316; --new-b: #f5b82e;
+  --req-bg: rgba(240,68,56,.14); --req-fg: #fca5a5;
+  --opt-bg: rgba(139,151,178,.14); --opt-fg: #b6c0d6;
+  --code-bg: #0a101c;
+  --json-key: #e6ebf5; --json-str: #8fe3b0; --json-num: #f5b82e; --json-lit: #c4a7ff;
+  --font-ui: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.55; }
+a { color: var(--accent-ink); }
+code, pre, .mono { font-family: var(--font-mono); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 28px; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+
+/* Header */
+.top { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.logo { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 15px; letter-spacing: .02em; }
+.top h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; text-wrap: balance; }
+.top p { margin: 0; color: var(--muted); max-width: 78ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 999px; background: var(--raise); border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--fg); }
+.pill .mono { font-weight: 500; color: var(--accent-ink); }
+.base { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Sidebar */
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; max-height: calc(100vh - 32px); overflow: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 4px; }
+@media (max-width: 900px) { .side { position: static; max-height: none; } .side nav { display: none; } }
+.search { width: 100%; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 0 12px; font: inherit; }
+.search::placeholder { color: var(--faint); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: 700 12px var(--font-ui); cursor: pointer; letter-spacing: .03em; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.side nav { display: flex; flex-direction: column; gap: 14px; }
+.nav-sec h3 { margin: 0 0 6px; font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--faint); }
+.nav-sec ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.nav-sec a { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; text-decoration: none; color: var(--muted); font-size: 13px; }
+.nav-sec a:hover { background: var(--panel); color: var(--fg); }
+.nav-sec a .m { width: 44px; flex: none; font: 700 10px var(--font-mono); }
+.nav-sec a span.fn { font-family: var(--font-mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Sections */
+main { min-width: 0; display: flex; flex-direction: column; gap: 34px; }
+.sec-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.sec-head h2 { margin: 0; font-size: 20px; font-weight: 800; }
+.sec-icon { width: 22px; height: 18px; border-radius: 4px 4px 3px 3px; background: var(--rail); position: relative; }
+.sec-icon::before { content: ""; position: absolute; left: 0; top: -4px; width: 10px; height: 6px; border-radius: 3px 3px 0 0; background: var(--rail); }
+.count { height: 24px; padding: 0 10px; border-radius: 999px; background: var(--raise); border: 1px solid var(--line); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; }
+.cards { display: flex; flex-direction: column; gap: 14px; }
+
+/* Endpoint card */
+.ep { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); overflow: hidden; }
+.ep.flagged { box-shadow: inset 4px 0 0 var(--rail); }
+.ep-head { width: 100%; display: flex; user-select: none; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px 14px 20px; background: transparent; border: 0; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.ep-head:hover { background: var(--raise); }
+.ep.open .ep-head { background: var(--raise); border-bottom: 1px solid var(--line); }
+.method { min-width: 66px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; font: 700 12px var(--font-mono); letter-spacing: .04em; border: 1px solid; }
+.m-GET { background: var(--get-bg); color: var(--get-fg); border-color: var(--get-line); }
+.m-POST { background: var(--post-bg); color: var(--post-fg); border-color: var(--post-line); }
+.m-PUT, .m-PATCH { background: var(--put-bg); color: var(--put-fg); border-color: var(--put-line); }
+.m-DELETE { background: var(--del-bg); color: var(--del-fg); border-color: var(--del-line); }
+.nav-sec a .m.m-GET, .nav-sec a .m.m-POST, .nav-sec a .m.m-PUT, .nav-sec a .m.m-PATCH, .nav-sec a .m.m-DELETE { background: none; border: 0; }
+.path { font: 600 15px var(--font-mono); color: var(--fg); overflow-wrap: anywhere; min-width: 0; }
+.tag { height: 24px; padding: 0 10px; border-radius: 999px; font: 800 11px var(--font-ui); letter-spacing: .06em; display: inline-flex; align-items: center; gap: 5px; }
+.tag-new, .tag-updated { color: #fff; background: linear-gradient(90deg, var(--new-a), var(--new-b)); box-shadow: 0 0 14px rgba(249,115,22,.35); }
+.tag-proposed { color: var(--rail); border: 1px dashed var(--rail); }
+.auth { height: 24px; padding: 0 9px; border-radius: 6px; background: rgba(77,130,255,.12); border: 1px solid var(--post-line); color: var(--accent-ink); font: 600 12px var(--font-ui); display: inline-flex; align-items: center; gap: 5px; }
+.auth.public { background: rgba(139,151,178,.1); border-color: var(--line); color: var(--muted); }
+.lock { width: 9px; height: 8px; border-radius: 2px; background: currentColor; position: relative; margin-top: 3px; }
+.lock::before { content: ""; position: absolute; left: 1.5px; top: -5px; width: 6px; height: 6px; border: 1.6px solid currentColor; border-bottom: 0; border-radius: 4px 4px 0 0; box-sizing: border-box; }
+.ep-title { color: var(--muted); font-weight: 600; flex: 1 1 200px; min-width: 0; }
+.head-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.btn { height: 30px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: 700 12px var(--font-ui); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn.done { border-color: var(--get-line); color: var(--get-fg); }
+.caret { width: 12px; height: 12px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translateY(-3px); transition: transform .2s; }
+.ep.open .caret { transform: rotate(-135deg) translate(-2px, -2px); }
+
+.ep-body { padding: 22px 22px 26px; display: flex; flex-direction: column; gap: 24px; }
+.blk h4 { margin: 0 0 10px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--fg); display: flex; align-items: center; gap: 8px; }
+.blk h4 .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--rail); }
+.desc { border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.desc strong { font-size: 15px; }
+.desc p { margin: 0; color: var(--muted); max-width: 90ch; }
+.fnref { align-self: flex-start; font: 500 12px var(--font-mono); color: var(--muted); background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; overflow-wrap: anywhere; }
+.fnref b { color: var(--accent-ink); font-weight: 600; }
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; }
+th { text-align: left; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 800; padding: 12px 16px; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+td { padding: 11px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.k { font: 600 13px var(--font-mono); white-space: nowrap; }
+td code { font-size: 13px; color: var(--accent-ink); background: rgba(77,130,255,.1); padding: 2px 6px; border-radius: 5px; }
+.req { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--req-bg); color: var(--req-fg); white-space: nowrap; }
+.opt { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--opt-bg); color: var(--opt-fg); white-space: nowrap; }
+
+.resp-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.http { font: 700 12px var(--font-mono); padding: 3px 9px; border-radius: 6px; background: var(--get-bg); color: var(--get-fg); border: 1px solid var(--get-line); }
+.http.err { background: var(--del-bg); color: var(--del-fg); border-color: var(--del-line); }
+.resp-head .note { color: var(--faint); font-size: 14px; flex: 1; }
+.code { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--code-bg); }
+.code pre { margin: 0; padding: 18px; overflow-x: auto; font-size: 13px; line-height: 1.6; color: var(--fg); }
+.jk { color: var(--json-key); } .js { color: var(--json-str); } .jn { color: var(--json-num); } .jl { color: var(--json-lit); }
+.resp-alt { margin-top: 12px; }
+
+.consume { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--code-bg); }
+.tabs { display: flex; align-items: center; gap: 4px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--panel-2); flex-wrap: wrap; }
+.tab { height: 30px; padding: 0 11px; border-radius: 7px; border: 0; background: none; color: var(--muted); font: 600 13px var(--font-ui); cursor: pointer; }
+.tab[aria-selected="true"] { background: rgba(77,130,255,.16); color: var(--accent-ink); }
+.tabs .btn { margin-left: auto; }
+.consume pre { margin: 0; padding: 18px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: 13px; align-items: center; }
+.empty { color: var(--muted); padding: 30px; text-align: center; border: 1px dashed var(--line); border-radius: 14px; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">BU</div>
+      <h1>BU Pulse Lecturer API</h1>
+    </div>
+    <p>Every endpoint the lecturer portal expects from the BU Pulse backend, with the request it sends and the payload it needs back. Paths are proposals for ICT to confirm; response shapes follow <code>lib/lecturer/types.ts</code> on the <code>lecturer-portal</code> branch. Every response uses the <code>{ status, message, data }</code> envelope.</p>
+    <div class="meta">
+      <span class="pill base">Base URL <span class="mono">https://umis-sb.babcock.edu.ng/api/v1</span></span>
+      <span class="pill" id="totalPill">70 endpoints</span>
+      <span class="tag tag-new">NEW</span><span class="legend" style="margin-right:6px">advising features added this sprint</span>
+      <span class="tag tag-proposed">PROPOSED PATH</span><span class="legend">sign-in paths not yet agreed</span>
+    </div>
+  </header>
+
+  <aside class="side" aria-label="Endpoint index">
+    <label for="q" class="legend" style="font-weight:700">Find an endpoint</label>
+    <input id="q" class="search" type="search" placeholder="Path, function or keyword" autocomplete="off">
+    <div class="filters" role="group" aria-label="Filter by method" id="methodFilters"></div>
+    <div class="filters">
+      <button class="chip" id="expandAll" type="button">Expand all</button>
+      <button class="chip" id="collapseAll" type="button">Collapse all</button>
+    </div>
+    <nav id="nav"></nav>
+  </aside>
+
+  <main id="main"></main>
+</div>
+
+<script>
+const BASE = "https://umis-sb.babcock.edu.ng/api/v1";
+
+// ── Example records reused across payloads ────────────────────────────────────
+const LECTURER = { instructorId: "NIYI", title: "Dr.", firstName: "Amos", lastName: "Awoniyi", email: "awoniyia@babcock.edu.ng", phone: null, office: "Room 214, Software Engineering Building", photoUrl: null, bio: "Teaches software engineering and databases.", school: "School of Computing", department: "Software Engineering", campus: "Ilishan-Remo", roles: ["lecturer", "course_advisor", "supervisor"], levelsApproving: [100], researchAreas: ["Software testing", "Fintech systems"], orcid: null };
+const STUDENT = { id: "l100-008", matric: "26/0288", firstName: "Nkechi", lastName: "Ajayi", programme: "Software Engineering", level: 100, photoUrl: null, advisorName: "Dr. Amos Awoniyi" };
+const COURSE = { id: "sen-201", code: "SEN 201", title: "Introduction to Software Engineering", units: 2, semesterCode: "2026/2027.1", level: 200, caWeight: 40, week: 6, groups: [{ id: "sen-201:A", label: "Group A" }, { id: "sen-201:B", label: "Group B" }], students: 163, coLecturers: [] };
+const SESSION = { id: "ses-sen-201-tue", courseId: "sen-201", groupIds: ["sen-201:A"], day: 2, start: "10:00", end: "12:00", venue: "CST Hall A", source: "registry", cancelled: false };
+const REG = { id: "reg-l100-008", student: STUDENT, status: "to_review", submittedAt: "2026-10-05T14:20:00Z", cgpa: 2.29, standing: "Probation",
+  courses: [{ code: "GEDS 101", title: "Communication in English", units: 2 }, { code: "MTH 101", title: "Elementary Mathematics I", units: 3, carryOver: true }, { code: "PHY 101", title: "General Physics I", units: 3, carryOver: true }],
+  checks: [{ id: "units", label: "Units within 15 to 24", passed: true, detail: "19 units" }, { id: "carry-overs", label: "Carry-overs included", passed: false, detail: "Missing carry-over: COS 102 Problem Solving (failed 2025/2026)", suggestedReason: "missing-carry-over" }, { id: "core-courses", label: "Required courses included", passed: true }] };
+const WINDOW = { level: 100, advisees: 212, closesAt: "2026-10-18T22:59:00Z", session: "2026/2027", semester: 1 };
+
+// ── Endpoints ─────────────────────────────────────────────────────────────────
+// s: section · fn: frontend function · m: method · p: path · t: title · d: description
+// q: query params · b: request body · code/msg/data: success response · err: one error example
+// tag: new | updated | proposed · idem: needs Idempotency-Key · pub: no Bearer token
+const S = {
+  auth: "Sign-in & Session", today: "Today, Search & Notifications", courses: "Courses & Class Lists", mat: "Materials, Announcements & Q&A",
+  ca: "Assessments (CA)", grades: "Final Grades", tt: "Timetable & Attendance", adv: "Course Advising", sup: "Supervision", oh: "Office Hours & Department",
+};
+
+const E = [
+  // Sign-in & session
+  { s: S.auth, fn: "signInWithStaffId", m: "POST", p: "/auth/lecturer/sign-in", t: "Sign in with staff ID", pub: true, tag: "proposed",
+    d: ["Signs a lecturer in with their staff ID and password.", "Returns a Sanctum token and the lecturer profile. The frontend stores the token in an HTTP-only cookie, so browser JavaScript never sees it."],
+    b: { staffId: "NIYI", password: "••••••••" }, msg: "Signed in", data: { token: "1|ZyX8sanctumTokenExample", expiresAt: "2026-11-04T23:00:00Z", lecturer: LECTURER },
+    err: { code: 401, msg: "Staff ID or password is incorrect", data: null } },
+  { s: S.auth, fn: "signInWithSso", m: "POST", p: "/auth/lecturer/sso", t: "Continue with university account", pub: true, tag: "proposed",
+    d: ["Signs a lecturer in with their Babcock Google account after the OAuth callback.", "If the email isn't on any staff record, returns status \"not-recognised\" so the frontend can offer the instructor-ID link flow."],
+    b: { email: "awoniyia@babcock.edu.ng", idToken: "eyJhbGciOiJSUzI1NiIs..." }, msg: "Signed in", data: { result: "signed-in", token: "1|ZyX8sanctumTokenExample", lecturer: LECTURER } },
+  { s: S.auth, fn: "requestInstructorLink", m: "POST", p: "/auth/lecturer/link-request", t: "Request a link code", pub: true, tag: "proposed",
+    d: ["Starts linking an SSO email to an instructor ID when the email isn't on the staff record.", "The department admin receives a 6-digit code to pass to the lecturer."],
+    b: { instructorId: "NIYI", email: "awoniyia@babcock.edu.ng" }, msg: "Code sent to your department admin", data: { result: "code-sent", expiresInMinutes: 30 } },
+  { s: S.auth, fn: "verifyInstructorLink", m: "POST", p: "/auth/lecturer/link-verify", t: "Verify link code", pub: true, tag: "proposed",
+    d: ["Confirms the 6-digit code, links the SSO email to the instructor ID and signs the lecturer in.", "The backend must audit-log the link (instructor ID, email, admin, time)."],
+    b: { instructorId: "NIYI", code: "482913" }, msg: "Account linked", data: { token: "1|ZyX8sanctumTokenExample", lecturer: LECTURER },
+    err: { code: 422, msg: "That code is wrong or has expired", data: null } },
+  { s: S.auth, fn: "signOutLecturer", m: "POST", p: "/auth/lecturer/sign-out", t: "Sign out",
+    d: ["Revokes the current token, or every token for this lecturer when everywhere is true."],
+    b: { everywhere: false }, msg: "Signed out", data: { revoked: 1 } },
+  { s: S.auth, fn: "getSession", m: "GET", p: "/lecturer/me", t: "Current lecturer",
+    d: ["Returns the signed-in lecturer, their notification preferences and whether they finished onboarding.", "Called on every app load."],
+    msg: "Session retrieved", data: { lecturer: LECTURER, prefs: { email: true, push: true }, onboarded: true } },
+  { s: S.auth, fn: "completeOnboarding", m: "POST", p: "/lecturer/me/onboarding", t: "Finish onboarding",
+    d: ["Saves the welcome-screen choices: notification preferences, office and a contact email when the staff record has none."],
+    b: { prefs: { email: true, push: true }, office: "Room 214, Software Engineering Building", email: "awoniyia@babcock.edu.ng" }, msg: "Onboarding complete", data: { ok: true } },
+  { s: S.auth, fn: "updateProfile", m: "PATCH", p: "/lecturer/me", t: "Update profile",
+    d: ["Updates editable profile fields and which fields show on the public staff page.", "Send only the fields that changed."],
+    b: { office: "Room 214, Software Engineering Building", bio: "Teaches software engineering and databases.", publicFields: { photo: true, email: true, office: true, officeHours: true, courses: true, researchAreas: true, publications: false } },
+    msg: "Profile updated", data: LECTURER },
+  { s: S.auth, fn: "reportMistake", m: "POST", p: "/lecturer/data-reports", t: "Report a data mistake",
+    d: ["Sends a correction request to ICT for fields the lecturer can't edit (name, department, phone)."],
+    b: { field: "department", problem: "Shows Computer Science", shouldBe: "Software Engineering" }, code: 201, msg: "Report sent to ICT", data: { reference: "MIS-0007" } },
+  { s: S.auth, fn: "getSemesters", m: "GET", p: "/semesters", q: [["scope", "lecturer", "Only semesters with teaching for this lecturer"]], t: "Semesters",
+    d: ["Lists semesters for the semester switcher, newest first."],
+    msg: "Semesters retrieved", data: [{ code: "2026/2027.1", session: "2026/2027", semester: 1, current: true, startsAt: "2026-08-31", endsAt: "2026-12-18" }, { code: "2025/2026.2", session: "2025/2026", semester: 2, current: false, startsAt: "2026-01-12", endsAt: "2026-05-15" }] },
+
+  // Today
+  { s: S.today, fn: "getToday", m: "GET", p: "/lecturer/today", q: [["semester", "2026/2027.1", "Semester code"]], t: "Today view",
+    d: ["Everything the lecturer needs on opening the app: next class, tasks that need them, the week at a glance and the next deadline.", "sync.records reports whether the records service is reachable; queued counts offline writes waiting to send."],
+    msg: "Today retrieved", data: { greetingName: "Amos", nextClass: { ...SESSION, course: { id: "sen-201", code: "SEN 201", title: "Introduction to Software Engineering" }, groupLabels: ["Group A"], topic: "Design patterns", startsAt: "2026-10-07T09:00:00Z" },
+      tasks: [{ id: "t-reg", kind: "registrations", title: "14 registrations to approve", detail: "14 students waiting. Registration closes 18 Oct.", deadline: "2026-10-18T22:59:00Z", urgency: "amber", href: "/lecturer/advising" }],
+      week: [{ date: "2026-10-07", classes: 2, deadlines: [] }], nextDeadline: { label: "CA 2: SEN 201", date: "2026-10-24T22:59:00Z", href: "/lecturer/courses/sen-201" }, sync: { records: "ok", lastSyncedAt: "2026-10-07T08:10:00Z", queued: 0 } } },
+  { s: S.today, fn: "search", m: "GET", p: "/lecturer/search", q: [["q", "ajayi", "At least 2 characters"]], t: "Global search",
+    d: ["Searches the lecturer's own courses, students (in their courses, advisees and supervisees only) and projects. Up to 20 results."],
+    msg: "Results retrieved", data: [{ kind: "student", id: "l100-008", title: "Nkechi Ajayi", subtitle: "26/0288 · Advisee, Level 100", href: "/lecturer/advising/students/l100-008" }, { kind: "course", id: "sen-201", title: "SEN 201", subtitle: "Introduction to Software Engineering", href: "/lecturer/courses/sen-201" }] },
+  { s: S.today, fn: "getNotifications", m: "GET", p: "/lecturer/notifications", t: "Notifications",
+    d: ["The lecturer's inbox, newest first."],
+    msg: "Notifications retrieved", data: [{ id: "n4", kind: "registration", title: "2 students resubmitted", body: "Registrations resubmitted after your return. See what changed.", at: "2026-10-06T08:00:00Z", read: false, href: "/lecturer/advising" }] },
+  { s: S.today, fn: "markNotificationsRead", m: "POST", p: "/lecturer/notifications/read", t: "Mark notifications read",
+    d: ["Marks the given notifications read, or all of them."],
+    b: { ids: ["n4", "n7"] }, msg: "Marked as read", data: { ok: true } },
+
+  // Courses
+  { s: S.courses, fn: "getCourses", m: "GET", p: "/lecturer/courses", q: [["semester", "2026/2027.1", "Semester code"]], t: "My courses",
+    d: ["Courses allocated to the lecturer this semester, plus earlier semesters for reference."],
+    msg: "Courses retrieved", data: { current: [COURSE], earlier: [{ ...COURSE, id: "sen-201-2025", semesterCode: "2025/2026.1", week: 15 }], registrationOpen: { until: "2026-10-18T22:59:00Z" } } },
+  { s: S.courses, fn: "getCourse", m: "GET", p: "/lecturer/courses/{courseId}", t: "Course overview",
+    d: ["One course workspace: timetable sessions, the next class, last announcement, upcoming deadlines and unanswered questions."],
+    msg: "Course retrieved", data: { course: COURSE, sessions: [SESSION], nextSession: { ...SESSION, startsAt: "2026-10-13T09:00:00Z", groupLabels: ["Group A"] }, lastAnnouncement: { id: "ann-1", title: "CA 2 brief is up", sentAt: "2026-10-02T08:30:00Z" }, deadlines: [{ label: "CA 2", date: "2026-10-24T22:59:00Z" }, { label: "Final grades", date: "2026-12-02T16:00:00Z" }], unansweredQuestions: 3 } },
+  { s: S.courses, fn: "getClassList", m: "GET", p: "/lecturer/courses/{courseId}/students", q: [["group", "sen-201:A", "Optional class group"]], t: "Class list",
+    d: ["Students enrolled in the course with attendance, CA so far and risk signals (low attendance, missed CA)."],
+    msg: "Class list retrieved", data: [{ student: { ...STUDENT, id: "s2-114", matric: "25/1144", level: 200 }, enrolment: { studentId: "s2-114", courseId: "sen-201", groupId: "sen-201:A", attendancePct: 71, caScores: { "ca-1": 7, "ca-2": null }, examScore: null, status: "active", tags: [], flaggedAtRisk: false }, caTotal: 14, signals: [{ kind: "low-attendance", pct: 71 }] }] },
+  { s: S.courses, fn: "flagStudent", m: "POST", p: "/lecturer/courses/{courseId}/students/{studentId}/flag", t: "Flag a student",
+    d: ["Flags a struggling student to their course adviser with a short note."],
+    b: { note: "Missed CA 1 and two classes in a row." }, msg: "Adviser notified", data: { advisor: "Dr. Folasade Ogunbiyi" } },
+  { s: S.courses, fn: "saveStudentNote", m: "PUT", p: "/lecturer/courses/{courseId}/students/{studentId}/note", t: "Private note",
+    d: ["Saves the lecturer's private note on a student for this course. Only the lecturer sees it."],
+    b: { note: "Strong in labs; struggles with written tests." }, msg: "Note saved", data: { ok: true } },
+  { s: S.courses, fn: "messageStudents", m: "POST", p: "/lecturer/messages", t: "Message students",
+    d: ["Sends a message to selected students by push and email."],
+    b: { studentIds: ["s2-114", "s2-120"], body: "Please see me after Tuesday's class about CA 1." }, msg: "Message sent", data: { sent: 2 } },
+  { s: S.courses, fn: "reportDuplicate", m: "POST", p: "/lecturer/courses/{courseId}/duplicate-report", t: "Report duplicate course",
+    d: ["Reports that a course appears twice in the catalogue under different codes."],
+    msg: "Reported to ICT", data: { reference: "DUP-BUCSC333" } },
+  { s: S.courses, fn: "askHod", m: "POST", p: "/lecturer/allocation-requests", t: "Ask HOD about allocation",
+    d: ["Asks the head of department to check the lecturer's course allocation for a semester."],
+    b: { semester: "2026/2027.1" }, msg: "Request sent", data: { message: "Asked your HOD about course allocation for First semester 2026/2027." } },
+
+  // Materials
+  { s: S.mat, fn: "getMaterials", m: "GET", p: "/lecturer/courses/{courseId}/materials", t: "Course materials",
+    d: ["Slides, notes and readings for the course, by week."],
+    msg: "Materials retrieved", data: [{ id: "mat-31", courseId: "sen-201", week: 6, name: "Week 6 - Design patterns.pdf", sizeKb: 2480, releaseAt: null, groupIds: [], uploadedAt: "2026-10-05T10:00:00Z", downloads: 112 }] },
+  { s: S.mat, fn: "uploadMaterial", m: "POST", p: "/lecturer/courses/{courseId}/materials", t: "Add a material",
+    d: ["Registers an uploaded file against a week. The file itself goes first through a resumable multipart upload; this call attaches it to the course."],
+    b: { courseId: "sen-201", week: 6, name: "Week 6 - Design patterns.pdf", sizeKb: 2480, releaseAt: "2026-10-12T07:00:00Z", groupIds: [] }, code: 201, msg: "Material added", data: { id: "mat-31", courseId: "sen-201", week: 6, name: "Week 6 - Design patterns.pdf", sizeKb: 2480, releaseAt: "2026-10-12T07:00:00Z", groupIds: [] } },
+  { s: S.mat, fn: "deleteMaterial", m: "DELETE", p: "/lecturer/materials/{id}", ex: { id: "mat-31" }, t: "Delete a material",
+    d: ["Moves a material to the bin. It can be restored for 30 days."],
+    msg: "Material deleted", data: { restoreUntilDays: 30 } },
+  { s: S.mat, fn: "searchCorpus", m: "GET", p: "/corpus/search", q: [["q", "design patterns", "Title or author"]], t: "Search reading list corpus",
+    d: ["Searches the library's paper corpus to add readings to a week."],
+    msg: "Papers retrieved", data: [{ title: "Design Patterns: Elements of Reusable Object-Oriented Software", authors: "Gamma, Helm, Johnson, Vlissides", year: 1994, doi: "10.5555/186897" }] },
+  { s: S.mat, fn: "addReading", m: "POST", p: "/lecturer/courses/{courseId}/readings", t: "Add a reading",
+    d: ["Adds a paper from the corpus to a week's reading list."],
+    b: { week: 6, title: "Design Patterns: Elements of Reusable Object-Oriented Software", doi: "10.5555/186897" }, code: 201, msg: "Reading added", data: { ok: true } },
+  { s: S.mat, fn: "getAnnouncements", m: "GET", p: "/lecturer/courses/{courseId}/announcements", t: "Announcements",
+    d: ["Announcements sent for the course, newest first, with read counts."],
+    msg: "Announcements retrieved", data: [{ id: "ann-1", courseId: "sen-201", title: "CA 2 brief is up", body: "The CA 2 brief is in Week 6. Submit online by Saturday 24 October, 11:59 pm.", groupIds: [], pinned: true, alsoEmail: true, sentAt: "2026-10-02T08:30:00Z", recipients: 163, seenBy: 131 }] },
+  { s: S.mat, fn: "postAnnouncement", m: "POST", p: "/lecturer/courses/{courseId}/announcements", t: "Post an announcement", idem: true,
+    d: ["Sends an announcement to the whole course or chosen groups, by push and optionally email.", "Non-urgent posts after 10 pm are held until 6 am (heldUntil0600)."],
+    b: { courseId: "sen-201", title: "Venue change for Tuesday", body: "Tuesday's class moves to CST Hall B.", groupIds: ["sen-201:A"], alsoEmail: true, pinned: false, urgent: true }, code: 201, msg: "Announcement sent",
+    data: { announcement: { id: "ann-2", title: "Venue change for Tuesday", sentAt: "2026-10-07T09:20:00Z", recipients: 82 }, heldUntil0600: false, groupLabels: ["Group A"] } },
+  { s: S.mat, fn: "getQuestions", m: "GET", p: "/lecturer/courses/{courseId}/questions", t: "Course Q&A",
+    d: ["Student questions for the course, unanswered first."],
+    msg: "Questions retrieved", data: [{ id: "q-12", courseId: "sen-201", body: "Is the observer pattern in the mid-semester test?", askedBy: "Anonymous", askedAt: "2026-10-06T20:05:00Z", upvotes: 14, answer: null, coveredInClass: false, pinnedFaq: false }] },
+  { s: S.mat, fn: "answerQuestion", m: "POST", p: "/lecturer/questions/{id}/answer", ex: { id: "q-12" }, t: "Answer a question",
+    d: ["Posts the lecturer's answer. The asker and everyone who upvoted are notified."],
+    b: { body: "Yes. Revise weeks 5 and 6." }, msg: "Answer posted", data: { notified: 15 } },
+  { s: S.mat, fn: "updateQuestion", m: "PATCH", p: "/lecturer/questions/{id}", ex: { id: "q-12" }, t: "Update a question",
+    d: ["Marks a question as covered in class or pins it as a FAQ."],
+    b: { coveredInClass: true, pinnedFaq: true }, msg: "Question updated", data: { ok: true } },
+
+  // CA
+  { s: S.ca, fn: "getAssessments", m: "GET", p: "/lecturer/courses/{courseId}/assessments", t: "Assessments",
+    d: ["CA items for the course with how many scores are entered and online submission counts."],
+    msg: "Assessments retrieved", data: { course: COURSE, assessments: [{ id: "ca-sen-201-1", courseId: "sen-201", name: "CA 1", maxMarks: 10, mode: "in-class", dueDate: "2026-09-25T09:00:00Z", released: true, entered: 163, total: 163, submissions: null }, { id: "ca-sen-201-2", courseId: "sen-201", name: "CA 2 assignment", maxMarks: 20, mode: "online", dueDate: "2026-10-24T22:59:00Z", released: false, entered: 0, total: 163, submissions: { submitted: 135, late: 3 } }] } },
+  { s: S.ca, fn: "createAssessment", m: "POST", p: "/lecturer/courses/{courseId}/assessments", t: "Create an assessment",
+    d: ["Adds a CA item. The total of all CA max marks must fit the course CA weight (40)."],
+    b: { courseId: "sen-201", name: "Mid-semester test", maxMarks: 10, mode: "in-class", dueDate: "2026-10-20T09:00:00Z" }, code: 201, msg: "Assessment created", data: { id: "ca-sen-201-3", courseId: "sen-201", name: "Mid-semester test", maxMarks: 10, mode: "in-class", dueDate: "2026-10-20T09:00:00Z", released: false } },
+  { s: S.ca, fn: "getScoreSheet", m: "GET", p: "/lecturer/courses/{courseId}/assessments/{assessmentId}/scores", q: [["group", "sen-201:A", "Optional class group"]], t: "Score sheet",
+    d: ["Scores for one CA item. A null score means not entered yet; never treat it as zero."],
+    msg: "Scores retrieved", data: { course: COURSE, assessment: { id: "ca-sen-201-1", name: "CA 1", maxMarks: 10 }, rows: [{ studentId: "s2-114", matric: "25/1144", name: "Tobi Adeyemi", score: 7 }, { studentId: "s2-120", matric: "25/1203", name: "Zainab Bello", score: null }] } },
+  { s: S.ca, fn: "saveCaScore", m: "PUT", p: "/lecturer/courses/{courseId}/assessments/{assessmentId}/scores/{studentId}", ex: { studentId: "s2-114" }, t: "Save a CA score",
+    d: ["Saves one student's score as the lecturer types. Send null to clear it."],
+    b: { score: 8 }, msg: "Score saved", data: { ok: true }, err: { code: 422, msg: "Score must be between 0 and 10", data: null } },
+  { s: S.ca, fn: "releaseAssessment", m: "POST", p: "/lecturer/assessments/{assessmentId}/release", t: "Release scores", idem: true,
+    d: ["Publishes a CA item's scores to students, with an optional comment and class average."],
+    b: { comment: "Well done overall. See me if you scored below 5.", showAverage: true }, msg: "Scores released", data: { students: 163, comment: "Well done overall. See me if you scored below 5.", showAverage: true } },
+  { s: S.ca, fn: "previewImport", m: "POST", p: "/lecturer/courses/{courseId}/imports/preview", t: "Preview score import",
+    d: ["Checks pasted or spreadsheet scores before import: matched rows, unknown matric numbers and duplicates."],
+    b: { rows: [{ matric: "25/1144", score: "8" }, { matric: "25/9999", score: "6" }] }, msg: "Import checked", data: { matched: 1, unknown: ["25/9999"], duplicates: [] } },
+
+  // Grades
+  { s: S.grades, fn: "getGradeSheet", m: "GET", p: "/lecturer/courses/{courseId}/grade-sheets/{groupId}", t: "Final grade sheet",
+    d: ["CA total, exam score, total and letter grade per student, with the pre-submit check (missing scores, out-of-range values)."],
+    msg: "Grade sheet retrieved", data: { course: COURSE, sheet: { id: "gs-sen-201:A", status: "open", dueDate: "2026-12-02T16:00:00Z" }, rows: [{ studentId: "s2-114", matric: "25/1144", ca: 31, exam: 42, total: 73, letter: "A" }], check: { ok: false, missingExam: 4, missingCa: 0, outOfRange: 0 }, assessments: [{ id: "ca-sen-201-1", name: "CA 1", maxMarks: 10 }] } },
+  { s: S.grades, fn: "saveExamScore", m: "PUT", p: "/lecturer/courses/{courseId}/grade-sheets/{groupId}/rows/{studentId}", ex: { studentId: "s2-114" }, t: "Save an exam score",
+    d: ["Saves one student's exam score (out of 60). Send null to clear it."],
+    b: { exam: 42 }, msg: "Exam score saved", data: { ok: true } },
+  { s: S.grades, fn: "setExamStatus", m: "PUT", p: "/lecturer/courses/{courseId}/students/{studentId}/exam-status", ex: { studentId: "s2-114" }, t: "Mark absent or incomplete",
+    d: ["Marks a student absent from the exam or incomplete, with a reason. Send null to clear."],
+    b: { status: "absent", reason: "Medical: certificate from BUTH" }, msg: "Exam status saved", data: { ok: true } },
+  { s: S.grades, fn: "submitGradeSheet", m: "POST", p: "/lecturer/courses/{courseId}/grade-sheets/{groupId}/submit", t: "Submit final grades", idem: true,
+    d: ["Submits the grade sheet to the HOD and Registry approval chain. Writes back to BU Pulse.", "A late submission needs a reason. Repeating the call returns alreadySubmitted: true."],
+    b: { lateReason: null }, msg: "Grades submitted", data: { sheet: { id: "gs-sen-201:A", status: "submitted", submittedAt: "2026-12-01T15:40:00Z" }, alreadySubmitted: false, pdfUrl: "/api/lecturer/grade-sheets/gs-sen-201:A.pdf" },
+    err: { code: 422, msg: "4 students have no exam score", data: { missingExam: 4 } } },
+
+  // Timetable
+  { s: S.tt, fn: "getSchedule", m: "GET", p: "/lecturer/timetable", q: [["semester", "2026/2027.1", "Semester code"]], t: "Teaching timetable",
+    d: ["The lecturer's weekly classes, any clashes between them, and office hours."],
+    msg: "Timetable retrieved", data: { officialPublished: true, registryExpected: "2026-10-14", sessions: [{ ...SESSION, course: { id: "sen-201", code: "SEN 201", title: "Introduction to Software Engineering" }, groupLabels: ["Group A"] }], clashes: [], courses: [{ id: "sen-201", code: "SEN 201", title: "Introduction to Software Engineering", groups: COURSE.groups }], officeHours: [{ id: "oh-wed", day: 3, start: "14:00", end: "16:00", location: "Room 214" }] } },
+  { s: S.tt, fn: "addClass", m: "POST", p: "/lecturer/timetable/classes", t: "Add a class",
+    d: ["Adds a class the lecturer arranged (tutorial, extra lab) to the timetable."],
+    b: { courseId: "sen-201", groupIds: ["sen-201:B"], day: 4, start: "14:00", end: "15:00", venue: "Lab 3", cancelled: false }, code: 201, msg: "Class added", data: { ...SESSION, id: "ses-sen-201-thu", groupIds: ["sen-201:B"], day: 4, start: "14:00", end: "15:00", venue: "Lab 3", source: "lecturer" } },
+  { s: S.tt, fn: "changeClass", m: "POST", p: "/lecturer/timetable/classes/{sessionId}/change", t: "Cancel, move or put a class online",
+    d: ["Changes one class and tells the students. change.kind is cancel, move (with day, start, end, venue) or online (with link)."],
+    b: { change: { kind: "move", day: 2, start: "12:00", end: "14:00", venue: "CST Hall B" }, message: "Tuesday's class moves to 12 pm in CST Hall B." }, msg: "Students notified", data: { notified: 82, message: "Tuesday's class moves to 12 pm in CST Hall B." } },
+  { s: S.tt, fn: "reportClash", m: "POST", p: "/lecturer/timetable/clash-reports", t: "Report a clash",
+    d: ["Reports two clashing classes to the timetable office."],
+    b: { sessions: ["ses-sen-201-tue", "ses-csc-333-tue"] }, code: 201, msg: "Clash reported", data: { reference: "TT-TUETUE" } },
+  { s: S.tt, fn: "getAttendanceRoster", m: "GET", p: "/lecturer/sessions/{sessionId}/roster", t: "Attendance roster",
+    d: ["Students expected at a class, for taking the register."],
+    msg: "Roster retrieved", data: { course: COURSE, session: { ...SESSION, groupLabels: ["Group A"] }, roster: [{ studentId: "s2-114", matric: "25/1144", name: "Tobi Adeyemi", lastStatus: "present" }], topic: "Design patterns" } },
+  { s: S.tt, fn: "saveRegister", m: "PUT", p: "/lecturer/sessions/{sessionId}/registers/{date}", t: "Save a register", idem: true,
+    d: ["Saves attendance for one class on one date. method is code (QR / 6-digit), manual or signed-sheet."],
+    b: { sessionId: "ses-sen-201-tue", date: "2026-10-07", method: "code", marks: { "s2-114": "present", "s2-120": "late", "s2-131": "absent" } }, msg: "Register saved", data: { id: "reg-ses-sen-201-tue-7", counts: { present: 74, late: 5, absent: 3, excused: 0 } } },
+  { s: S.tt, fn: "deleteRegister", m: "DELETE", p: "/lecturer/registers/{id}", ex: { id: "reg-ses-sen-201-tue-7" }, t: "Delete a register",
+    d: ["Deletes a register taken by mistake."],
+    msg: "Register deleted", data: { ok: true } },
+
+  // Advising
+  { s: S.adv, fn: "getAdvising", m: "GET", p: "/lecturer/advising/registrations", t: "Advisees' registrations",
+    d: ["Every advisee's registration for the adviser's level with automatic checks, plus the registration window."],
+    msg: "Registrations retrieved", data: { window: WINDOW, registrations: [REG] } },
+  { s: S.adv, fn: "getRegistration", m: "GET", p: "/lecturer/advising/registrations/{id}", ex: { id: "reg-l100-008" }, t: "One registration",
+    d: ["One advisee's registration with checks, previous return and what changed on resubmission."],
+    msg: "Registration retrieved", data: REG },
+  { s: S.adv, fn: "approveRegistrations", m: "POST", p: "/lecturer/advising/registrations/approve", t: "Approve registrations", idem: true,
+    d: ["Approves one or more registrations and sends them to the school officer. Writes back to BU Pulse.", "In bulk, registrations with a failed check are refused: they need a single decision."],
+    b: { ids: ["reg-l100-002", "reg-l100-003", "reg-l100-008"] }, msg: "Registrations approved", data: { approved: ["reg-l100-002", "reg-l100-003"], refused: ["reg-l100-008"] } },
+  { s: S.adv, fn: "returnRegistration", m: "POST", p: "/lecturer/advising/registrations/{id}/return", ex: { id: "reg-l100-180" }, t: "Return a registration", idem: true, tag: "updated",
+    d: ["Sends a registration back to the student with a reason. Their form reopens and they get a push and email.", "Now also allowed after approval: status to_review, approved_advisor or approved_school. Returning a school-approved registration withdraws the school officer's approval too, and the officer is told."],
+    b: { reasons: ["missing-core-course"], note: "Add GEDS 105 Citizenship and Leadership. It is required this semester." }, msg: "Registration returned",
+    data: { ...REG, id: "reg-l100-180", status: "returned", returned: { reasons: ["missing-core-course"], note: "Add GEDS 105 Citizenship and Leadership. It is required this semester.", at: "2026-10-07T09:30:00Z" } },
+    err: { code: 409, msg: "This registration can't be returned right now", data: null } },
+  { s: S.adv, fn: "remindNotSubmitted", m: "POST", p: "/lecturer/advising/reminders", t: "Remind non-submitters",
+    d: ["Reminds every advisee who hasn't submitted, by push and email. Once a day."],
+    msg: "Reminders sent", data: { reminded: 5 } },
+  { s: S.adv, fn: "getAdviseeRoster", m: "GET", p: "/lecturer/advising/students", q: [["level", "100", "Adviser's level; defaults to all their levels"]], t: "All students in the level", tag: "new",
+    d: ["Every student in the adviser's level, whatever their registration stage, for the All students tab.", "failedOutstanding counts failed courses not registered again; missingCore counts required courses never taken or not picked (this semester's only count once the registration is submitted). cgpa is null when the student has no published results."],
+    msg: "Advisees retrieved", data: { window: WINDOW, students: [{ student: STUDENT, registrationId: "reg-l100-008", status: "to_review", units: 19, cgpa: 2.29, standing: "Probation", failedOutstanding: 2, missingCore: 0 }, { student: { ...STUDENT, id: "l100-010", matric: "26/2956", firstName: "David", lastName: "Eze" }, registrationId: "reg-l100-010", status: "to_review", units: 11, cgpa: null, standing: "Good", failedOutstanding: 0, missingCore: 4 }] } },
+  { s: S.adv, fn: "getAdviseeRecord", m: "GET", p: "/lecturer/advising/students/{studentId}", t: "Advisee record", tag: "new",
+    d: ["One advisee's full record for advising: unofficial transcript, CA scores in courses they're taking now, and the programme curriculum the frontend uses to build the course audit (failed, missing, still to do).", "Read-only. Restrict to the adviser's own levels and log every view. A null assessment score means not entered yet."],
+    msg: "Advisee record retrieved",
+    data: { student: STUDENT, registration: REG, cgpa: 2.29, standing: "Probation",
+      transcript: [{ session: "2025/2026", semester: 1, level: 100, courses: [{ code: "GEDS 101", title: "Communication in English", units: 2, score: 72, grade: "A", gradePoint: 5 }, { code: "MTH 101", title: "Elementary Mathematics I", units: 3, score: 24, grade: "F", gradePoint: 0 }], gpa: 2.89, cgpa: 2.89 },
+        { session: "2025/2026", semester: 2, level: 100, courses: [{ code: "COS 102", title: "Problem Solving", units: 3, score: 31, grade: "F", gradePoint: 0 }, { code: "SEN 102", title: "Web Design and Development", units: 3, score: 64, grade: "B", gradePoint: 4 }], gpa: 1.69, cgpa: 2.29 }],
+      current: [{ code: "GEDS 101", title: "Communication in English", units: 2, lecturer: "Mrs. Yemi Olatunji", assessments: [{ name: "CA 1", max: 10, score: 9 }, { name: "Mid-semester test", max: 20, score: 17 }, { name: "Assignment", max: 10, score: null }], attendancePct: 92 }],
+      curriculum: [{ code: "GEDS 101", title: "Communication in English", units: 2, level: 100, semester: 1, kind: "core" }, { code: "COS 102", title: "Problem Solving", units: 3, level: 100, semester: 2, kind: "core" }, { code: "STA 112", title: "Probability I", units: 3, level: 100, semester: 2, kind: "elective" }],
+      term: { session: "2026/2027", semester: 1 } },
+    err: { code: 404, msg: "We couldn't find that student among your advisees", data: null } },
+  { s: S.adv, fn: "getAtRiskQueue", m: "GET", p: "/lecturer/advising/at-risk", t: "At-risk advisees",
+    d: ["Advisees flagged by the standing rule or by their lecturers, for the adviser to check in with."],
+    msg: "At-risk queue retrieved", data: [{ id: "standing-l100-008", student: STUDENT, reason: "Academic standing: Probation (CGPA 2.29)", raisedBy: "Standing rule", at: "2026-10-05T14:20:00Z", handledNote: null }] },
+  { s: S.adv, fn: "markAtRiskHandled", m: "POST", p: "/lecturer/advising/at-risk/{id}/handled", ex: { id: "standing-l100-008" }, t: "Mark at-risk item handled",
+    d: ["Records what the adviser did about an at-risk item."],
+    b: { note: "Met on 7 Oct; agreed a revision plan for MTH 101." }, msg: "Marked as handled", data: { ok: true } },
+  { s: S.adv, fn: "sendCheckIn", m: "POST", p: "/lecturer/advising/check-ins", t: "Message an advisee",
+    d: ["Sends an adviser message to a student's BU Pulse inbox with push and email. Also used by Send to student on the course audit."],
+    b: { studentId: "l100-008", body: "Hi Nkechi, I reviewed your course record. You failed COS 102 and MTH 102 and need to register them again." }, code: 201, msg: "Message sent", data: { studentId: "l100-008" } },
+
+  // Supervision
+  { s: S.sup, fn: "getSupervision", m: "GET", p: "/lecturer/supervision", t: "Supervised projects",
+    d: ["Final-year projects the lecturer supervises, and new supervision requests."],
+    msg: "Supervision retrieved", data: { projects: [{ id: "proj-ada", student: { ...STUDENT, id: "sup-ada", firstName: "Ada", lastName: "Okafor", level: 400 }, title: "Automated testing adoption in Nigerian fintechs", type: "Dissertation", chapters: [{ id: "ch-2", title: "Literature review", state: "submitted" }] }], requests: [{ id: "req-3", student: { ...STUDENT, id: "sup-chinedu", firstName: "Chinedu", lastName: "Eze", level: 400 }, title: "Migrating monoliths to microservices in Nigerian banks", type: "Dissertation", assignedBy: "Prof. Olayinka Adeniran (HOD)" }] } },
+  { s: S.sup, fn: "respondToSupervision", m: "POST", p: "/lecturer/supervision/requests/{id}", ex: { id: "req-3" }, t: "Accept or raise a concern",
+    d: ["Accepts a supervision assignment or sends a concern to the HOD."],
+    b: { decision: "accept", note: null }, msg: "Response sent", data: { decision: "accept" } },
+  { s: S.sup, fn: "getProject", m: "GET", p: "/lecturer/supervision/projects/{id}", ex: { id: "proj-ada" }, t: "One project",
+    d: ["A project with chapters, review comments and the meeting log."],
+    msg: "Project retrieved", data: { id: "proj-ada", title: "Automated testing adoption in Nigerian fintechs", chapters: [{ id: "ch-2", title: "Literature review", state: "submitted", paragraphs: [{ id: "ch2-p1", text: "This chapter reviews the literature on automated software testing..." }], comments: [] }], meetingLog: [] } },
+  { s: S.sup, fn: "addReviewComment", m: "POST", p: "/lecturer/supervision/projects/{projectId}/chapters/{chapterId}/comments", t: "Comment on a chapter",
+    d: ["Adds a review comment on a quoted passage, with an optional suggested rewrite."],
+    b: { paragraphId: "ch2-p3", quote: "fewer than a third ran automated tests", body: "Cite the sample size here.", suggestion: "fewer than a third (n = 48) ran automated tests" }, code: 201, msg: "Comment added", data: { id: "cmt-17", paragraphId: "ch2-p3", quote: "fewer than a third ran automated tests", body: "Cite the sample size here.", suggestion: "fewer than a third (n = 48) ran automated tests", author: "Dr. Amos Awoniyi", at: "2026-10-07T10:00:00Z", resolved: false } },
+  { s: S.sup, fn: "deleteReviewComment", m: "DELETE", p: "/lecturer/supervision/projects/{projectId}/chapters/{chapterId}/comments/{commentId}", t: "Delete a comment",
+    d: ["Deletes a review comment before the student sees it."],
+    msg: "Comment deleted", data: { ok: true } },
+  { s: S.sup, fn: "decideChapter", m: "POST", p: "/lecturer/supervision/projects/{projectId}/chapters/{chapterId}/decision", t: "Approve or request changes", idem: true,
+    d: ["Approves a chapter or sends it back with a summary. open counts unresolved comments."],
+    b: { decision: "changes", summary: "Strengthen the methodology gap and cite sample sizes." }, msg: "Decision sent", data: { chapter: { id: "ch-2", state: "changes_requested" }, open: 3 } },
+  { s: S.sup, fn: "addMeetingNote", m: "POST", p: "/lecturer/supervision/projects/{projectId}/meetings", t: "Log a meeting",
+    d: ["Adds an entry to the supervision meeting log."],
+    b: { discussed: "Chapter 2 structure and sources.", nextSteps: "Revise sections 2.3 and 2.4 by 21 Oct." }, code: 201, msg: "Meeting logged", data: { id: "mtg-4", at: "2026-10-07T11:00:00Z", discussed: "Chapter 2 structure and sources.", nextSteps: "Revise sections 2.3 and 2.4 by 21 Oct." } },
+
+  // Office hours
+  { s: S.oh, fn: "getOfficeHours", m: "GET", p: "/lecturer/office-hours", t: "Office hours",
+    d: ["Office-hour slots, whether bookings are paused, and upcoming bookings."],
+    msg: "Office hours retrieved", data: { paused: false, slots: [{ id: "oh-wed", day: 3, start: "14:00", end: "16:00", slotMinutes: 15, location: "Room 214, Software Engineering Building", audience: "my-students" }], bookings: [{ id: "bk-1", student: { ...STUDENT, id: "s2-114", firstName: "Tobi", lastName: "Adeyemi" }, date: "2026-10-07", start: "14:00", end: "14:15", topic: "SEN 201", note: "CA 1 query" }] } },
+  { s: S.oh, fn: "saveOfficeHours", m: "PUT", p: "/lecturer/office-hours", t: "Save office hours",
+    d: ["Replaces the office-hour slots and paused flag."],
+    b: { paused: false, slots: [{ id: "oh-wed", day: 3, start: "14:00", end: "16:00", slotMinutes: 15, location: "Room 214, Software Engineering Building", audience: "my-students" }] }, msg: "Office hours saved", data: { paused: false, slots: [{ id: "oh-wed", day: 3, start: "14:00", end: "16:00", slotMinutes: 15, location: "Room 214, Software Engineering Building", audience: "my-students" }] } },
+  { s: S.oh, fn: "cancelBookings", m: "POST", p: "/lecturer/office-hours/bookings/cancel", t: "Cancel bookings",
+    d: ["Cancels bookings and tells each student why."],
+    b: { ids: ["bk-1", "bk-2"], message: "I'm at a faculty meeting this afternoon. Please rebook for Friday." }, msg: "Bookings cancelled", data: { notified: 2 } },
+  { s: S.oh, fn: "getDepartment", m: "GET", p: "/lecturer/department", t: "Department",
+    d: ["The lecturer's department: HOD, advisers by level, programmes and the course catalogue."],
+    msg: "Department retrieved", data: { schoolCode: "CES", schoolName: "School of Computing", departmentCode: "SENG", departmentName: "Software Engineering", hod: "Prof. Olayinka Adeniran", advisorsByLevel: [{ level: 100, name: "Dr. Amos Awoniyi" }, { level: 200, name: "Mr. Kunle Adewale" }], programmes: [{ name: "B.Sc. Software Engineering", years: 4 }], catalogue: [{ code: "SEN 201", title: "Introduction to Software Engineering", units: 2, level: 200, prerequisites: [] }] } },
+];
+
+// ── Path, query and body descriptions ────────────────────────────────────────
+const PATH_EX = { courseId: "sen-201", studentId: "l100-008", assessmentId: "ca-sen-201-1", groupId: "sen-201:A", sessionId: "ses-sen-201-tue", projectId: "proj-ada", chapterId: "ch-2", commentId: "cmt-17", date: "2026-10-07", id: "x" };
+const PATH_DESC = { courseId: "Course ID", studentId: "Student ID", assessmentId: "CA item ID", groupId: "Class group ID", sessionId: "Timetable session ID", projectId: "Project ID", chapterId: "Chapter ID", commentId: "Comment ID", date: "Class date (YYYY-MM-DD)", id: "Record ID" };
+
+const params = (e) => [...e.p.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+const exPath = (e) => e.p.replace(/\{(\w+)\}/g, (_, k) => encodeURIComponent((e.ex && e.ex[k]) || PATH_EX[k]));
+const query = (e) => (e.q && e.q.length ? "?" + e.q.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&") : "");
+const fullUrl = (e) => BASE + exPath(e) + query(e);
+const hasBody = (e) => e.b !== undefined;
+const envelope = (e) => ({ status: true, message: e.msg, data: e.data });
+const headersOf = (e) => {
+  const h = [];
+  if (!e.pub) h.push(["Authorization", "Bearer {token}", true, "Sanctum token from sign-in"]);
+  h.push(["Accept", "application/json", true, ""]);
+  if (hasBody(e)) h.push(["Content-Type", "application/json", true, ""]);
+  if (e.idem) h.push(["Idempotency-Key", "{uuid}", true, "New UUID per action; a repeated key returns the first result and does nothing twice"]);
+  return h;
+};
+
+// ── Rendering helpers ────────────────────────────────────────────────────────
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+function highlight(json) {
+  return esc(json).replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?)/g, (m, str, colon, lit, num) => {
+    if (str) return colon ? `<span class="jk">${str}</span>${colon}` : `<span class="js">${str}</span>`;
+    if (lit) return `<span class="jl">${lit}</span>`;
+    return `<span class="jn">${num}</span>`;
+  });
+}
+const pretty = (v) => JSON.stringify(v, null, 2);
+
+function toPhp(v, ind = "") {
+  const pad = ind + "    ";
+  if (v === null) return "null";
+  if (typeof v === "boolean" || typeof v === "number") return String(v);
+  if (typeof v === "string") return "'" + v.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+  if (Array.isArray(v)) return v.length ? "[\n" + v.map((x) => pad + toPhp(x, pad)).join(",\n") + ",\n" + ind + "]" : "[]";
+  const keys = Object.keys(v);
+  return keys.length ? "[\n" + keys.map((k) => `${pad}'${k}' => ${toPhp(v[k], pad)}`).join(",\n") + ",\n" + ind + "]" : "[]";
+}
+const indentJson = (v, n) => pretty(v).split("\n").join("\n" + " ".repeat(n));
+
+function snippet(e, lang) {
+  const url = fullUrl(e);
+  const h = headersOf(e).map(([k, v]) => [k, k === "Authorization" ? "Bearer YOUR_SANCTUM_BEARER_TOKEN" : k === "Idempotency-Key" ? "8f14e45f-ceea-467a-9575-0b5e3d6c4f21" : v]);
+  const body = hasBody(e) ? e.b : undefined;
+  const lower = e.m.toLowerCase();
+  if (lang === "curl") {
+    const lines = [`curl -X ${e.m} "${url}"`].concat(h.map(([k, v]) => `  -H "${k}: ${v}"`));
+    if (body !== undefined) lines.push(`  -d '${JSON.stringify(body)}'`);
+    return lines.join(" \\\n");
+  }
+  if (lang === "fetch") {
+    const hdr = h.map(([k, v]) => `    "${k}": "${v}",`).join("\n");
+    return `const res = await fetch("${url}", {\n  method: "${e.m}",\n  headers: {\n${hdr}\n  },${body !== undefined ? `\n  body: JSON.stringify(${indentJson(body, 2)}),` : ""}\n});\nconst { status, message, data } = await res.json();`;
+  }
+  if (lang === "axios") {
+    const hdr = h.filter(([k]) => k !== "Content-Type").map(([k, v]) => `    "${k}": "${v}",`).join("\n");
+    const cfg = `{\n  headers: {\n${hdr}\n  },\n}`;
+    if (body !== undefined && ["post", "put", "patch"].includes(lower)) return `const { data } = await axios.${lower}(\n  "${url}",\n  ${indentJson(body, 2)},\n  ${cfg.split("\n").join("\n  ")},\n);\n// data = { status, message, data }`;
+    return `const { data } = await axios.${lower}("${url}", ${cfg});\n// data = { status, message, data }`;
+  }
+  if (lang === "php") {
+    let chain = "$response = Http::acceptJson()";
+    if (!e.pub) chain += "\n    ->withToken($token)";
+    if (e.idem) chain += "\n    ->withHeaders(['Idempotency-Key' => (string) Str::uuid()])";
+    chain += body !== undefined ? `\n    ->${lower}('${url}', ${toPhp(body, "    ")});` : `\n    ->${lower}('${url}');`;
+    return `use Illuminate\\Support\\Facades\\Http;${e.idem ? "\nuse Illuminate\\Support\\Str;" : ""}\n\n${chain}\n\n$data = $response->json('data');`;
+  }
+  // dart
+  const hdr = h.map(([k, v]) => `    '${k}': '${v}',`).join("\n");
+  const call = e.m === "PATCH" ? "patch" : lower;
+  return `import 'dart:convert';\nimport 'package:http/http.dart' as http;\n\nfinal res = await http.${call}(\n  Uri.parse('${url}'),\n  headers: {\n${hdr}\n  },${body !== undefined ? `\n  body: jsonEncode(${indentJson(body, 2)}),` : ""}\n);\nfinal json = jsonDecode(res.body) as Map<String, dynamic>;`;
+}
+
+const LANGS = [["curl", "cURL"], ["fetch", "JavaScript (Fetch)"], ["axios", "Axios"], ["php", "PHP (Laravel)"], ["dart", "Dart / Flutter"]];
+const TAG_LABEL = { new: "NEW", updated: "UPDATED", proposed: "PROPOSED PATH" };
+
+function copy(text, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = "Copied"; btn.classList.add("done"); setTimeout(() => { btn.textContent = t; btn.classList.remove("done"); }, 1400); };
+  try {
+    navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, btn, done));
+  } catch { fallbackCopy(text, btn, done); }
+}
+function fallbackCopy(text, btn, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch { btn.textContent = "Select and copy"; }
+  ta.remove();
+}
+
+function bodyHtml(e) {
+  const ps = params(e);
+  const head = headersOf(e);
+  const parts = [];
+  parts.push(`<div class="blk"><h4><span class="dot"></span>Description &amp; purpose</h4><div class="desc"><strong>${esc(e.d[0])}</strong>${e.d.slice(1).map((x) => `<p>${esc(x)}</p>`).join("")}<span class="fnref">Frontend: <b>lecturerApi.${esc(e.fn)}()</b> · lib/lecturer/api/index.ts</span></div></div>`);
+  parts.push(`<div class="blk"><h4><span class="dot"></span>Request headers</h4><div class="tbl-wrap"><table><thead><tr><th>Header</th><th>Value / example</th><th>Required</th></tr></thead><tbody>${head.map(([k, v, r, n]) => `<tr><td class="k">${esc(k)}</td><td><code>${esc(v)}</code>${n ? `<div class="legend" style="margin-top:4px">${esc(n)}</div>` : ""}</td><td><span class="${r ? "req" : "opt"}">${r ? "Required" : "Optional"}</span></td></tr>`).join("")}</tbody></table></div></div>`);
+  if (ps.length || (e.q && e.q.length)) {
+    const rows = ps.map((k) => `<tr><td class="k">{${esc(k)}}</td><td>Path</td><td><code>${esc((e.ex && e.ex[k]) || PATH_EX[k])}</code></td><td>${esc(PATH_DESC[k] || "")}</td></tr>`)
+      .concat((e.q || []).map(([k, v, n]) => `<tr><td class="k">${esc(k)}</td><td>Query</td><td><code>${esc(v)}</code></td><td>${esc(n)}</td></tr>`));
+    parts.push(`<div class="blk"><h4><span class="dot"></span>Parameters</h4><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>In</th><th>Example</th><th>Notes</th></tr></thead><tbody>${rows.join("")}</tbody></table></div></div>`);
+  }
+  if (hasBody(e)) {
+    const b = pretty(e.b);
+    parts.push(`<div class="blk"><div class="resp-head"><h4 style="margin:0"><span class="dot"></span>Request body</h4><span class="note">application/json</span><button class="btn" type="button" data-copy="body">Copy body</button></div><div class="code"><pre>${highlight(b)}</pre></div></div>`);
+  }
+  const ok = pretty(envelope(e));
+  const code = e.code || 200;
+  let resp = `<div class="blk"><h4><span class="dot"></span>Expected responses</h4><div class="resp-head"><span class="http">HTTP ${code}</span><span class="note">${esc(e.msg)}</span><button class="btn" type="button" data-copy="resp">Copy response</button></div><div class="code"><pre>${highlight(ok)}</pre></div>`;
+  if (e.err) resp += `<div class="resp-alt"><div class="resp-head"><span class="http err">HTTP ${e.err.code}</span><span class="note">${esc(e.err.msg)}</span></div><div class="code"><pre>${highlight(pretty({ status: false, message: e.err.msg, code: errCode(e), data: e.err.data }))}</pre></div></div>`;
+  resp += `</div>`;
+  parts.push(resp);
+  parts.push(`<div class="blk"><h4><span class="dot"></span>How to consume</h4><div class="consume"><div class="tabs" role="tablist">${LANGS.map(([k, l], i) => `<button class="tab" role="tab" type="button" data-lang="${k}" aria-selected="${i === 0}">${l}</button>`).join("")}<button class="btn" type="button" data-copy="code">Copy code</button></div><pre class="snip">${esc(snippet(e, "curl"))}</pre></div></div>`);
+  return parts.join("");
+}
+function errCode(e) {
+  const map = { 401: "AUTH-401", 404: "NOT-FOUND", 409: "REG-409", 422: "VALIDATION-422" };
+  return map[e.err.code] || `HTTP-${e.err.code}`;
+}
+
+// ── Build page ───────────────────────────────────────────────────────────────
+const main = document.getElementById("main");
+const nav = document.getElementById("nav");
+const sections = [...new Set(E.map((e) => e.s))];
+
+sections.forEach((sec) => {
+  const list = E.filter((e) => e.s === sec);
+  const flagged = list.filter((e) => e.tag === "new" || e.tag === "updated").length;
+  const secEl = document.createElement("section");
+  secEl.className = "sec";
+  secEl.dataset.sec = sec;
+  secEl.innerHTML = `<div class="sec-head"><span class="sec-icon" aria-hidden="true"></span><h2>${esc(sec)}</h2><span class="count">${list.length} endpoints</span>${flagged ? `<span class="tag tag-new">${flagged} NEW</span>` : ""}</div><div class="cards"></div>`;
+  const cards = secEl.querySelector(".cards");
+  const navSec = document.createElement("div");
+  navSec.className = "nav-sec";
+  navSec.innerHTML = `<h3>${esc(sec)}</h3><ul></ul>`;
+  list.forEach((e) => {
+    const card = document.createElement("article");
+    card.className = "ep" + (e.tag === "new" || e.tag === "updated" ? " flagged" : "");
+    card.id = e.fn;
+    card.dataset.method = e.m;
+    card.dataset.search = `${e.m} /api/v1${e.p} ${e.fn} ${e.t} ${e.d.join(" ")}`.toLowerCase();
+    const tag = e.tag ? `<span class="tag tag-${e.tag}">${TAG_LABEL[e.tag]}</span>` : "";
+    const auth = e.pub ? `<span class="auth public">public</span>` : `<span class="auth"><span class="lock" aria-hidden="true"></span>auth:sanctum</span>`;
+    card.innerHTML = `<div class="ep-head" role="button" tabindex="0" aria-expanded="false" aria-controls="b-${e.fn}"><span class="method m-${e.m}">${e.m}</span><span class="path">/api/v1${esc(e.p)}</span>${tag}${auth}<span class="ep-title">${esc(e.t)}</span><span class="head-actions"><button class="btn" type="button" data-copy="uri">Copy URI</button><span class="caret" aria-hidden="true"></span></span></div><div class="ep-body" id="b-${e.fn}" hidden></div>`;
+    cards.appendChild(card);
+    const li = document.createElement("li");
+    li.innerHTML = `<a href="#${e.fn}" data-target="${e.fn}"><span class="m m-${e.m}">${e.m}</span><span class="fn">${esc(e.fn)}</span></a>`;
+    li.dataset.method = e.m;
+    li.dataset.target = e.fn;
+    navSec.querySelector("ul").appendChild(li);
+  });
+  main.appendChild(secEl);
+  nav.appendChild(navSec);
+});
+const empty = document.createElement("p");
+empty.className = "empty";
+empty.textContent = "No endpoint matches. Try a path segment such as advising or grade-sheets.";
+empty.hidden = true;
+main.appendChild(empty);
+
+document.getElementById("totalPill").textContent = `${E.length} endpoints`;
+
+const byFn = Object.fromEntries(E.map((e) => [e.fn, e]));
+function setOpen(card, open) {
+  const body = card.querySelector(".ep-body");
+  if (open && !body.dataset.ready) { body.innerHTML = bodyHtml(byFn[card.id]); body.dataset.ready = "1"; }
+  body.hidden = !open;
+  card.classList.toggle("open", open);
+  card.querySelector(".ep-head").setAttribute("aria-expanded", String(open));
+}
+
+main.addEventListener("click", (ev) => {
+  const card = ev.target.closest(".ep");
+  if (!card) return;
+  const e = byFn[card.id];
+  const copyBtn = ev.target.closest("[data-copy]");
+  if (copyBtn) {
+    ev.stopPropagation();
+    const kind = copyBtn.dataset.copy;
+    const lang = card.querySelector(".tab[aria-selected='true']")?.dataset.lang || "curl";
+    const text = kind === "uri" ? fullUrl(e) : kind === "body" ? pretty(e.b) : kind === "resp" ? pretty(envelope(e)) : snippet(e, lang);
+    copy(text, copyBtn);
+    return;
+  }
+  const tab = ev.target.closest(".tab");
+  if (tab) {
+    card.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+    card.querySelector(".snip").textContent = snippet(e, tab.dataset.lang);
+    return;
+  }
+  if (ev.target.closest(".ep-head")) {
+    setOpen(card, !card.classList.contains("open"));
+  }
+});
+main.addEventListener("keydown", (ev) => {
+  if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches(".ep-head")) { ev.preventDefault(); ev.target.click(); }
+});
+
+// Filters
+let method = "ALL";
+const mf = document.getElementById("methodFilters");
+["ALL", "GET", "POST", "PUT", "PATCH", "DELETE"].forEach((m) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.textContent = m === "ALL" ? "All" : m; b.dataset.m = m;
+  b.setAttribute("aria-pressed", String(m === "ALL"));
+  b.addEventListener("click", () => { method = m; mf.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c === b))); applyFilter(); });
+  mf.appendChild(b);
+});
+const qInput = document.getElementById("q");
+qInput.addEventListener("input", applyFilter);
+function applyFilter() {
+  const term = qInput.value.trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll(".ep").forEach((c) => {
+    const ok = (method === "ALL" || c.dataset.method === method) && (!term || c.dataset.search.includes(term));
+    c.hidden = !ok;
+    if (ok) shown++;
+  });
+  document.querySelectorAll(".sec").forEach((s) => { s.hidden = !s.querySelector(".ep:not([hidden])"); });
+  document.querySelectorAll(".nav-sec li").forEach((li) => { li.hidden = document.getElementById(li.dataset.target).hidden; });
+  document.querySelectorAll(".nav-sec").forEach((n) => { n.hidden = !n.querySelector("li:not([hidden])"); });
+  empty.hidden = shown > 0;
+}
+
+document.getElementById("expandAll").addEventListener("click", () => document.querySelectorAll(".ep:not([hidden])").forEach((c) => setOpen(c, true)));
+document.getElementById("collapseAll").addEventListener("click", () => document.querySelectorAll(".ep").forEach((c) => setOpen(c, false)));
+
+// Deep links: #functionName opens that endpoint
+function openFromHash() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  const card = id && document.getElementById(id);
+  if (card && card.classList.contains("ep")) { setOpen(card, true); card.scrollIntoView({ block: "start" }); }
+}
+window.addEventListener("hashchange", openFromHash);
+if (location.hash) openFromHash(); else setOpen(document.getElementById("getAdviseeRecord"), true);
+</script>
+</body>
+</html>

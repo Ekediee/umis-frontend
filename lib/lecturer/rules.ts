@@ -4,7 +4,23 @@
 
 import { caTotal } from "./grading";
 import { daysBetween } from "./format";
-import type { Assessment, Enrolment, Registration, RegistrationCheck, RegistrationCourse, RiskSignal, Urgency } from "./types";
+import type {
+  Assessment,
+  AuditCourse,
+  AuditStatus,
+  CourseAudit,
+  CurriculumCourse,
+  Enrolment,
+  Letter,
+  Registration,
+  RegistrationCheck,
+  RegistrationCourse,
+  RegistrationStatus,
+  RiskSignal,
+  TranscriptCourse,
+  TranscriptSemester,
+  Urgency,
+} from "./types";
 
 // ── At-risk suggestions (Stage 2) ────────────────────────────────────────────
 // The system suggests; only the lecturer sends a flag.
@@ -66,7 +82,13 @@ export const UNIT_RANGE = { min: 15, max: 24 }; // assumption
 
 export function registrationChecks(
   courses: RegistrationCourse[],
-  ctx: { outstandingCarryOvers: { code: string; title: string; failedIn: string }[]; missingPrereqs: string[]; clashes: string[] },
+  ctx: {
+    outstandingCarryOvers: { code: string; title: string; failedIn: string }[];
+    missingPrereqs: string[];
+    clashes: string[];
+    /** Core courses for this level and semester (from the curriculum); optional for callers without a curriculum. */
+    requiredCore?: { code: string; title: string }[];
+  },
 ): RegistrationCheck[] {
   const units = courses.reduce((s, c) => s + c.units, 0);
   const checks: RegistrationCheck[] = [];
@@ -99,6 +121,21 @@ export function registrationChecks(
       : { id: "carry-overs", label: "Carry-overs included", passed: true },
   );
 
+  if (ctx.requiredCore) {
+    const notPicked = ctx.requiredCore.filter((c) => !registered.has(c.code));
+    checks.push(
+      notPicked.length
+        ? {
+            id: "core-courses",
+            label: "Required courses included",
+            passed: false,
+            detail: notPicked.map((m) => `Not picked: ${m.code} ${m.title}`).join("; "),
+            suggestedReason: "missing-core-course",
+          }
+        : { id: "core-courses", label: "Required courses included", passed: true },
+    );
+  }
+
   checks.push(
     ctx.clashes.length
       ? { id: "clashes", label: "No timetable clashes", passed: false, detail: ctx.clashes.join("; "), suggestedReason: "other" }
@@ -112,6 +149,7 @@ export const allChecksPassed = (r: Pick<Registration, "checks">) => r.checks.eve
 
 export const RETURN_REASON_LABELS: Record<string, string> = {
   "missing-carry-over": "Missing carry-over",
+  "missing-core-course": "Missing required course",
   "too-many-units": "Too many units",
   "too-few-units": "Too few units",
   "wrong-elective": "Wrong elective",
@@ -121,6 +159,88 @@ export const RETURN_REASON_LABELS: Record<string, string> = {
 /** Reason text is required: at least one chip or 10 characters (6.3). */
 export function isReturnValid(reasons: string[], note: string) {
   return reasons.length > 0 || note.trim().length >= 10;
+}
+
+/**
+ * An advisor can send a registration back while it is waiting, and also after
+ * approving it — by them or by the school officer (confirmed). Returning a
+ * school-approved registration withdraws that approval too.
+ */
+export function canReturn(status: RegistrationStatus) {
+  return status === "to_review" || status === "approved_advisor" || status === "approved_school";
+}
+
+// ── Course audit: what a student has passed, failed, missed and still has to do ──
+
+/** Babcock 5-point scale. */
+export const GRADE_POINTS: Record<Letter, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
+
+/** Order of terms, so "earlier than now" comparisons work across levels. */
+const termIndex = (level: number, semester: number) => level * 10 + semester;
+
+/**
+ * Sorts every curriculum course into one status:
+ * - passed: latest attempt E or better
+ * - failed: latest attempt F and not registered again (outstanding carry-over)
+ * - registered: in this semester's registration (a retake when failed before)
+ * - missing: a core course from this or an earlier term the student never took or did not pick
+ * - to_do: belongs to a later term
+ * Electives the student skipped are not "missing"; they show as to_do until taken.
+ * `registeredCodes` is null while the registration isn't submitted: this term's
+ * courses then stay to_do (the "Not submitted" status already says so).
+ */
+export function auditCourses(
+  curriculum: CurriculumCourse[],
+  transcript: TranscriptSemester[],
+  registeredCodes: string[] | null,
+  current: { level: number; semester: 1 | 2 },
+): CourseAudit {
+  const attempts = new Map<string, Letter[]>();
+  for (const sem of transcript) for (const c of sem.courses) attempts.set(c.code, [...(attempts.get(c.code) ?? []), c.grade]);
+  const registered = new Set(registeredCodes ?? []);
+  const submitted = registeredCodes !== null;
+  const now = termIndex(current.level, current.semester);
+
+  const courses: AuditCourse[] = curriculum.map((c) => {
+    const tries = attempts.get(c.code) ?? [];
+    const grade = tries.at(-1);
+    const term = termIndex(c.level, c.semester);
+    let status: AuditStatus;
+    if (grade && grade !== "F") status = "passed";
+    else if (registered.has(c.code)) status = "registered";
+    else if (grade === "F") status = "failed";
+    else if (c.kind === "core" && (term < now || (term === now && submitted))) status = "missing";
+    else status = "to_do";
+    return { ...c, status, grade, attempts: tries.length, retake: status === "registered" && grade === "F" ? true : undefined };
+  });
+
+  const counts = { passed: 0, failed: 0, registered: 0, missing: 0, to_do: 0 } as Record<AuditStatus, number>;
+  courses.forEach((c) => counts[c.status]++);
+  const unitsRequired = curriculum.filter((c) => c.kind === "core").reduce((s, c) => s + c.units, 0);
+  const unitsPassed = courses.filter((c) => c.status === "passed").reduce((s, c) => s + c.units, 0);
+  return { courses, counts, unitsPassed, unitsRequired };
+}
+
+/** GPA for a set of results, to two decimals; null when there are none. */
+export function gpaOf(results: Pick<TranscriptCourse, "units" | "gradePoint">[]): number | null {
+  const units = results.reduce((s, r) => s + r.units, 0);
+  if (!units) return null;
+  return Math.round((results.reduce((s, r) => s + r.units * r.gradePoint, 0) / units) * 100) / 100;
+}
+
+/** The plain-language message an advisor sends a student about their course audit. */
+export function auditMessage(firstName: string, audit: CourseAudit) {
+  const list = (s: AuditStatus) => audit.courses.filter((c) => c.status === s);
+  const line = (c: AuditCourse) => `• ${c.code} ${c.title} (${c.units} units)`;
+  const parts = [`Hi ${firstName}, I reviewed your course record.`];
+  const failed = list("failed");
+  const missing = list("missing");
+  if (failed.length) parts.push(`You failed these courses and need to register them again:\n${failed.map(line).join("\n")}`);
+  if (missing.length) parts.push(`These required courses are missing from your record or this semester's registration:\n${missing.map(line).join("\n")}`);
+  if (!failed.length && !missing.length) parts.push("You have no failed or missing courses. Well done.");
+  const left = audit.unitsRequired - audit.unitsPassed;
+  parts.push(`You still have ${left} core units to complete before graduation. Come and see me if you have questions.`);
+  return parts.join("\n\n");
 }
 
 // ── Urgency (cross-cutting "days before it turns amber") ────────────────────

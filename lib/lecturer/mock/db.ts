@@ -33,8 +33,11 @@ import type {
   SupervisionProject,
   SupervisionRequest,
   AdvisingWindow,
+  CurriculumCourse,
+  TranscriptSemester,
 } from "../types";
-import { registrationChecks } from "../rules";
+import { GRADE_POINTS, gpaOf, registrationChecks } from "../rules";
+import { letterFor } from "../grading";
 import { FIRST_NAMES, LAST_NAMES, PROGRAMMES, chance, int, matric, mulberry32, pick } from "./seed";
 
 import { DEMO_NOW } from "../clock";
@@ -59,6 +62,10 @@ export interface MockDb {
   questions: Question[];
   registrations: Registration[];
   advising: AdvisingWindow;
+  /** B.Sc. Software Engineering curriculum (advisees' programme). */
+  curriculum: CurriculumCourse[];
+  /** studentId → published results (advisees who are repeating Level 100). */
+  transcripts: Map<string, TranscriptSemester[]>;
   projects: SupervisionProject[];
   supervisionRequests: SupervisionRequest[];
   officeHours: { slots: OfficeHourSlot[]; paused: boolean };
@@ -387,18 +394,89 @@ function buildQuestions(students: Student[]): Question[] {
   return q;
 }
 
-const L100_COURSES: RegistrationCourse[] = [
-  { code: "GEDS 101", title: "Communication in English", units: 2 },
-  { code: "COS 101", title: "Introduction to Computing Sciences", units: 3 },
-  { code: "MTH 101", title: "Elementary Mathematics I", units: 3 },
-  { code: "PHY 101", title: "General Physics I", units: 3 },
-  { code: "PHY 107", title: "General Practical Physics I", units: 1 },
-  { code: "CHM 101", title: "General Chemistry I", units: 3 },
-  { code: "SEN 101", title: "Introduction to Software Engineering Practice", units: 2 },
-  { code: "GEDS 105", title: "Citizenship and Leadership", units: 2 },
-];
+/** B.Sc. Software Engineering — four levels, two semesters each (BU Pulse catalogue, simplified). */
+const CURRICULUM: CurriculumCourse[] = (
+  [
+    // Level 100, first semester
+    ["GEDS 101", "Communication in English", 2, 100, 1, "core"],
+    ["COS 101", "Introduction to Computing Sciences", 3, 100, 1, "core"],
+    ["MTH 101", "Elementary Mathematics I", 3, 100, 1, "core"],
+    ["PHY 101", "General Physics I", 3, 100, 1, "core"],
+    ["PHY 107", "General Practical Physics I", 1, 100, 1, "core"],
+    ["CHM 101", "General Chemistry I", 3, 100, 1, "core"],
+    ["SEN 101", "Introduction to Software Engineering Practice", 2, 100, 1, "core"],
+    ["GEDS 105", "Citizenship and Leadership", 2, 100, 1, "core"],
+    ["MTH 103", "Elementary Mathematics III", 3, 100, 1, "elective"],
+    ["STA 111", "Descriptive Statistics", 3, 100, 1, "elective"],
+    ["GEDS 121", "Use of Library", 1, 100, 1, "elective"],
+    // Level 100, second semester
+    ["COS 102", "Problem Solving", 3, 100, 2, "core"],
+    ["MTH 102", "Elementary Mathematics II", 3, 100, 2, "core"],
+    ["PHY 102", "General Physics II", 3, 100, 2, "core"],
+    ["PHY 108", "General Practical Physics II", 1, 100, 2, "core"],
+    ["SEN 102", "Web Design and Development", 3, 100, 2, "core"],
+    ["GEDS 102", "Communication in English II", 2, 100, 2, "core"],
+    ["STA 112", "Probability I", 3, 100, 2, "elective"],
+    // Level 200
+    ["SEN 201", "Introduction to Software Engineering", 2, 200, 1, "core"],
+    ["SEN 203", "Software Evolution and Maintenance", 3, 200, 1, "core"],
+    ["COS 201", "Computer Programming I", 3, 200, 1, "core"],
+    ["MTH 201", "Mathematical Methods I", 3, 200, 1, "core"],
+    ["GEDS 201", "Entrepreneurship Studies", 2, 200, 1, "core"],
+    ["SEN 212", "Internet Technology and Web Application Development", 3, 200, 2, "core"],
+    ["COS 202", "Computer Programming II", 3, 200, 2, "core"],
+    ["SEN 204", "Object-Oriented Analysis and Design", 3, 200, 2, "core"],
+    ["MTH 202", "Linear Algebra", 3, 200, 2, "core"],
+    ["COS 206", "Introduction to Data Science", 2, 200, 2, "elective"],
+    // Level 300
+    ["SEN 301", "Software Requirements Engineering", 3, 300, 1, "core"],
+    ["SEN 303", "Introduction to Big Data Engineering", 2, 300, 1, "core"],
+    ["CSC 333", "Database System Design, Implementation and Management", 3, 300, 1, "core"],
+    ["SEN 313", "Mobile Application Development", 2, 300, 1, "elective"],
+    ["SEN 302", "Software Testing and Quality Assurance", 3, 300, 2, "core"],
+    ["SEN 304", "Software Architecture", 3, 300, 2, "core"],
+    ["SEN 399", "Industrial Training (SIWES)", 6, 300, 2, "core"],
+    // Level 400
+    ["SEN 406", "Formal Methods in Software Engineering", 2, 400, 1, "core"],
+    ["SEN 407", "Software Measurement and Metrics", 2, 400, 1, "core"],
+    ["SEN 417", "Human Computer Interaction and Emerging Technologies", 3, 400, 1, "core"],
+    ["COS 419", "Agile Development and Scrum", 2, 400, 1, "elective"],
+    ["SEN 411", "Open-Source Systems Development", 2, 400, 2, "elective"],
+    ["GST 400", "Religion and Social Ethics", 3, 400, 2, "core"],
+    ["SEN 499", "Final Year Project", 6, 400, 2, "core"],
+  ] as const
+).map(([code, title, units, level, semester, kind]) => ({ code, title, units, level, semester, kind }));
 
-function buildRegistrations(rng: ReturnType<typeof mulberry32>): Registration[] {
+const courseOf = (code: string) => CURRICULUM.find((c) => c.code === code)!;
+const asRegistered = (code: string): RegistrationCourse => ({ code, title: courseOf(code).title, units: courseOf(code).units });
+
+const L100_CORE_SEM1 = CURRICULUM.filter((c) => c.level === 100 && c.semester === 1 && c.kind === "core");
+const L100_COURSES: RegistrationCourse[] = L100_CORE_SEM1.map((c) => asRegistered(c.code));
+
+/** Stable per-student random stream, so history never shifts the shared seed. */
+const rngFor = (id: string) => mulberry32([...id].reduce((h, ch) => Math.imul(h ^ ch.charCodeAt(0), 16777619), 2166136261));
+
+/**
+ * 2025/2026 results for a student repeating Level 100. `fail` lists the course
+ * codes they failed; everything else is a pass between D and A.
+ */
+function buildHistory(studentId: string, fail: string[]): TranscriptSemester[] {
+  const r = rngFor(studentId);
+  const semesters: TranscriptSemester[] = [];
+  const all: { units: number; gradePoint: number }[] = [];
+  for (const semester of [1, 2] as const) {
+    const courses = CURRICULUM.filter((c) => c.level === 100 && c.semester === semester && c.kind === "core").map((c) => {
+      const score = fail.includes(c.code) ? int(r, 18, 38) : int(r, 45, 82);
+      const grade = letterFor(score);
+      return { code: c.code, title: c.title, units: c.units, score, grade, gradePoint: GRADE_POINTS[grade] };
+    });
+    all.push(...courses);
+    semesters.push({ session: "2025/2026", semester, level: 100, courses, gpa: gpaOf(courses) ?? 0, cgpa: gpaOf(all) ?? 0 });
+  }
+  return semesters;
+}
+
+function buildRegistrations(rng: ReturnType<typeof mulberry32>, transcripts: Map<string, TranscriptSemester[]>): Registration[] {
   const plan: [RegistrationStatus, number][] = [
     ["to_review", 14],
     ["returned", 3],
@@ -411,29 +489,45 @@ function buildRegistrations(rng: ReturnType<typeof mulberry32>): Registration[] 
   const regs: Registration[] = [];
   for (const [status, count] of plan) {
     for (let i = 0; i < count; i++) {
+      const index = cursor;
       const student = students[cursor++];
       let courses = [...L100_COURSES];
-      const carry: { code: string; title: string; failedIn: string }[] = [];
       let clashes: string[] = [];
+
+      // Who is repeating Level 100, and what they failed in 2025/2026.
+      let fail: string[] = [];
+      if ((status === "to_review" && (i === 1 || i === 6)) || status === "returned") fail = ["COS 102"]; // left out again → carry-over check fails
+      else if (status === "to_review" && (i === 0 || i === 5)) fail = ["COS 102"]; // resubmitted with it added
+      else if (status === "to_review" && i === 7) fail = ["MTH 101", "PHY 101", "COS 102", "MTH 102"]; // on probation
+      else if (index % 9 === 4) fail = [["MTH 101", "PHY 101", "CHM 101"][index % 3]]; // first-semester retake, already registered
+
+      const history = fail.length ? buildHistory(student.id, fail) : [];
+      if (history.length) transcripts.set(student.id, history);
+      const outstanding = fail.filter((code) => courseOf(code).semester === 2).map((code) => ({ code, title: courseOf(code).title, failedIn: "2025/2026" }));
+
       if (status === "to_review") {
-        if (i === 1 || i === 6) carry.push({ code: "COS 102", title: "Problem Solving", failedIn: "2025/2026" });
-        if (i === 3) courses = [...courses, { code: "MTH 103", title: "Elementary Mathematics III", units: 3 }, { code: "STA 111", title: "Descriptive Statistics", units: 3 }, { code: "GEDS 121", title: "Use of Library", units: 1 }];
+        if (i === 0 || i === 5) courses = [...courses, asRegistered("COS 102")];
+        if (i === 3) courses = [...courses, asRegistered("MTH 103"), asRegistered("STA 111"), asRegistered("GEDS 121")];
         if (i === 9) courses = courses.slice(0, 4);
         if (i === 11) clashes = ["PHY 107 and CHM 101 both Thu 2:00 pm"];
       }
-      if (status === "returned") carry.push({ code: "COS 102", title: "Problem Solving", failedIn: "2025/2026" });
-      const checks = registrationChecks(courses, { outstandingCarryOvers: carry, missingPrereqs: [], clashes });
+      // Failed courses registered again are carry-overs.
+      courses = courses.map((c) => (fail.includes(c.code) ? { ...c, carryOver: true } : c));
+
+      const checks = registrationChecks(courses, { outstandingCarryOvers: outstanding, missingPrereqs: [], clashes, requiredCore: L100_CORE_SEM1 });
       const submitted = status === "not_submitted" ? null : d(2026, 10, int(rng, 1, 6), int(rng, 8, 20), int(rng, 0, 59));
+      rng(); // keeps the shared seed sequence stable for the data built after this
+      const cgpa = history.at(-1)?.cgpa ?? 0;
       regs.push({
         id: `reg-${student.id}`,
         student,
         status,
         submittedAt: submitted,
-        cgpa: Math.round((2.1 + rng() * 2.8) * 100) / 100,
-        standing: status === "to_review" && i === 7 ? "Probation" : "Good",
+        cgpa,
+        standing: (status === "to_review" && i === 7) || (history.length && cgpa < 1.5) ? "Probation" : "Good",
         courses,
         checks,
-        resubmitted: status === "to_review" && (i === 0 || i === 5) ? { changes: ["Added COS 102 Problem Solving (carry-over)", "Removed GEDS 105"] } : undefined,
+        resubmitted: status === "to_review" && (i === 0 || i === 5) ? { changes: ["Added COS 102 Problem Solving (carry-over)"] } : undefined,
         returned: status === "returned" ? { reasons: ["missing-carry-over"], note: "Add COS 102 Problem Solving — you failed it in 2025/2026.", at: d(2026, 10, 3, 11) } : undefined,
       });
     }
@@ -644,7 +738,8 @@ function createDb(): MockDb {
   const studentList = [...students.values()];
   const { projects, requests } = buildProjects(rng);
   projects.forEach((p) => students.set(p.student.id, p.student));
-  const registrations = buildRegistrations(rng);
+  const transcripts = new Map<string, TranscriptSemester[]>();
+  const registrations = buildRegistrations(rng, transcripts);
   registrations.forEach((r) => students.set(r.student.id, r.student));
 
   const bookingStudents = studentList.slice(40, 42);
@@ -715,7 +810,9 @@ function createDb(): MockDb {
     ],
     questions: buildQuestions(studentList.filter((s) => s.id.startsWith("seng203"))),
     registrations,
-    advising: { level: 100, advisees: 212, closesAt: d(2026, 10, 18, 23, 59) },
+    advising: { level: 100, advisees: 212, closesAt: d(2026, 10, 18, 23, 59), session: "2026/2027", semester: 1 },
+    curriculum: CURRICULUM,
+    transcripts,
     projects,
     supervisionRequests: requests,
     officeHours: {

@@ -38,7 +38,13 @@ export function ReturnSheet({ registration, onClose, onDone }: { registration: R
       onClose={onClose}
       dismissible={!send.pending}
       title={registration ? `Return to ${fullName(registration.student)}` : ""}
-      description="They see your reason on their registration screen and get a push and email. Their form reopens."
+      description={
+        registration?.status === "approved_school"
+          ? "This withdraws your approval and the school officer's. They see your reason on their registration screen, get a push and email, and their form reopens. The school officer is told."
+          : registration?.status === "approved_advisor"
+            ? "This withdraws your approval. They see your reason on their registration screen and get a push and email. Their form reopens."
+            : "They see your reason on their registration screen and get a push and email. Their form reopens."
+      }
       footer={
         <>
           <Btn variant="ghost" onClick={onClose}>

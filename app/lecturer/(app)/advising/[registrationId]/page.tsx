@@ -4,16 +4,16 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, CheckCircle2, MessageSquare, RefreshCcw, Undo2, XCircle } from "lucide-react";
+import { Check, CheckCircle2, GraduationCap, MessageSquare, RefreshCcw, Undo2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { lecturerApi } from "@/lib/lecturer/api";
 import { appNow } from "@/lib/lecturer/clock";
 import { fullName, timeAgo } from "@/lib/lecturer/format";
 import { useLecturerQuery, useMutation } from "@/lib/lecturer/query";
-import { allChecksPassed, RETURN_REASON_LABELS } from "@/lib/lecturer/rules";
+import { allChecksPassed, canReturn, RETURN_REASON_LABELS } from "@/lib/lecturer/rules";
 import { Page } from "@/components/lecturer/shell/page";
 import { ReturnSheet } from "@/components/lecturer/advising/return-sheet";
-import { Btn, CardSkeleton, Chip, ErrorState, KeyValue, PageHeader, PersonAvatar, Surface } from "@/components/lecturer/ui/primitives";
+import { Btn, BtnLink, CardSkeleton, Chip, ErrorState, KeyValue, PageHeader, PersonAvatar, Surface } from "@/components/lecturer/ui/primitives";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL = { not_submitted: "Not submitted", to_review: "To review", returned: "Returned", approved_advisor: "Approved by you", approved_school: "Approved by school" } as const;
@@ -122,16 +122,32 @@ export default function RegistrationDetailPage() {
                 <p className="text-[12px] text-gray-500">{s.matric}</p>
               </div>
             </div>
-            <KeyValue label="CGPA" value={r.cgpa.toFixed(2)} />
+            <KeyValue label="CGPA" value={r.cgpa ? r.cgpa.toFixed(2) : "No results yet"} />
             <KeyValue label="Standing" value={r.standing === "Good" ? r.standing : <Chip tone="amber">{r.standing}</Chip>} />
             <KeyValue label="Level" value={s.level} />
             {r.submittedAt && <KeyValue label="Submitted" value={timeAgo(r.submittedAt, now)} />}
           </Surface>
+          <BtnLink href={`/lecturer/advising/students/${s.id}`} variant="secondary" icon={GraduationCap}>
+            Transcript and course audit
+          </BtnLink>
           <Btn variant="secondary" icon={MessageSquare} onClick={() => toast.info("Opens a direct thread with the student (phase 3).")}>
             Message
           </Btn>
         </aside>
       </div>
+
+      {!decidable && canReturn(r.status) && (
+        <div className="fixed inset-x-0 bottom-[76px] z-40 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur md:bottom-0 md:pl-[calc(16rem+2rem)] dark:border-gray-800 dark:bg-gray-900/95">
+          <div className="mx-auto flex max-w-[900px] items-center gap-3">
+            <p className="hidden flex-1 text-[13px] text-gray-500 sm:block">
+              {r.status === "approved_school" ? "Returning withdraws your approval and the school officer's." : "Returning withdraws your approval."}
+            </p>
+            <Btn size="lg" variant="secondary" icon={Undo2} className="flex-1 sm:flex-none" onClick={() => setReturning(true)}>
+              Return to student
+            </Btn>
+          </div>
+        </div>
+      )}
 
       {decidable && (
         <div className="fixed inset-x-0 bottom-[76px] z-40 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur md:bottom-0 md:pl-[calc(16rem+2rem)] dark:border-gray-800 dark:bg-gray-900/95">
