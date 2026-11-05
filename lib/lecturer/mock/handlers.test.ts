@@ -99,3 +99,26 @@ describe("Search (1.3)", () => {
     expect(r.some((x) => x.kind === "student")).toBe(true);
   });
 });
+
+describe("Editable CA on the grade sheet (5B.1)", () => {
+  it("saves a CA total, validates the max, and clears back to the calculated total", async () => {
+    const sheet = await api.getGradeSheet("sen-201", "sen-201:B");
+    const id = sheet.rows.find((r) => r.enrolment.status === "active")!.student.id;
+    const calculated = sheet.rows.find((r) => r.student.id === id)!.grade.ca;
+
+    await expect(api.saveCaTotal("sen-201", "sen-201:B", id, 41)).rejects.toMatchObject({ code: "GR-422" });
+    await api.saveCaTotal("sen-201", "sen-201:B", id, 33);
+    let row = (await api.getGradeSheet("sen-201", "sen-201:B")).rows.find((r) => r.student.id === id)!;
+    expect(row.grade).toMatchObject({ ca: 33, caEdited: true, caComputed: calculated });
+
+    await api.saveCaTotal("sen-201", "sen-201:B", id, null);
+    row = (await api.getGradeSheet("sen-201", "sen-201:B")).rows.find((r) => r.student.id === id)!;
+    expect(row.grade).toMatchObject({ ca: calculated, caEdited: false });
+  });
+
+  it("is locked on a returned sheet except for the highlighted rows", async () => {
+    const sheet = await api.getGradeSheet("cosc-333", "cosc-333:SE");
+    const other = sheet.rows.find((r) => !sheet.sheet.returnedStudentIds!.includes(r.student.id))!;
+    await expect(api.saveCaTotal("cosc-333", "cosc-333:SE", other.student.id, 20)).rejects.toMatchObject({ code: "GR-423" });
+  });
+});

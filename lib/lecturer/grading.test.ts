@@ -97,3 +97,16 @@ describe("caPlanStatus (5A.1)", () => {
     expect(caPlanStatus([...plan, A("x", 5)], 40).over).toBe(true);
   });
 });
+
+describe("CA typed on the grade sheet", () => {
+  it("replaces the calculated CA and keeps the calculated value for display", () => {
+    expect(gradeRow(enr({ caOverride: 35 }), plan)).toMatchObject({ ca: 35, caComputed: 30, caEdited: true, total: 75, letter: "A" });
+  });
+  it("counts as CA for the pre-submit check even with no assessment scores", () => {
+    const c = preSubmitCheck([enr({ caScores: { ca1: null, ca2: null, ca3: null }, caOverride: 20 })], plan);
+    expect(c.noCa).toEqual([]);
+  });
+  it("an override of 0 is a real score, not a blank", () => {
+    expect(gradeRow(enr({ caOverride: 0 }), plan)).toMatchObject({ ca: 0, caEdited: true, total: 40 });
+  });
+});

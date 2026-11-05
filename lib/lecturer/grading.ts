@@ -50,7 +50,11 @@ export function caTotal(enrolment: Pick<Enrolment, "caScores">, assessments: Ass
 
 export interface GradeRow {
   studentId: string;
+  /** CA used for the total: the typed override if any, else the calculated total. */
   ca: number | null;
+  /** CA calculated from the assessments, shown when an override replaces it. */
+  caComputed: number | null;
+  caEdited: boolean;
   exam: number | null;
   total: number | null;
   letter: Letter | null;
@@ -58,14 +62,17 @@ export interface GradeRow {
 }
 
 export function gradeRow(enrolment: Enrolment, assessments: Assessment[], caWeight = 40): GradeRow {
-  const ca = caTotal(enrolment, assessments, caWeight);
+  const caComputed = caTotal(enrolment, assessments, caWeight);
+  const caEdited = enrolment.caOverride !== undefined && enrolment.caOverride !== null;
+  const ca = caEdited ? enrolment.caOverride! : caComputed;
+  const base = { studentId: enrolment.studentId, ca, caComputed, caEdited };
   const exam = enrolment.examScore;
   if (enrolment.examStatus) {
-    return { studentId: enrolment.studentId, ca, exam, total: null, letter: null, status: enrolment.examStatus };
+    return { ...base, exam, total: null, letter: null, status: enrolment.examStatus };
   }
-  if (exam === null) return { studentId: enrolment.studentId, ca, exam, total: null, letter: null };
+  if (exam === null) return { ...base, exam, total: null, letter: null };
   const total = roundHalfUp((ca ?? 0) + exam);
-  return { studentId: enrolment.studentId, ca, exam, total, letter: letterFor(total) };
+  return { ...base, exam, total, letter: letterFor(total) };
 }
 
 export type ScoreValidation = { ok: true; value: number | null } | { ok: false; message: string };

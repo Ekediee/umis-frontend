@@ -596,6 +596,19 @@ export function saveExamScore(courseId: string, groupId: string, studentId: stri
   return respond({ ok: true }, 100);
 }
 
+/** CA total typed on the grade sheet. null clears it back to the calculated total. */
+export function saveCaTotal(courseId: string, groupId: string, studentId: string, score: number | null) {
+  const db = getDb();
+  const c = course(courseId);
+  const sheet = db.gradeSheets.find((g) => g.courseId === courseId && g.groupId === groupId)!;
+  if (!sheetEditable(sheet, studentId)) return fail("This row is locked. Only highlighted rows can change.", "GR-423");
+  if (score !== null && score > c.caWeight) return fail(`CA is out of ${c.caWeight}.`, "GR-422");
+  const e = db.enrolments.find((x) => x.courseId === courseId && x.studentId === studentId)!;
+  if (score === null) delete e.caOverride;
+  else e.caOverride = score;
+  return respond({ ok: true }, 100);
+}
+
 export function setExamStatus(courseId: string, studentId: string, status: Enrolment["examStatus"] | null, reason: string) {
   const e = getDb().enrolments.find((x) => x.courseId === courseId && x.studentId === studentId)!;
   e.examStatus = status ?? undefined;
