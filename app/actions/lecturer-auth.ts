@@ -22,6 +22,10 @@ import { redirect } from "next/navigation";
 const LECTURER_COOKIE = "lecturer_session"; // also read in middleware.ts
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
+// Same rule as the student session (lib/session.ts): Secure only when the public URL is HTTPS.
+// The sandbox runs on plain HTTP, where browsers drop Secure cookies and sign-in loops back.
+const useSecureCookies = (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
+
 // Mock directory of instructor records (BU Pulse). Email is blank for NIYI, as in the audit.
 const STAFF = [{ instructorId: "NIYI", email: null as string | null, name: "Amos Awoniyi" }];
 
@@ -35,7 +39,7 @@ export type AuthResult =
 async function startSession(instructorId: string) {
   const payload = Buffer.from(JSON.stringify({ sub: instructorId, exp: Date.now() + EIGHT_HOURS })).toString("base64url");
   const jar = await cookies();
-  jar.set(LECTURER_COOKIE, payload, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+  jar.set(LECTURER_COOKIE, payload, { httpOnly: true, sameSite: "lax", secure: useSecureCookies, path: "/" });
   const onboarded = jar.get("lecturer_onboarded")?.value === "1";
   return { status: "ok", redirectTo: onboarded ? "/lecturer" : "/lecturer/welcome" } as const;
 }
@@ -77,7 +81,7 @@ export async function verifyInstructorLink(instructorId: string, code: string): 
 
 export async function markOnboarded() {
   const jar = await cookies();
-  jar.set("lecturer_onboarded", "1", { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 365 });
+  jar.set("lecturer_onboarded", "1", { httpOnly: true, sameSite: "lax", secure: useSecureCookies, path: "/", maxAge: 60 * 60 * 24 * 365 });
 }
 
 export async function signOutLecturer(everywhere = false) {
